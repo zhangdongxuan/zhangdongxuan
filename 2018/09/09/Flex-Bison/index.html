@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>Flex &amp; Bison | Coding Honor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="flex &amp; bison 不仅可以进行语言的词法和文法分析，还可以接续几乎所有的结构化文本。">
+<meta name="keywords" content="编译原理">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Flex &amp; Bison">
+<meta property="og:url" content="http://coderhonor.com/2018/09/09/Flex-Bison/index.html">
+<meta property="og:site_name" content="Coding Honor">
+<meta property="og:description" content="flex &amp; bison 不仅可以进行语言的词法和文法分析，还可以接续几乎所有的结构化文本。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-09T07:34:47.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Flex &amp; Bison">
+<meta name="twitter:description" content="flex &amp; bison 不仅可以进行语言的词法和文法分析，还可以接续几乎所有的结构化文本。">
+  
+    <link rel="alternative" href="/atom.xml" title="Coding Honor" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/img/favicon.png">
+  
+  
+      <link rel="stylesheet" href="//cdn.bootcss.com/animate.css/3.5.0/animate.min.css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  
+  
+      <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  
+  <!-- 加载特效 -->
+    <script src="/js/pace.js"></script>
+    <link href="/css/pace/pace-theme-flash.css" rel="stylesheet">
+  <script>
+      var yiliaConfig = {
+          rootUrl: '/',
+          fancybox: true,
+          animate: true,
+          isHome: false,
+          isPost: true,
+          isArchive: false,
+          isTag: false,
+          isCategory: false,
+          open_in_new: false
+      }
+  </script>
+</head></html>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <a href="/" class="profilepic">
+            
+            <img lazy-src="/img/head.jpeg" class="js-avatar">
+            
+        </a>
+
+        <hgroup>
+          <h1 class="header-author"><a href="/" title="Hi Mate">Code Honor</a></h1>
+        </hgroup>
+
+        
+        <p class="header-subtitle">明月别枝惊鹊，清风半夜鸣蝉。稻花香里说丰年，听取蛙声一片。</p>
+        
+        
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        <div class="icon-wrap icon-link hide" data-idx="2">
+                            <div class="loopback_l"></div>
+                            <div class="loopback_r"></div>
+                        </div>
+                        
+                        
+                    </div>
+                    
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>菜单</li>
+                        <li>标签</li>
+                        
+                        <li>友情链接</li>
+                        
+                        
+                    </ul>
+                </div>
+            </div>
+        
+
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fl github" target="_blank" href="https://github.com/zhangdongxuan/" title="github">github</a>
+                            
+                                <a class="fl iteye" target="_blank" href="http://dxz.iteye.com" title="iteye">iteye</a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <a href="/tags/AVFoundation/" style="font-size: 10px;">AVFoundation</a> <a href="/tags/C/" style="font-size: 10px;">C++</a> <a href="/tags/UI/" style="font-size: 20px;">UI</a> <a href="/tags/iOS/" style="font-size: 10px;">iOS</a> <a href="/tags/大杂烩/" style="font-size: 10px;">大杂烩</a> <a href="/tags/编译原理/" style="font-size: 10px;">编译原理</a> <a href="/tags/设计模式/" style="font-size: 10px;">设计模式</a> <a href="/tags/音视频/" style="font-size: 20px;">音视频</a>
+                    </div>
+                </section>
+                
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://www.zhangdongxuan.com">name</a>
+                    
+                    </div>
+                </section>
+                
+
+                
+            </div>
+        </div>
+    </header>                
+</div>
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="Me">Code Honor</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                
+                    <img lazy-src="/img/head.jpeg" class="js-avatar">
+                
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="Me">Code Honor</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">明月别枝惊鹊，清风半夜鸣蝉。稻花香里说丰年，听取蛙声一片。</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                <div class="social">
+                    
+                        <a class="github" target="_blank" href="https://github.com/zhangdongxuan/" title="github">github</a>
+                    
+                        <a class="iteye" target="_blank" href="http://dxz.iteye.com" title="iteye">iteye</a>
+                    
+                </div>
+            </nav>
+        </header>                
+    </div>
+</nav>
+      <div class="body-wrap"><article id="post-Flex-Bison" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2018/09/09/Flex-Bison/" class="article-date">
+      <time datetime="2018-09-09T07:33:41.000Z" itemprop="datePublished">2018-09-09</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Flex &amp; Bison
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/编译原理/">编译原理</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><h3 id="Flex"><a href="#Flex" class="headerlink" title="Flex"></a>Flex</h3><p>Flex是一个词法分析工具，词法分析可以称为lexical analysis，或称scanning； </p>
+<blockquote>
+<p>词法分析把输入分割成一个个有意义的词块，称为记号（token）；</p>
+</blockquote>
+<h3 id="Bison"><a href="#Bison" class="headerlink" title="Bison"></a>Bison</h3><p>Bison是一个语法分析工具，语法分析可以称为syntax analysis，或称parsing；</p>
+<blockquote>
+<p>语法分析主要是确定词法分析记号（token）是如何彼此关联的；</p>
+</blockquote>
+<p>基本所有的编译器项目中，都会使用lex或者flex做词法分析，并利用Yacc或者Bison对词法分析的结果进行语法分析。</p>
+<p>flex和bison最早是用来生成编译器的，他们具备处理结构化的输入的能力，后来发现他们可以用在很多地方，例如解析css文件、json文件、XML文件等。</p>
+<h2 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h2><h3 id="上下文无关文法"><a href="#上下文无关文法" class="headerlink" title="上下文无关文法"></a>上下文无关文法</h3><p>当我们编写一个语法分析器，就需要我们用一定的方法来描述记号转化为语法分析树的规则。<br>这种描述的方法在计算机中最常用的就是上下文无关文法Context-Free Grammar。<br>上下文无关文法就是说这个文法中所有的产生式左边只有一个非终结符。</p>
+<p>例如下面这个就是上下文无关文法</p>
+<figure class="highlight excel"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">S -&gt; aSb | ab      这个文法产生了语言 &#123;a^<span class="built_in">n</span> * b^<span class="built_in">n</span> <span class="symbol">:</span> <span class="built_in">n</span> ≥ <span class="number">1</span>&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个文法有两个产生式，每个产生式左边只有一个非终结符S，这就是上下文无关文法，因为你只要找到符合产生式右边的串，就可以把它归约为对应的非终结符。</p>
+<p>要理解什么是上下文无关文法，可以先感受一下上下文有关文法，例如</p>
+<figure class="highlight clean"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">S -&gt; ab</span><br><span class="line"></span><br><span class="line">aSb -&gt; aaSbb</span><br></pre></td></tr></table></figure>
+
+<p>这就是上下文相关文法，因为它的第一个产生式左边有不止一个符号，所以你在匹配这个产生式中的S的时候必需确保这个S有正确的“上下文”，也就是左边的a和右边的b，所以叫上下文相关文法。</p>
+<p>因为上下文无关文法有足够强的表达力来表示大多数程序设计语言的语法，上下文无关文法又足够简单，使得我们可以构造有效的分析算法来检验一个给定字串是否是由某个上下文无关文法产生的。</p>
+<h3 id="BNF文法"><a href="#BNF文法" class="headerlink" title="BNF文法"></a>BNF文法</h3><p>为了编写一个语法分析器，需要一定的方法来描述语法分析器所使用的把一系列记号转化为语法分析树的规则。在计算机分析程序里最常用的语言就是上下文无关文法（Context-Free Grammar, CFG）。书写上下文无关文法的标准格式就是Backus-Naur范式（BackusNaur Form，BNF）。</p>
+<p>BNF文法用起来是非常简单易懂的，例如我们可以用下面的表达式来表示 1 * 2 + 3 * 4 + 5:</p>
+<figure class="highlight bnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">&lt;exp&gt;</span> ::= &lt;factor&gt; | &lt;exp&gt; + &lt;factor&gt;</span><br><span class="line"></span><br><span class="line"><span class="attribute">&lt;factor&gt;</span> ::= NUMBER | &lt;factor&gt; * NUMBER</span><br></pre></td></tr></table></figure>
+
+<p>每一行就是一条规则，用来说明如何创建语法分析树的分支。<br>有效的BNF总是带有递归性的，规则会直接或者间接地指向自身。</p>
+<h3 id="Flex语法结构"><a href="#Flex语法结构" class="headerlink" title="Flex语法结构"></a>Flex语法结构</h3><p>以最简单的word count的程序word_count.l来看</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">%&#123;</span><br><span class="line">	<span class="keyword">int</span> chars = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">int</span> words = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">int</span> lines = <span class="number">0</span>; </span><br><span class="line">%&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">%%</span><br><span class="line"></span><br><span class="line">[a-zA-Z]+ 	&#123; words++; chars += <span class="built_in">strlen</span>(yytext); &#125; </span><br><span class="line">\n 			&#123; chars++; lines++; &#125;</span><br><span class="line">. 			&#123; chars++; &#125;</span><br><span class="line"></span><br><span class="line">%%</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	yylex();</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">"%8d%8d%8d\n"</span>, lines, words, chars); </span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>MacOS下编译代码命令</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-tag">flex</span> <span class="selector-tag">word_count</span><span class="selector-class">.l</span></span><br><span class="line"><span class="selector-tag">cc</span> <span class="selector-tag">lex</span><span class="selector-class">.yy</span><span class="selector-class">.c</span> <span class="selector-tag">-ll</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="变量声明"><a href="#变量声明" class="headerlink" title="变量声明"></a>变量声明</h4><p>声明部分可以进行声明和选项设置。<br>可以在%{和%}包围的部分里面定义c代码，里面的内容会被完整地复制到lex.yy.c 的开头，通常会用来放置include、define的信息。</p>
+<h4 id="规则定义"><a href="#规则定义" class="headerlink" title="规则定义"></a>规则定义</h4><p>规则声明部分被两个%%包围，规则为</p>
+<blockquote>
+<p>正则表达式  {匹配到之后执行的C代码}</p>
+</blockquote>
+<p>例如：<br>[a-zA-Z]+     { words++; chars += strlen(yytext); }<br>在任意一个flex的动作中，变量yytext总是被设为指向本次匹配的输入文本。<br>前面的部分就是模式，处于一行的开始位置，后面的部分就是动作，也就是，输入中匹配到了这个模式的时候，对应的进行什么动作。<br>yytext，在输入匹配到该模式的时候，匹配的部分就存储到yytext里面。</p>
+<h4 id="C代码部分"><a href="#C代码部分" class="headerlink" title="C代码部分"></a>C代码部分</h4><p>这部分是C代码，它们会被复制到lex.yy.c的最末尾。</p>
+<p>程序主要由一系列带有指令的正则表达式组成，这些指令确定了正则表达式匹配后相应的动作（action）。</p>
+<h3 id="Bison语法结构"><a href="#Bison语法结构" class="headerlink" title="Bison语法结构"></a>Bison语法结构</h3><p>bison的语法规则也分为三部分，以flex 和 bison协同的计算器程序为例</p>
+<p>flex部分：创建calculator.l并声明</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">%&#123;</span><br><span class="line">    <span class="comment">//calculator_def中定义了记号</span></span><br><span class="line">	#include <span class="string">"calculator_def.h"</span></span><br><span class="line">%&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">%%</span><br><span class="line"></span><br><span class="line"><span class="string">"+"</span> 	&#123; <span class="keyword">return</span> ADD; &#125;</span><br><span class="line"><span class="string">"-"</span> 	&#123; <span class="keyword">return</span> SUB; &#125;</span><br><span class="line"><span class="string">"*"</span> 	&#123; <span class="keyword">return</span> MUL; &#125;</span><br><span class="line"><span class="string">"/"</span> 	&#123; <span class="keyword">return</span> DIV; &#125;</span><br><span class="line"><span class="string">"|"</span> 	&#123; <span class="keyword">return</span> ABS; &#125;</span><br><span class="line">[<span class="number">0</span>-<span class="number">9</span>]+ 	&#123; yylval = atoi(yytext); <span class="keyword">return</span> NUMBER; &#125; </span><br><span class="line">\n 		&#123; <span class="keyword">return</span> EOL; &#125;</span><br><span class="line">[ \t]	&#123; <span class="comment">/**whitespace**/</span> &#125;</span><br><span class="line">.		&#123; printf(<span class="string">"Mystery character %c\n"</span>, *yytext); &#125;</span><br><span class="line"></span><br><span class="line">%%</span><br></pre></td></tr></table></figure>
+
+<p>bison代码：创建calculator.y并编写代码</p>
+<figure class="highlight gams"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">%&#123;</span><br><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">%&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* declare tokens */</span> </span><br><span class="line">%token NUMBER</span><br><span class="line">%token ADD SUB MUL <span class="built-in">DIV</span> <span class="built-in">ABS</span> </span><br><span class="line">%token EOL</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">%%</span><br><span class="line">calclist:</span><br><span class="line">		| calclist <span class="built-in">exp</span> EOL &#123; printf(<span class="string">"= %d\n"</span>, <span class="symbol">$</span><span class="number">2</span>); &#125; </span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="built-in">exp</span>: factor</span><br><span class="line">	| <span class="built-in">exp</span> ADD factor &#123; <span class="symbol">$</span><span class="symbol">$</span> = <span class="symbol">$</span><span class="number">1</span> + <span class="symbol">$</span><span class="number">3</span>; &#125; </span><br><span class="line">	| <span class="built-in">exp</span> SUB factor &#123; <span class="symbol">$</span><span class="symbol">$</span> = <span class="symbol">$</span><span class="number">1</span> - <span class="symbol">$</span><span class="number">3</span>; &#125; ;</span><br><span class="line"></span><br><span class="line">factor: term</span><br><span class="line">	| factor MUL term &#123; <span class="symbol">$</span><span class="symbol">$</span> = <span class="symbol">$</span><span class="number">1</span> * <span class="symbol">$</span><span class="number">3</span>; &#125; </span><br><span class="line">	| factor <span class="built-in">DIV</span> term &#123; <span class="symbol">$</span><span class="symbol">$</span> = <span class="symbol">$</span><span class="number">1</span> / <span class="symbol">$</span><span class="number">3</span>; &#125; ;</span><br><span class="line"></span><br><span class="line">term: NUMBER</span><br><span class="line">	| <span class="built-in">ABS</span> term &#123; <span class="symbol">$</span><span class="symbol">$</span> = <span class="symbol">$</span><span class="number">2</span> &gt;= <span class="number">0</span>? <span class="symbol">$</span><span class="number">2</span> : - <span class="symbol">$</span><span class="number">2</span>; &#125; ;</span><br><span class="line"></span><br><span class="line">%%</span><br><span class="line"></span><br><span class="line">int main(int argc, char **argv)</span><br><span class="line">&#123;</span><br><span class="line">	yyparse();</span><br><span class="line">	return <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">yyerror(char *s)</span><br><span class="line">&#123;</span><br><span class="line">	fprintf(stderr, <span class="string">"error: %s\n"</span>, s);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="声明部分和C代码部分"><a href="#声明部分和C代码部分" class="headerlink" title="声明部分和C代码部分"></a>声明部分和C代码部分</h4><p>被%{和%}包围的部分，里面的内容会被完整地复制到lex.yy.c 的开头，通常会用来放置include、define的信息。</p>
+<p>除此之外一般还要进行token设置。<br>token用于标记语法解析中用到的基本语素，教程里称之为“记号”。<br>用枚举来定义，而且为了避免冲突一般枚举的值从258开始。<br>语法是：<br>%token 记号，例如</p>
+<figure class="highlight haml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">%<span class="selector-tag">token</span></span> NUMBER</span><br><span class="line"><span class="tag">%<span class="selector-tag">token</span></span> ADD SUB MUL DIV ABS </span><br><span class="line"><span class="tag">%<span class="selector-tag">token</span></span> EOL</span><br></pre></td></tr></table></figure>
+
+<p>这里一般是当flex成功匹配到一个模式的时候，会return一个token，然后在bison的规则中查找应该进行的动作。</p>
+<h4 id="规则部分"><a href="#规则部分" class="headerlink" title="规则部分"></a>规则部分</h4><p>规则部分遵循DNF范式的定义，每一个bison语法分析器在分析其输入时都会构造一棵语法分析树。<br>在有些应用里，它把整棵树作为一个数据结构创建在内存中以便于后续使用。<br>在其他应用里，语法分析树只是隐式地包含在语法分析器进行的一系列操作中。</p>
+<figure class="highlight gams"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">%%</span><br><span class="line">calclist:</span><br><span class="line">		| calclist <span class="built-in">exp</span> EOL &#123; printf(<span class="string">"= %d\n"</span>, <span class="symbol">$</span><span class="number">2</span>); &#125; ;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="built-in">exp</span>: factor</span><br><span class="line">	| <span class="built-in">exp</span> ADD factor &#123; <span class="symbol">$</span><span class="symbol">$</span> = <span class="symbol">$</span><span class="number">1</span> + <span class="symbol">$</span><span class="number">3</span>; &#125; </span><br><span class="line">	| <span class="built-in">exp</span> SUB factor &#123; <span class="symbol">$</span><span class="symbol">$</span> = <span class="symbol">$</span><span class="number">1</span> - <span class="symbol">$</span><span class="number">3</span>; &#125; ;</span><br><span class="line"></span><br><span class="line">factor: term</span><br><span class="line">	| factor MUL term &#123; <span class="symbol">$</span><span class="symbol">$</span> = <span class="symbol">$</span><span class="number">1</span> * <span class="symbol">$</span><span class="number">3</span>; &#125; </span><br><span class="line">	| factor <span class="built-in">DIV</span> term &#123; <span class="symbol">$</span><span class="symbol">$</span> = <span class="symbol">$</span><span class="number">1</span> / <span class="symbol">$</span><span class="number">3</span>; &#125; ;</span><br><span class="line"></span><br><span class="line">term: NUMBER</span><br><span class="line">	| <span class="built-in">ABS</span> term &#123; <span class="symbol">$</span><span class="symbol">$</span> = <span class="symbol">$</span><span class="number">2</span> &gt;= <span class="number">0</span>? <span class="symbol">$</span><span class="number">2</span> : - <span class="symbol">$</span><span class="number">2</span>; &#125; ;</span><br><span class="line"></span><br><span class="line">%%</span><br></pre></td></tr></table></figure>
+
+<h4 id="第三部分是用户自定义代码"><a href="#第三部分是用户自定义代码" class="headerlink" title="第三部分是用户自定义代码"></a>第三部分是用户自定义代码</h4><p>以上可以使用如下命令生成编译结果：</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-tag">bison</span> <span class="selector-tag">-d</span> <span class="selector-tag">calculator</span><span class="selector-class">.y</span></span><br><span class="line"><span class="selector-tag">flex</span> <span class="selector-tag">calculator</span><span class="selector-class">.l</span></span><br><span class="line"><span class="selector-tag">cc</span> <span class="selector-tag">-o</span> <span class="selector-tag">calculator</span> <span class="selector-tag">calculator</span><span class="selector-class">.tab</span><span class="selector-class">.c</span> <span class="selector-tag">lex</span><span class="selector-class">.yy</span><span class="selector-class">.c</span> <span class="selector-tag">-ll</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>利用flex &amp; bison 除了可以进行语言的词法和文法分析，还可以接续几乎所有的结构化文本。</p>
+<p>文章中提到的代码，我放到了github上：<a href="https://github.com/zhangdongxuan/Flex-Bison。" target="_blank" rel="noopener">https://github.com/zhangdongxuan/Flex-Bison。</a></p>
+
+      
+      
+        <div class="page-reward">
+          <p><a href="javascript:void(0)" onclick="dashangToggle()" class="dashang">赏</a></p>
+          <div class="hide_box"></div>
+          <div class="shang_box">
+            <a class="shang_close" href="javascript:void(0)" onclick="dashangToggle()">×</a>
+            <div class="shang_tit">
+              <p>谢谢支持</p>
+            </div>
+            <div class="shang_payimg">
+              <img src="/img/alipayimg.jpg" alt="扫码支持" title="扫一扫" />
+            </div>
+              <div class="pay_explain">扫码打赏，你说多少就多少</div>
+            <div class="shang_payselect">
+              
+                <div class="pay_item checked" data-id="alipay">
+                  <span class="radiobox"></span>
+                  <span class="pay_logo"><img src="/img/alipay.png" alt="支付宝" /></span>
+                </div>
+              
+              
+                <div class="pay_item" data-id="wechat">
+                  <span class="radiobox"></span>
+                  <span class="pay_logo"><img src="/img/weixin.png" alt="微信" /></span>
+                </div>
+              
+            </div>
+            <div class="shang_info">
+              <p>打开<span id="shang_pay_txt">支付宝</span>扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+        </div>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.2.0/zepto.min.js"></script>
+        <script type="text/javascript">
+          $(".pay_item").click(function(){
+            $(this).addClass('checked').siblings('.pay_item').removeClass('checked');
+            var dataid=$(this).attr('data-id');
+            $(".shang_payimg img").attr("src","/img/"+dataid+"img.jpg");
+            $("#shang_pay_txt").text(dataid=="alipay"?"支付宝":"微信");
+          });
+          function dashangToggle(){
+            
+            $(".hide_box").fadeToggle();
+            $(".shang_box").fadeToggle();
+          }
+        </script>
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a href="/2018/09/09/Flex-Bison/">Flex &amp; Bison</a></p>
+        <p><span>文章作者:</span><a href="/" title="访问 Code Honor 的个人博客">Code Honor</a></p>
+        <p><span>发布时间:</span>2018年09月09日 - 15时33分</p>
+        <p><span>最后更新:</span>2018年09月09日 - 15时34分</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/2018/09/09/Flex-Bison/" title="Flex &amp; Bison">http://coderhonor.com/2018/09/09/Flex-Bison/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://coderhonor.com/2018/09/09/Flex-Bison/　　作者: Code Honor" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+            <script src="/js/clipboard.min.js"></script>
+            <script> var clipboard = new Clipboard('.copy-path'); </script>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/" title="中国大陆 (CC BY-NC-SA 3.0 CN)" target = "_blank">"署名-非商用-相同方式共享 3.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+<nav id="article-nav">
+  
+  
+    <a href="/2018/09/08/音频基本概念/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">音频基本概念</div>
+      <strong class="article-nav-caption">></strong>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#简介"><span class="toc-number">1.</span> <span class="toc-text">简介</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Flex"><span class="toc-number">1.1.</span> <span class="toc-text">Flex</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Bison"><span class="toc-number">1.2.</span> <span class="toc-text">Bison</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#语法"><span class="toc-number">2.</span> <span class="toc-text">语法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#上下文无关文法"><span class="toc-number">2.1.</span> <span class="toc-text">上下文无关文法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#BNF文法"><span class="toc-number">2.2.</span> <span class="toc-text">BNF文法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Flex语法结构"><span class="toc-number">2.3.</span> <span class="toc-text">Flex语法结构</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#变量声明"><span class="toc-number">2.3.1.</span> <span class="toc-text">变量声明</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#规则定义"><span class="toc-number">2.3.2.</span> <span class="toc-text">规则定义</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#C代码部分"><span class="toc-number">2.3.3.</span> <span class="toc-text">C代码部分</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Bison语法结构"><span class="toc-number">2.4.</span> <span class="toc-text">Bison语法结构</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#声明部分和C代码部分"><span class="toc-number">2.4.1.</span> <span class="toc-text">声明部分和C代码部分</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#规则部分"><span class="toc-number">2.4.2.</span> <span class="toc-text">规则部分</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#第三部分是用户自定义代码"><span class="toc-number">2.4.3.</span> <span class="toc-text">第三部分是用户自定义代码</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li></ol>
+</div>
+<input type="button" id="tocButton" value="隐藏目录"  title="点击按钮隐藏或者显示文章目录">
+
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script>
+    var valueHide = "隐藏目录";
+    var valueShow = "显示目录";
+
+    if ($(".left-col").is(":hidden")) {
+        $("#tocButton").attr("value", valueShow);
+    }
+    $("#tocButton").click(function() {
+        if ($("#toc").is(":hidden")) {
+            $("#tocButton").attr("value", valueHide);
+            $("#toc").slideDown(320);
+        }
+        else {
+            $("#tocButton").attr("value", valueShow);
+            $("#toc").slideUp(350);
+        }
+    })
+    if ($(".toc").length < 1) {
+        $("#toc, #tocButton").hide();
+    }
+</script>
+
+
+
+
+
+<div class="bdsharebuttonbox">
+	<a href="#" class="fx fa-weibo bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+	<a href="#" class="fx fa-weixin bds_weixin" data-cmd="weixin" title="分享到微信"></a>
+	<a href="#" class="fx fa-qq bds_sqq" data-cmd="sqq" title="分享到QQ好友"></a>
+	<a href="#" class="fx fa-facebook-official bds_fbook" data-cmd="fbook" title="分享到Facebook"></a>
+	<a href="#" class="fx fa-twitter bds_twi" data-cmd="twi" title="分享到Twitter"></a>
+	<a href="#" class="fx fa-linkedin bds_linkedin" data-cmd="linkedin" title="分享到linkedin"></a>
+	<a href="#" class="fx fa-files-o bds_copy" data-cmd="copy" title="分享到复制网址"></a>
+</div>
+<script>window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"2","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];</script>
+
+
+
+
+    
+        <section id="comments">
+  <div id="disqus_thread"></div>
+    <script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'zhangdongxuan'; // required: replace example with your forum shortname
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+    
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a href="/" title="回到主页"><i class="fa fa-home"></i></a>
+        
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+        
+            <a href="/2018/09/08/音频基本概念/" title="下一篇: 音频基本概念">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2018/09/09/Flex-Bison/">Flex & Bison</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/09/08/音频基本概念/">音频基本概念</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/09/01/视频播放基本原理/">视频播放基本原理</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/05/26/LLDB/">LLDB</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/03/23/iOS使用内存地址访问私有属性/">iOS使用内存地址访问私有属性</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/09/26/NSAutoreleasePool分析/">NSAutoreleasePool分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/09/10/大屏-iPhone-的适配-转/">大屏 iPhone 的适配[转]</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/09/05/iOS-图片压缩/">iOS 图片压缩</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/06/15/edgesForExtendedLayout/">edgesForExtendedLayout</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/02/07/iOS视频播放常用类/">iOS视频播放常用类</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/05/iOS实现文字复制/">iOS实现文字复制</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/10/31/MacOS-编译C/">MacOS 编译C++</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/09/小白的步伐-博客旧拾/">小白的步伐-博客旧拾</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/06/iOS-观察者模式/">iOS 观察者模式</a></li></ul>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+    <script>
+        $(".post-list").addClass("toc-article");
+        $(".post-list-item a").attr("target","_blank");
+        $("#post-nav-button > a:nth-child(2)").click(function() {
+            $(".fa-bars, .fa-times").toggle();
+            $(".post-list").toggle(300);
+            if ($(".toc").length > 0) {
+                $("#toc, #tocButton").toggle(200, function() {
+                    if ($(".switch-area").is(":visible")) {
+                        $("#tocButton").attr("value", valueHide);
+                        }
+                    })
+            }
+            else {
+            }
+        })
+    </script>
+
+
+
+    <script>
+        
+    </script>
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                &copy; 2019 Code Honor
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank">Hexo</a>  Theme <a href="https://github.com/luuman/hexo-theme-spfk" target="_blank">spfk</a> by luuman
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" >访问: 
+                            <span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>, </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit">本页阅读量: 
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+
+    </div>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script src="/js/main.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            var backgroundnum = 24;
+            var backgroundimg = "url(/background/bg-x.jpg)".replace(/x/gi, Math.ceil(Math.random() * backgroundnum));
+            $("#mobile-nav").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+            $(".left-col").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+        })
+    </script>
+
+
+
+
+
+<div class="scroll" id="scroll">
+    <a href="#"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    $(document).ready(function() {
+        if ($("#comments").length < 1) {
+            $("#scroll > a:nth-child(2)").hide();
+        };
+    })
+</script>
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+
+  <script language="javascript">
+    $(function() {
+        $("a[title]").each(function() {
+            var a = $(this);
+            var title = a.attr('title');
+            if (title == undefined || title == "") return;
+            a.data('title', title).removeAttr('title').hover(
+
+            function() {
+                var offset = a.offset();
+                $("<div id=\"anchortitlecontainer\"></div>").appendTo($("body")).html(title).css({
+                    top: offset.top - a.outerHeight() - 15,
+                    left: offset.left + a.outerWidth()/2 + 1
+                }).fadeIn(function() {
+                    var pop = $(this);
+                    setTimeout(function() {
+                        pop.remove();
+                    }, pop.text().length * 800);
+                });
+            }, function() {
+                $("#anchortitlecontainer").remove();
+            });
+        });
+    });
+</script>
+
+
+  </div>
+</body>
+</html>

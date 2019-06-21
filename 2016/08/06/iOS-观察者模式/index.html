@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>iOS 观察者模式 | Coding Honor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="观察者模式是使用频率很高的模式，它定义了对象与对象之间的依赖关系，当一个对象的状态发生变化的时候自动地去通知其他对象响应此变化。发生改变的对象被称为观察目标，被通知去响应变化的被称为观察者,可以动态的去增加和删除观察者，从而做到观察者和被观察者之家的解耦，使系统更容易拓展。">
+<meta name="keywords" content="设计模式">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS 观察者模式">
+<meta property="og:url" content="http://coderhonor.com/2016/08/06/iOS-观察者模式/index.html">
+<meta property="og:site_name" content="Coding Honor">
+<meta property="og:description" content="观察者模式是使用频率很高的模式，它定义了对象与对象之间的依赖关系，当一个对象的状态发生变化的时候自动地去通知其他对象响应此变化。发生改变的对象被称为观察目标，被通知去响应变化的被称为观察者,可以动态的去增加和删除观察者，从而做到观察者和被观察者之家的解耦，使系统更容易拓展。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://7xwfw4.com1.z0.glb.clouddn.com/Observer.png">
+<meta property="og:image" content="http://7xwfw4.com1.z0.glb.clouddn.com/image/png/result.png">
+<meta property="og:updated_time" content="2018-05-26T15:21:07.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="iOS 观察者模式">
+<meta name="twitter:description" content="观察者模式是使用频率很高的模式，它定义了对象与对象之间的依赖关系，当一个对象的状态发生变化的时候自动地去通知其他对象响应此变化。发生改变的对象被称为观察目标，被通知去响应变化的被称为观察者,可以动态的去增加和删除观察者，从而做到观察者和被观察者之家的解耦，使系统更容易拓展。">
+<meta name="twitter:image" content="http://7xwfw4.com1.z0.glb.clouddn.com/Observer.png">
+  
+    <link rel="alternative" href="/atom.xml" title="Coding Honor" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/img/favicon.png">
+  
+  
+      <link rel="stylesheet" href="//cdn.bootcss.com/animate.css/3.5.0/animate.min.css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  
+  
+      <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  
+  <!-- 加载特效 -->
+    <script src="/js/pace.js"></script>
+    <link href="/css/pace/pace-theme-flash.css" rel="stylesheet">
+  <script>
+      var yiliaConfig = {
+          rootUrl: '/',
+          fancybox: true,
+          animate: true,
+          isHome: false,
+          isPost: true,
+          isArchive: false,
+          isTag: false,
+          isCategory: false,
+          open_in_new: false
+      }
+  </script>
+</head></html>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <a href="/" class="profilepic">
+            
+            <img lazy-src="/img/head.jpeg" class="js-avatar">
+            
+        </a>
+
+        <hgroup>
+          <h1 class="header-author"><a href="/" title="Hi Mate">Code Honor</a></h1>
+        </hgroup>
+
+        
+        <p class="header-subtitle">明月别枝惊鹊，清风半夜鸣蝉。稻花香里说丰年，听取蛙声一片。</p>
+        
+        
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        <div class="icon-wrap icon-link hide" data-idx="2">
+                            <div class="loopback_l"></div>
+                            <div class="loopback_r"></div>
+                        </div>
+                        
+                        
+                    </div>
+                    
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>菜单</li>
+                        <li>标签</li>
+                        
+                        <li>友情链接</li>
+                        
+                        
+                    </ul>
+                </div>
+            </div>
+        
+
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fl github" target="_blank" href="https://github.com/zhangdongxuan/" title="github">github</a>
+                            
+                                <a class="fl iteye" target="_blank" href="http://dxz.iteye.com" title="iteye">iteye</a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <a href="/tags/AVFoundation/" style="font-size: 10px;">AVFoundation</a> <a href="/tags/C/" style="font-size: 10px;">C++</a> <a href="/tags/UI/" style="font-size: 20px;">UI</a> <a href="/tags/iOS/" style="font-size: 10px;">iOS</a> <a href="/tags/大杂烩/" style="font-size: 10px;">大杂烩</a> <a href="/tags/编译原理/" style="font-size: 10px;">编译原理</a> <a href="/tags/设计模式/" style="font-size: 10px;">设计模式</a> <a href="/tags/音视频/" style="font-size: 20px;">音视频</a>
+                    </div>
+                </section>
+                
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://www.zhangdongxuan.com">name</a>
+                    
+                    </div>
+                </section>
+                
+
+                
+            </div>
+        </div>
+    </header>                
+</div>
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="Me">Code Honor</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                
+                    <img lazy-src="/img/head.jpeg" class="js-avatar">
+                
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="Me">Code Honor</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">明月别枝惊鹊，清风半夜鸣蝉。稻花香里说丰年，听取蛙声一片。</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                <div class="social">
+                    
+                        <a class="github" target="_blank" href="https://github.com/zhangdongxuan/" title="github">github</a>
+                    
+                        <a class="iteye" target="_blank" href="http://dxz.iteye.com" title="iteye">iteye</a>
+                    
+                </div>
+            </nav>
+        </header>                
+    </div>
+</nav>
+      <div class="body-wrap"><article id="post-iOS-观察者模式" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/08/06/iOS-观察者模式/" class="article-date">
+      <time datetime="2016-08-06T08:45:16.000Z" itemprop="datePublished">2016-08-06</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      iOS 观察者模式
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/非技术/">非技术</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/设计模式/">设计模式</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>差不多有半年没有写过博客了，知识沉淀的感觉让我十分怀念。最近在工作中用到的观察者模式比较多，发现客户端开发中无论是Android还是iOS都需要很多经常的利用到这种模式。这种模式会在很大程度上达到层次解耦合的作用，具体如果解耦会在下文中提到。</p>
+<h2 id="模式定义"><a href="#模式定义" class="headerlink" title="模式定义"></a>模式定义</h2><blockquote>
+<p>定义对象之间的一种一对多依赖关系，使得每当一个对象状态发生改变时，其相关依赖对象皆得到通知并被自动更新。观察者模式的别名包括发布-订阅（Publish/Subscribe）模式、模型-视图（Model/View）模式、源-监听器（Source/Listener）模式或从属者（Dependents）模式。观察者模式是一种对象行为型模式。  – 刘伟老师</p>
+</blockquote>
+<h2 id="模式概述"><a href="#模式概述" class="headerlink" title="模式概述"></a>模式概述</h2><p>观察者模式是使用频率很高的模式，它定义了对象与对象之间的依赖关系，当一个对象的状态发生变化的时候自动地去通知其他对象响应此变化。发生改变的对象被称为观察目标(Subject)，被通知去响应变化的被称为观察者(Observer),可以动态的去增加和删除观察者，从而做到观察者和被观察者之家的解耦，使系统更容易拓展。</p>
+<h2 id="举个例子"><a href="#举个例子" class="headerlink" title="举个例子"></a>举个例子</h2><p>“铃响，学生上课；铃再响，学生下课”。在这个场景中铃声就是同学们的观察目标，而学生就是观察者。</p>
+<h2 id="模式类图"><a href="#模式类图" class="headerlink" title="模式类图"></a>模式类图</h2><p><img src="http://7xwfw4.com1.z0.glb.clouddn.com/Observer.png" alt></p>
+<ul>
+<li><strong>Subjec:</strong> 目标，即被观察者。其中会定义一个观察者集合，用来存放任意数量的观察者，并提供管理这些观察者的方法。同时定义了通知的方法notify()。这个类可以是接口，抽象类或者具体类；</li>
+<li><strong>ConcreteSubject:</strong> 具体的目标类。当其状态改变时，会向各个观察者发出通知，此类可以根据情况来决定是否对目标类进行扩展；</li>
+<li><strong>Observer:</strong> 观察者类对观察目标的改变做出响应。一般定义为接口，该接口声明了更新数据的方法update()；</li>
+<li><strong>ConcreteObserver:</strong> 具体观察者,它是真正响应变化的类，在一般情况下它维护一个指向具体目标对象的引用，它具体存储观察者的有关状态（例如下课的铃响，学生记住下课的状态），这些状态要和具体目标的状态保持一致。它实现了在Observer接口中的update（）方法。可以调用观察目标对象的addObserver()和removeObserver()将自己添加到观察者队列或者从观察者队列中删除。</li>
+<li><strong>ConcreteObserver:</strong> 具体观察者</li>
+</ul>
+<p>##注意<br><strong>在OC中没有接口这一说，并且其与接口类似的协议也是不能声明对象的！！</strong></p>
+<h2 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h2><p>下面是该模式在Objective-C中的实现。</p>
+<p><code>Observer.h</code></p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Observer</span> : <span class="title">NSObject</span></span></span><br><span class="line"></span><br><span class="line">-(<span class="keyword">void</span>)update;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<p><code>Observer.m</code></p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Observer</span></span></span><br><span class="line"></span><br><span class="line">-(<span class="keyword">void</span>)update&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<p><code>ConcreteObserver.h</code></p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#import <span class="meta-string">"Observer.h"</span></span></span><br><span class="line"><span class="class"><span class="keyword">@class</span> <span class="title">Subject</span>;</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">ConcreteObserver</span> : <span class="title">Observer</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>,<span class="keyword">weak</span>)Subject *subject;</span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<p><code>ConcreteObserver.m</code></p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#import <span class="meta-string">"ConcreteObserver.h"</span></span></span><br><span class="line"><span class="meta">#import <span class="meta-string">"Subject.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">ConcreteObserver</span></span>&#123;</span><br><span class="line">    <span class="built_in">CLASS_STATE</span> state;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="keyword">void</span>)update&#123;</span><br><span class="line">    state = [_subject state];</span><br><span class="line">    <span class="keyword">if</span>(state)&#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@"学生冲进教室"</span>);</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@"学生冲出教室"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<p><code>Subject.h</code></p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@class</span> <span class="title">Observer</span>;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="built_in">NS_ENUM</span>(<span class="built_in">NSInteger</span>, <span class="built_in">CLASS_STATE</span>) &#123;</span><br><span class="line">    <span class="built_in">CLASS_OFF</span> = <span class="number">0</span>,   <span class="comment">//下课</span></span><br><span class="line">    <span class="built_in">CLASS_ON</span>,  <span class="comment">//上课</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Subject</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>,<span class="keyword">assign</span>)SUBJECT_STATE state;</span><br><span class="line">-(<span class="built_in">BOOL</span>)addObserver:(Observer*)observer;</span><br><span class="line">-(<span class="built_in">BOOL</span>)removeObserver:(Observer*)observer;</span><br><span class="line">-(<span class="keyword">void</span>)notify;</span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<p><code>Subject.m</code></p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#import <span class="meta-string">"Subject.h"</span></span></span><br><span class="line"><span class="meta">#import <span class="meta-string">"Observer.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Subject</span></span>&#123;</span><br><span class="line">    <span class="built_in">NSMutableArray</span> *observerArray;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="keyword">instancetype</span>)init&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">self</span> = [<span class="keyword">super</span> init]) &#123;</span><br><span class="line">        observerArray = [[<span class="built_in">NSMutableArray</span> alloc]init];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">self</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="built_in">BOOL</span>)addObserver:(Observer*)observer&#123;</span><br><span class="line">    <span class="keyword">if</span> (![observerArray containsObject:observer]) &#123;</span><br><span class="line">        [observerArray addObject:observer];</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="built_in">BOOL</span>)removeObserver:(Observer*)observer&#123;</span><br><span class="line">    <span class="keyword">if</span> ([observerArray containsObject:observer]) &#123;</span><br><span class="line">        [observerArray removeObject:observer];</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="keyword">void</span>)notify&#123;</span><br><span class="line">    <span class="keyword">for</span> (Observer* observer <span class="keyword">in</span> observerArray) &#123;</span><br><span class="line">        [observer update];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="keyword">void</span>)setState:(<span class="built_in">CLASS_STATE</span>)state&#123;</span><br><span class="line">    _state = state;</span><br><span class="line">    <span class="keyword">if</span> (_state) &#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@"上课铃响"</span>);</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@"下课铃响"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<p>另外为了尽量匹配观察者模式的类图结构，还有一个Subject的子类ConcreteSubject，其实在这个例子中这个类并不需要存在。<br><code>ConcreteSubject.h</code></p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#import <span class="meta-string">"Subject.h"</span></span></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">ConcreteSubject</span> : <span class="title">Subject</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<p><code>ConcreteSubject.m</code></p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#import <span class="meta-string">"ConcreteSubject.h"</span></span></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">ConcreteSubject</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<p>最后在main函数中我们运行：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">Subject * subject = [[Subject alloc]init];</span><br><span class="line">        </span><br><span class="line">ConcreteObserver *observer1 = [[ConcreteObserver alloc]init];</span><br><span class="line">ConcreteObserver *observer2= [[ConcreteObserver alloc]init];</span><br><span class="line">ConcreteObserver *observer3 = [[ConcreteObserver alloc]init];</span><br><span class="line">ConcreteObserver *observer4 = [[ConcreteObserver alloc]init];</span><br><span class="line"></span><br><span class="line">observer1.subject = subject;</span><br><span class="line">observer2.subject = subject;</span><br><span class="line">observer3.subject = subject;</span><br><span class="line">observer4.subject = subject;</span><br><span class="line"></span><br><span class="line">[subject addObserver:observer1];</span><br><span class="line">[subject addObserver:observer2];</span><br><span class="line">[subject addObserver:observer3];</span><br><span class="line">[subject addObserver:observer4];</span><br><span class="line"></span><br><span class="line">[subject setState:<span class="built_in">CLASS_ON</span>];</span><br><span class="line">[subject notify];</span><br><span class="line">        </span><br><span class="line">[subject setState:<span class="built_in">CLASS_OFF</span>];</span><br><span class="line">[subject notify];</span><br></pre></td></tr></table></figure>
+
+<p>运动结果：<br><img src="http://7xwfw4.com1.z0.glb.clouddn.com/image/png/result.png" alt></p>
+<hr>
+<h2 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h2><p>&ensp;&ensp;&ensp;&ensp;以上是比较复杂的观察着模式，在更新观察者的状态的时候需要获被观察者的状态。但是在很多情况下，我们并不需获取被观察者的状态，也就不需要持有被观察者的对象，这样会大大的简化模式模型。<br>&ensp;&ensp;&ensp;&ensp;比如在网络层和业务层之间，网络层下载数据之后如何通知业务层进行更新呢？如果像以上这种做法很显然观察者和被观察者之间相互依赖，层次之间的耦合度还是比较高的，所以代码应该如何组织呢？</p>
+
+      
+      
+        <div class="page-reward">
+          <p><a href="javascript:void(0)" onclick="dashangToggle()" class="dashang">赏</a></p>
+          <div class="hide_box"></div>
+          <div class="shang_box">
+            <a class="shang_close" href="javascript:void(0)" onclick="dashangToggle()">×</a>
+            <div class="shang_tit">
+              <p>谢谢支持</p>
+            </div>
+            <div class="shang_payimg">
+              <img src="/img/alipayimg.jpg" alt="扫码支持" title="扫一扫" />
+            </div>
+              <div class="pay_explain">扫码打赏，你说多少就多少</div>
+            <div class="shang_payselect">
+              
+                <div class="pay_item checked" data-id="alipay">
+                  <span class="radiobox"></span>
+                  <span class="pay_logo"><img src="/img/alipay.png" alt="支付宝" /></span>
+                </div>
+              
+              
+                <div class="pay_item" data-id="wechat">
+                  <span class="radiobox"></span>
+                  <span class="pay_logo"><img src="/img/weixin.png" alt="微信" /></span>
+                </div>
+              
+            </div>
+            <div class="shang_info">
+              <p>打开<span id="shang_pay_txt">支付宝</span>扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+        </div>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.2.0/zepto.min.js"></script>
+        <script type="text/javascript">
+          $(".pay_item").click(function(){
+            $(this).addClass('checked').siblings('.pay_item').removeClass('checked');
+            var dataid=$(this).attr('data-id');
+            $(".shang_payimg img").attr("src","/img/"+dataid+"img.jpg");
+            $("#shang_pay_txt").text(dataid=="alipay"?"支付宝":"微信");
+          });
+          function dashangToggle(){
+            
+            $(".hide_box").fadeToggle();
+            $(".shang_box").fadeToggle();
+          }
+        </script>
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a href="/2016/08/06/iOS-观察者模式/">iOS 观察者模式</a></p>
+        <p><span>文章作者:</span><a href="/" title="访问 Code Honor 的个人博客">Code Honor</a></p>
+        <p><span>发布时间:</span>2016年08月06日 - 16时45分</p>
+        <p><span>最后更新:</span>2018年05月26日 - 23时21分</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/2016/08/06/iOS-观察者模式/" title="iOS 观察者模式">http://coderhonor.com/2016/08/06/iOS-观察者模式/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://coderhonor.com/2016/08/06/iOS-观察者模式/　　作者: Code Honor" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+            <script src="/js/clipboard.min.js"></script>
+            <script> var clipboard = new Clipboard('.copy-path'); </script>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/" title="中国大陆 (CC BY-NC-SA 3.0 CN)" target = "_blank">"署名-非商用-相同方式共享 3.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+<nav id="article-nav">
+  
+    <a href="/2016/08/09/小白的步伐-博客旧拾/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption"><</strong>
+      <div class="article-nav-title">
+        
+          小白的步伐-博客旧拾
+        
+      </div>
+    </a>
+  
+  
+</nav>
+
+  
+</article>
+
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#引言"><span class="toc-number">1.</span> <span class="toc-text">引言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#模式定义"><span class="toc-number">2.</span> <span class="toc-text">模式定义</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#模式概述"><span class="toc-number">3.</span> <span class="toc-text">模式概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#举个例子"><span class="toc-number">4.</span> <span class="toc-text">举个例子</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#模式类图"><span class="toc-number">5.</span> <span class="toc-text">模式类图</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#代码示例"><span class="toc-number">6.</span> <span class="toc-text">代码示例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#思考"><span class="toc-number">7.</span> <span class="toc-text">思考</span></a></li></ol>
+</div>
+<input type="button" id="tocButton" value="隐藏目录"  title="点击按钮隐藏或者显示文章目录">
+
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script>
+    var valueHide = "隐藏目录";
+    var valueShow = "显示目录";
+
+    if ($(".left-col").is(":hidden")) {
+        $("#tocButton").attr("value", valueShow);
+    }
+    $("#tocButton").click(function() {
+        if ($("#toc").is(":hidden")) {
+            $("#tocButton").attr("value", valueHide);
+            $("#toc").slideDown(320);
+        }
+        else {
+            $("#tocButton").attr("value", valueShow);
+            $("#toc").slideUp(350);
+        }
+    })
+    if ($(".toc").length < 1) {
+        $("#toc, #tocButton").hide();
+    }
+</script>
+
+
+
+
+
+<div class="bdsharebuttonbox">
+	<a href="#" class="fx fa-weibo bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+	<a href="#" class="fx fa-weixin bds_weixin" data-cmd="weixin" title="分享到微信"></a>
+	<a href="#" class="fx fa-qq bds_sqq" data-cmd="sqq" title="分享到QQ好友"></a>
+	<a href="#" class="fx fa-facebook-official bds_fbook" data-cmd="fbook" title="分享到Facebook"></a>
+	<a href="#" class="fx fa-twitter bds_twi" data-cmd="twi" title="分享到Twitter"></a>
+	<a href="#" class="fx fa-linkedin bds_linkedin" data-cmd="linkedin" title="分享到linkedin"></a>
+	<a href="#" class="fx fa-files-o bds_copy" data-cmd="copy" title="分享到复制网址"></a>
+</div>
+<script>window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"2","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];</script>
+
+
+
+
+    
+        <section id="comments">
+  <div id="disqus_thread"></div>
+    <script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'zhangdongxuan'; // required: replace example with your forum shortname
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+    
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a href="/2016/08/09/小白的步伐-博客旧拾/" title="上一篇: 小白的步伐-博客旧拾">
+                <i class="fa fa-angle-left"></i>
+            </a>
+        
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+        
+            <a href="/" title="回到主页"><i class="fa fa-home"></i></a>
+        
+    </div>
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2018/09/09/Flex-Bison/">Flex & Bison</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/09/08/音频基本概念/">音频基本概念</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/09/01/视频播放基本原理/">视频播放基本原理</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/05/26/LLDB/">LLDB</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/03/23/iOS使用内存地址访问私有属性/">iOS使用内存地址访问私有属性</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/09/26/NSAutoreleasePool分析/">NSAutoreleasePool分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/09/10/大屏-iPhone-的适配-转/">大屏 iPhone 的适配[转]</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/09/05/iOS-图片压缩/">iOS 图片压缩</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/06/15/edgesForExtendedLayout/">edgesForExtendedLayout</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/02/07/iOS视频播放常用类/">iOS视频播放常用类</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/05/iOS实现文字复制/">iOS实现文字复制</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/10/31/MacOS-编译C/">MacOS 编译C++</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/09/小白的步伐-博客旧拾/">小白的步伐-博客旧拾</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/06/iOS-观察者模式/">iOS 观察者模式</a></li></ul>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+    <script>
+        $(".post-list").addClass("toc-article");
+        $(".post-list-item a").attr("target","_blank");
+        $("#post-nav-button > a:nth-child(2)").click(function() {
+            $(".fa-bars, .fa-times").toggle();
+            $(".post-list").toggle(300);
+            if ($(".toc").length > 0) {
+                $("#toc, #tocButton").toggle(200, function() {
+                    if ($(".switch-area").is(":visible")) {
+                        $("#tocButton").attr("value", valueHide);
+                        }
+                    })
+            }
+            else {
+            }
+        })
+    </script>
+
+
+
+    <script>
+        
+    </script>
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                &copy; 2019 Code Honor
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank">Hexo</a>  Theme <a href="https://github.com/luuman/hexo-theme-spfk" target="_blank">spfk</a> by luuman
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" >访问: 
+                            <span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>, </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit">本页阅读量: 
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+
+    </div>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script src="/js/main.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            var backgroundnum = 24;
+            var backgroundimg = "url(/background/bg-x.jpg)".replace(/x/gi, Math.ceil(Math.random() * backgroundnum));
+            $("#mobile-nav").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+            $(".left-col").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+        })
+    </script>
+
+
+
+
+
+<div class="scroll" id="scroll">
+    <a href="#"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    $(document).ready(function() {
+        if ($("#comments").length < 1) {
+            $("#scroll > a:nth-child(2)").hide();
+        };
+    })
+</script>
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+
+  <script language="javascript">
+    $(function() {
+        $("a[title]").each(function() {
+            var a = $(this);
+            var title = a.attr('title');
+            if (title == undefined || title == "") return;
+            a.data('title', title).removeAttr('title').hover(
+
+            function() {
+                var offset = a.offset();
+                $("<div id=\"anchortitlecontainer\"></div>").appendTo($("body")).html(title).css({
+                    top: offset.top - a.outerHeight() - 15,
+                    left: offset.left + a.outerWidth()/2 + 1
+                }).fadeIn(function() {
+                    var pop = $(this);
+                    setTimeout(function() {
+                        pop.remove();
+                    }, pop.text().length * 800);
+                });
+            }, function() {
+                $("#anchortitlecontainer").remove();
+            });
+        });
+    });
+</script>
+
+
+  </div>
+</body>
+</html>
