@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>Coding Honor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="iOS组建UIScrollView 的简单介绍 -                                                     #top {         background-color: #FFF;         background-image: linear-gradient(#FFFFFF,#E5E5E5);         backgro">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Coding Honor">
+<meta property="og:url" content="http://coderhonor.com/articles/iOS组建UIScrollView 的简单介绍.html">
+<meta property="og:site_name" content="Coding Honor">
+<meta property="og:description" content="iOS组建UIScrollView 的简单介绍 -                                                     #top {         background-color: #FFF;         background-image: linear-gradient(#FFFFFF,#E5E5E5);         backgro">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://coderhonor.com/images/feed.png">
+<meta property="og:image" content="http://7xnusv.com1.z0.glb.clouddn.com/QQ图片20151130122501.jpg">
+<meta property="og:image" content="http://7xnusv.com1.z0.glb.clouddn.com/145.pic.jpg">
+<meta property="og:image" content="http://7xnusv.com1.z0.glb.clouddn.com/146.pic.jpg">
+<meta property="og:updated_time" content="2019-06-23T15:18:47.123Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Coding Honor">
+<meta name="twitter:description" content="iOS组建UIScrollView 的简单介绍 -                                                     #top {         background-color: #FFF;         background-image: linear-gradient(#FFFFFF,#E5E5E5);         backgro">
+<meta name="twitter:image" content="http://coderhonor.com/images/feed.png">
+  
+    <link rel="alternative" href="/atom.xml" title="Coding Honor" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/img/favicon.png">
+  
+  
+      <link rel="stylesheet" href="//cdn.bootcss.com/animate.css/3.5.0/animate.min.css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  
+  
+      <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  
+  <!-- 加载特效 -->
+    <script src="/js/pace.js"></script>
+    <link href="/css/pace/pace-theme-flash.css" rel="stylesheet">
+  <script>
+      var yiliaConfig = {
+          rootUrl: '/',
+          fancybox: true,
+          animate: true,
+          isHome: false,
+          isPost: false,
+          isArchive: false,
+          isTag: false,
+          isCategory: false,
+          open_in_new: false
+      }
+  </script>
+</head></html>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <a href="/" class="profilepic">
+            
+            <img lazy-src="/img/head.jpeg" class="js-avatar">
+            
+        </a>
+
+        <hgroup>
+          <h1 class="header-author"><a href="/" title="Hi Mate">Code Honor</a></h1>
+        </hgroup>
+
+        
+        <p class="header-subtitle">明月别枝惊鹊，清风半夜鸣蝉。稻花香里说丰年，听取蛙声一片。</p>
+        
+        
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        <div class="icon-wrap icon-link hide" data-idx="2">
+                            <div class="loopback_l"></div>
+                            <div class="loopback_r"></div>
+                        </div>
+                        
+                        
+                    </div>
+                    
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>菜单</li>
+                        <li>标签</li>
+                        
+                        <li>友情链接</li>
+                        
+                        
+                    </ul>
+                </div>
+            </div>
+        
+
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fl github" target="_blank" href="https://github.com/zhangdongxuan/" title="github">github</a>
+                            
+                                <a class="fl iteye" target="_blank" href="http://dxz.iteye.com" title="iteye">iteye</a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <a href="/tags/AVFoundation/" style="font-size: 10px;">AVFoundation</a> <a href="/tags/C/" style="font-size: 10px;">C++</a> <a href="/tags/UI/" style="font-size: 20px;">UI</a> <a href="/tags/iOS/" style="font-size: 10px;">iOS</a> <a href="/tags/大杂烩/" style="font-size: 10px;">大杂烩</a> <a href="/tags/编译原理/" style="font-size: 10px;">编译原理</a> <a href="/tags/设计模式/" style="font-size: 10px;">设计模式</a> <a href="/tags/音视频/" style="font-size: 20px;">音视频</a>
+                    </div>
+                </section>
+                
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://www.zhangdongxuan.com">name</a>
+                    
+                    </div>
+                </section>
+                
+
+                
+            </div>
+        </div>
+    </header>                
+</div>
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="Me">Code Honor</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                
+                    <img lazy-src="/img/head.jpeg" class="js-avatar">
+                
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="Me">Code Honor</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">明月别枝惊鹊，清风半夜鸣蝉。稻花香里说丰年，听取蛙声一片。</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                <div class="social">
+                    
+                        <a class="github" target="_blank" href="https://github.com/zhangdongxuan/" title="github">github</a>
+                    
+                        <a class="iteye" target="_blank" href="http://dxz.iteye.com" title="iteye">iteye</a>
+                    
+                </div>
+            </nav>
+        </header>                
+    </div>
+</nav>
+      <div class="body-wrap"><article id="page-" class="article article-type-page" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/articles/iOS组建UIScrollView 的简单介绍.html" class="article-date">
+      <time datetime="2019-06-23T15:18:47.123Z" itemprop="datePublished">2019-06-23</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+              <style>
+    .article-meta {
+        display: none;
+    }
+    #container .article .article-title {
+        padding-right: 0;
+    }
+    .article-header {
+        padding: 0;
+        padding-top: 26px;
+        border-left: none;
+        text-align: center;
+    }
+    .article-header:hover {
+        border-left: none;
+    }
+    .article-title {
+        font-size: 1.6em
+    }
+    .article-meta {
+        display: none;
+    }
+    .article-entry hr {
+        margin: 0;
+    }
+    #container .article-info-post.article-info {
+      display: none;
+      }
+    #container .article .article-title {
+    padding: 0;
+    }
+</style>
+
+
+          
+        <!DOCTYPE html>
+<html>
+    <head>
+<meta charset="utf-8">
+<title>iOS组建UIScrollView 的简单介绍 - </title>
+        <meta name="keywords" content="iOS">
+        <meta name="description" content>
+<meta name="author" content>
+<meta name="generator" content="B3log Solo">
+<meta name="copyright" content="B3log">
+<meta name="owner" content="B3log Team">
+<meta name="revised" content=", 2016">
+<meta http-equiv="Window-target" content="_top">
+<link type="text/css" rel="stylesheet" href="/skins/ease/css/ease.min.css?1470839176339" charset="utf-8">
+<link href="http://7xnusv.com1.z0.glb.clouddn.com/blog-articles-rss.do" title="RSS" type="application/rss+xml" rel="alternate">
+<link rel="icon" type="image/png" href="/favicon.png">
+
+    </head>
+    <body>
+        <style type="text/css">
+    #top {
+        background-color: #FFF;
+        background-image: linear-gradient(#FFFFFF,#E5E5E5);
+        background-image: -ms-linear-gradient(#FFFFFF,#E5E5E5);
+        background-image: -o-linear-gradient(#FFFFFF,#E5E5E5);
+        background-image: -webkit-linear-gradient(#FFFFFF,#E5E5E5);
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#FFFFFF', endColorstr='#E5E5E5');
+        border-bottom: 1px solid #E5E5E5;
+        line-height: 26px;
+        display: none;
+    }
+
+    #top a, #top span span {
+        border-right: 1px solid #D9D9D9;
+        color: #4C4C4C;
+        float: left;
+        line-height: 14px;
+        margin: 6px 0;
+        padding: 0 6px;
+        text-decoration: none;
+        text-shadow: 0 -1px 0 #FFFFFF;
+        font-weight: normal;
+    }
+
+    #top a:hover, #top a.hover {
+        background-color: #EEF2FA;
+        border-left-color: #707070;
+        border-radius: 0 13px 13px 0;
+        margin: 0px;
+        line-height: 26px;
+    }
+
+    #showTop {
+        background-image: url("/images/arrow-right.png");
+        cursor: pointer;
+        height: 26px;
+        right: 0;
+        position: absolute;
+        top: 0;
+        width: 26px;
+        border-radius: 0 0 0 15px;
+        z-index: 10;
+    }
+
+    #showTop:hover {
+        background-image: url("/images/arrow-right.gif");
+    }
+
+    #top #hideTop {
+        background-image: url("/images/arrow-left.png");
+        height: 26px;
+        margin: 0;
+        padding: 0;
+        width: 26px;
+        border: 0;
+    }
+
+    #top #hideTop:hover {
+        background-image: url("/images/arrow-left.gif");
+        border-radius: 0;    
+    }
+</style>
+<div id="showTop"></div>
+<div id="top">
+    <a href="https://github.com/b3log/solo" target="_blank" class="hover">
+        Solo
+    </a>
+    <span class="left">&nbsp;当前访客：1</span>
+    <span class="right" id="admin" data-login="false">
+            <a href="/login?goto=http%3A%2F%2F7xnusv.com1.z0.glb.clouddn.com%2Fadmin-index.do%23main" title="登录">登录</a>
+            <a href="http://7xnusv.com1.z0.glb.clouddn.com/register" title="注册" target="_blank" rel="noopener">注册</a>
+        <a href="javascript:void(0)" id="hideTop" target="_blank" rel="noopener"></a>
+    </span>
+    <div class="clear"></div>
+</div>
+<div class="header">
+    <div class="wrapper banner">
+        <div class="left">
+            <h1>
+                <a class="title ft-gray" href="http://7xnusv.com1.z0.glb.clouddn.com" target="_blank" rel="noopener">
+                    
+                </a>
+            </h1>
+            <span class="sub-title">大猴子的窝</span>
+        </div>
+        <div class="notice">
+            合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下
+        </div>
+        <div class="clear"></div>
+    </div>
+    <div class="nav">
+        <div class="wrapper">
+            <ul>
+                <li>
+                    <a rel="noopener" href="http://7xnusv.com1.z0.glb.clouddn.com/" target="_blank">首页</a>
+                </li>  
+                <li>
+                    <a href="http://zhangdongxuan.com/tags/Java" target="_self">Java</a>
+                </li>
+                <li>
+                    <a href="http://zhangdongxuan.com/tags/C" target="_self">C</a>
+                </li>
+                <li>
+                    <a href="http://zhangdongxuan.com/tags/Objective-C" target="_self">Objective-C</a>
+                </li>
+                <li>
+                    <a href="http://zhangdongxuan.com/tags/非技术" target="_self">随笔</a>
+                </li>
+                <li>
+                    <a href="http://zhangdongxuan.com/AboutMe" target="_self">关于我</a>
+                </li>
+                <li>
+                    <a href="http://7xnusv.com1.z0.glb.clouddn.com/dynamic.html" target="_blank" rel="noopener">动态</a>
+                </li>
+                <li>
+                    <a href="http://7xnusv.com1.z0.glb.clouddn.com/tags.html" target="_blank" rel="noopener">标签墙</a>  
+                </li>
+                <li>
+                    <a href="http://7xnusv.com1.z0.glb.clouddn.com/archives.html" target="_blank" rel="noopener">存档</a>
+                </li>
+                <li>
+                    <a href="http://7xnusv.com1.z0.glb.clouddn.com/links.html" target="_blank" rel="noopener">友情链接</a>
+                </li>
+                <li>
+                    <a rel="noopener" href="http://7xnusv.com1.z0.glb.clouddn.com/blog-articles-rss.do" target="_blank">RSS<img src="/images/feed.png" alt="RSS"></a>
+                </li>
+            </ul>
+            <form target="_blank" action="http://zhannei.baidu.com/cse/site">
+                <input id="search" type="text" name="q">
+                <input type="submit" value class="none">
+                <input type="hidden" name="cc" value="7xnusv.com1.z0.glb.clouddn.com">
+            </form>
+            <div class="clear"></div>
+        </div>
+    </div>
+</div>        <div class="main">
+            <div class="wrapper">
+                <div class="article">
+                    <div class="article-title">
+                        <h2>
+                            <a class="ft-gray" href="http://7xnusv.com1.z0.glb.clouddn.com/articles/2015/11/30/1448867280302.html" target="_blank" rel="noopener">
+                                iOS组建UIScrollView 的简单介绍
+                            </a>
+                        </h2>
+                        <div class="right">
+                            <a rel="noopener" class="ft-gray" href="http://7xnusv.com1.z0.glb.clouddn.com/articles/2015/11/30/1448867280302.html#comments" target="_blank">
+                                0&nbsp;&nbsp;评论
+                            </a>&nbsp;&nbsp;
+                            <a rel="noopener" class="ft-gray" href="http://7xnusv.com1.z0.glb.clouddn.com/articles/2015/11/30/1448867280302.html" target="_blank">
+                                1,691&nbsp;&nbsp;浏览
+                            </a>
+                        </div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="article-body">
+                        <link rel="stylesheet" type="text/css" href="/plugins/list/style.css"><ul class="b3-solo-list"></ul><p><a href="http://7xnusv.com1.z0.glb.clouddn.com/QQ图片20151130122501.jpg" class="fancybox" data-fancybox-group="group" target="_blank" rel="noopener"><img src="http://7xnusv.com1.z0.glb.clouddn.com/QQ图片20151130122501.jpg" alt width="400" height="730"></a></p> 
+<p>上周做了这样一个效果的引导页面，其中的文字描述使用了UIScrollView 这个组建，然后结合UIPageControl实现了这个效果，大概的实现过程是挺简单的。</p> 
+<p>代码</p> 
+<pre class="brush: java"> UIScrollView *scrollView=[[UIScrollView alloc]initWithFrame:CGRectMake(0,0 , screenWidth,threeFifthHeight+90)];
+    [scrollView setContentSize:CGSizeMake(screenWidth*3, 0)];
+    [scrollView setPagingEnabled:YES];
+    scrollView.showsVerticalScrollIndicator = FALSE;
+    scrollView.showsHorizontalScrollIndicator = FALSE;
+    scrollView.delegate=self;
+</pre> 
+<p>然后需要tip一下的是获取当前滚动的页数代码</p> 
+<pre class="brush: java">- (void) scrollViewDidScroll:(UIScrollView *)scrollView{
+    CGFloat pageWidth = scrollView.frame.size.width;
+    int index = floor((scrollView.contentOffset.x - pageWidth / 2)/pageWidth) + 1;
+    if (frontPageIndex!=index) {
+        [imageView setImage:[UIImage imageNamed:[backGroundPics objectAtIndex:index]]];
+        frontPageIndex=index;
+        pageConteol.currentPage=index;
+    }
+    
+}
+</pre> 
+<p>嗯，代码在：<a href="https://github.com/zhangdongxuan/OC-Begin/tree/master/HelloWorld" target="_blank" rel="noopener">https://github.com/zhangdongxuan/OC-Begin/tree/master/HelloWorld</a></p> 
+<p>－－－－－－－这个是大概刚入职微信的时候总结的，现在需要再添加一些－－－－－－－－－－－－－</p> 
+<p>UIScrollView对象适用于那些屏幕尺寸大于屏幕的视图。当某个视图是UIScrollView的子视图的时候，UIScrollView可以以矩形的方式显示出子视图。UIScrollView就好像一个“镜头”一样可以根据镜头的位置显示出子视图的内容。UIScrollView对象的尺寸就是这个“镜头”的尺寸，而其能够显示的范围是它的contentSize决定的，通常contentSize的数值就是子视图的尺寸。</p> 
+<pre class="brush: cpp"> CGRect selRect = self.view.bounds;
+    selRect.size.width *= 2;
+    selRect.size.height *= 2;
+    MainView *mainView = [[MainView alloc]initWithFrame:selRect];
+    [self.view addSubview:mainView];
+    
+    UIScrollView * scrollView = [[UIScrollView alloc]initWithFrame:self.view.bounds];
+    [scrollView addSubview:mainView];
+    scrollView.contentSize = selRect.size;
+    
+    
+    [self.view addSubview:scrollView];
+    self.view.backgroundColor = [UIColor whiteColor];</pre> 
+<p>&nbsp;</p> 
+<p>效果如下：</p> 
+<p><a href="http://7xnusv.com1.z0.glb.clouddn.com/145.pic.jpg" class="fancybox" data-fancybox-group="group" target="_blank" rel="noopener"><img src="http://7xnusv.com1.z0.glb.clouddn.com/145.pic.jpg" alt width="320" height="502"></a>&nbsp; &nbsp; &nbsp; &nbsp;<a href="http://7xnusv.com1.z0.glb.clouddn.com/146.pic.jpg" class="fancybox" data-fancybox-group="group" target="_blank" rel="noopener"><img src="http://7xnusv.com1.z0.glb.clouddn.com/146.pic.jpg" alt width="320" height="502"></a><a href="http://7xnusv.com1.z0.glb.clouddn.com/145.pic.jpg" class="fancybox" data-fancybox-group="group" target="_blank" rel="noopener"></a></p> 
+<p>&nbsp;</p> 
+<p>&nbsp;</p> 
+<p>&nbsp;</p> 
+<p>&nbsp;</p>
+                    </div>
+                    <div class="right ft-gray">
+                        15-11-30 15:08
+                        <a rel="noopener" href="http://7xnusv.com1.z0.glb.clouddn.com/authors/1446883982894" target="_blank">ZDX</a>
+                    </div>
+                    <div class="left ft-gray">
+                        标签：
+                        <a rel="noopener" href="http://7xnusv.com1.z0.glb.clouddn.com/tags/iOS" target="_blank">iOS</a>
+                    </div>
+                    <div class="clear"></div>
+                    <div class="fn-mgtb10">
+                        <div id="relevantArticles" class="article-relative"></div>
+                        <div id="randomArticles" class="article-relative"></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="left">
+                        <span class="ft-gray">&lt;</span>
+                        <a href="http://7xnusv.com1.z0.glb.clouddn.com/articles/2015/11/30/1448868478186.html" target="_blank" rel="noopener">iOS中将图片作为UIView背景的两种方式</a>
+                    </div>
+                    <div class="right">
+                        <a href="http://7xnusv.com1.z0.glb.clouddn.com/articles/2015/11/30/1448857004539.html" target="_blank" rel="noopener">iOS页面之间的跳转之一</a> 
+                        <span class="ft-gray">&gt;</span>
+                    </div>
+                    <div class="clear"></div>
+                </div>
+<div id="comments">
+</div>
+            </div>
+        </div>
+<div class="footer">
+    <div class="wrapper">
+        <div style="text-align:center">
+            <span class="ft-gray">&copy; 2016</span> - <a href="http://7xnusv.com1.z0.glb.clouddn.com" target="_blank" rel="noopener"></a>
+            •<a href="http://www.miitbeian.gov.cn/state/outPortal/loginPortal.action" target="_blank" rel="noopener"> 豫ICP备15031658号-1</a>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			 浏览次数：
+                <span class="ft-gray">
+                    15,646
+                </span>
+                &nbsp;&nbsp;
+                文章总数：
+                <span class="ft-gray">
+                    25
+                </span>
+                &nbsp;&nbsp;
+                评论总数：
+                <span class="ft-gray">
+                    2
+                </span>
+        </div>
+       
+        <div class="clear"></div>
+    </div>
+</div>
+<div id="goTop" onclick="Util.goTop()">TOP</div>
+<script type="text/javascript">
+    var latkeConfig = {
+        "servePath": "http://7xnusv.com1.z0.glb.clouddn.com",
+        "staticServePath": ""
+    };
+    
+    var Label = {
+        "tag1Label": "标签：",
+        "viewLabel": "浏览",
+        "commentLabel": "评论",
+        "topArticleLabel": "置顶！",
+        "updatedLabel": "有更新！",
+        "contentLabel": "全文",
+        "abstractLabel": "摘要",
+        "adminLabel": "管理",
+        "logoutLabel": "登出",
+        "skinDirName": "ease",
+        "loginLabel": "登录",
+        "em00Label": "微笑",
+        "em01Label": "大笑",
+        "em02Label": "高兴",
+        "em03Label": "悲伤",
+        "em04Label": "哭泣",
+        "em05Label": "无语",
+        "em06Label": "烦躁",
+        "em07Label": "生气",
+        "em08Label": "我瞅",
+        "em09Label": "惊讶",
+        "em10Label": "酷",
+        "em11Label": "顽皮",
+        "em12Label": "爱心",
+        "em13Label": "心碎",
+        "em14Label": "魔鬼"
+    };
+</script>
+<script type="text/javascript" src="/js/lib/jquery/jquery.min.js" charset="utf-8"></script>
+<script type="text/javascript" src="/js/common.min.js?1470839176339" charset="utf-8"></script>
+<script type="text/javascript" src="/skins/ease/js/ease.min.js?1470839176339" charset="utf-8"></script>
+<script type="text/javascript">
+    (function () {
+        var $groups =  $("a[rel=group]"),
+        $fancybox = $(".fancybox");
+        if ($groups.length > 0 || $fancybox.length > 0) {
+            if (document.createStyleSheet) {
+                document.createStyleSheet("/plugins/fancybox/js/jquery.fancybox.css");
+            } else {
+                $("head").append($("<link rel='stylesheet' href='/plugins/fancybox/js/jquery.fancybox.css' type='text/css' charset='utf-8' />"));
+            } 
+            
+            $.ajax({
+                url: "/plugins/fancybox/js/jquery.fancybox.pack.js",
+                dataType: "script",
+                cache: true,
+                complete: function() {
+                    $groups.fancybox({
+                        openEffect  : 'none',
+                        closeEffect : 'none',
+                        prevEffect : 'none',
+                        nextEffect : 'none'
+                    });
+                    $fancybox.fancybox({
+                        openEffect  : 'none',
+                        closeEffect : 'none',
+                        prevEffect : 'none',
+                        nextEffect : 'none'
+                    });
+                }
+            });
+        }
+    })();
+</script>
+
+<script type="text/javascript" src="/js/page.min.js?1470839176339" charset="utf-8"></script>
+<script type="text/javascript">
+                       var page = new Page({
+                           "nameTooLongLabel": "姓名只能为 2 到 20 个字符！",
+                           "mailCannotEmptyLabel": "邮箱不能为空！",
+                           "mailInvalidLabel": "邮箱格式不正确！",
+                           "commentContentCannotEmptyLabel": "评论内容只能为 2 到 500 个字符！",
+                           "captchaCannotEmptyLabel": "验证码不能为空！",
+                           "captchaErrorLabel": "验证码错误",
+                           "loadingLabel": "载入中....",
+                           "oId": "1448867280302",
+                           "skinDirName": "ease",
+                           "blogHost": "7xnusv.com1.z0.glb.clouddn.com:80",
+                           "randomArticles1Label": "随机阅读",
+                           "externalRelevantArticles1Label": "站外相关阅读"
+                       });
+
+                       var addComment = function(result, state) {
+                           var commentHTML = '<div id="' + result.oId + '"><img class="comment-header" \
+                                    title="' + result.userName + '" alt="' + result.userName +
+                                   '" src="' + result.commentThumbnailURL 
+                                   + '"/><div class="comment-panel"><div class="left">' + result.replyNameHTML;
+
+                           if (state !== "") {
+                               var commentOriginalCommentName = $("#" + page.currentCommentId 
+                                       + " .comment-panel>.left a").first().text();
+                               commentHTML += '&nbsp;@&nbsp;<a href="http://7xnusv.com1.z0.glb.clouddn.com' 
+                                       + result.commentSharpURL.split("#")[0] + '#' + page.currentCommentId + '"'
+                                       + 'onmouseover="page.showComment(this, \'' + page.currentCommentId + '\', 20);"'
+                                       + 'onmouseout="page.hideComment(\'' + page.currentCommentId + '\')">' 
+                                       + commentOriginalCommentName + '</a>';
+                           }
+
+                           commentHTML += '</div><div class="right ft-gray">' + result.commentDate.substring(2, 16)
+                                   + '&nbsp;<a rel="nofollow" href="javascript:replyTo(\'' + result.oId
+                                   + '\');">回复»</a></div><span class="clear"></span><div class="article-body">' +
+                                   Util.replaceEmString($("#comment" + state).val().replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>"))
+                                   + '</div></div><span class="clear"></span></div>';
+
+                           return commentHTML;
+                       };
+
+                       var replyTo = function(id) {
+                           var commentFormHTML = "<table class='form' id='replyForm'>";
+                           page.addReplyForm(id, commentFormHTML);
+                           $("#replyForm label").each(function() {
+                               $this = $(this);
+                               $this.attr("for", $this.attr("for") + "Reply");
+                           });
+                       };
+
+                       $(document).ready(function() {
+                           page.load();
+                           // emotions
+                           page.replaceCommentsEm("#comments .article-body");
+        page.tips.externalRelevantArticlesDisplayCount = "5";
+        page.loadRandomArticles('<h4 class="ft-gray">随机阅读</h4>');
+        page.loadRelevantArticles('1448867280302', '<h4 class="ft-gray">相关阅读</h4>');
+        page.loadExternalRelevantArticles("iOS");
+                       });
+</script>
+    <div style="display: none;">Copyright (c) 2009-2016, <a href="http://b3log.org" target="_blank" rel="noopener">b3log.org</a></div>
+    </body>
+</html>
+<!-- Generated by B3log Latke(24 ms), 2016/08/10 22:28:48 -->
+      
+      
+        <div class="page-reward">
+          <p><a href="javascript:void(0)" onclick="dashangToggle()" class="dashang">赏</a></p>
+          <div class="hide_box"></div>
+          <div class="shang_box">
+            <a class="shang_close" href="javascript:void(0)" onclick="dashangToggle()">×</a>
+            <div class="shang_tit">
+              <p>谢谢支持</p>
+            </div>
+            <div class="shang_payimg">
+              <img src="/img/alipayimg.jpg" alt="扫码支持" title="扫一扫" />
+            </div>
+              <div class="pay_explain">扫码打赏，你说多少就多少</div>
+            <div class="shang_payselect">
+              
+                <div class="pay_item checked" data-id="alipay">
+                  <span class="radiobox"></span>
+                  <span class="pay_logo"><img src="/img/alipay.png" alt="支付宝" /></span>
+                </div>
+              
+              
+                <div class="pay_item" data-id="wechat">
+                  <span class="radiobox"></span>
+                  <span class="pay_logo"><img src="/img/weixin.png" alt="微信" /></span>
+                </div>
+              
+            </div>
+            <div class="shang_info">
+              <p>打开<span id="shang_pay_txt">支付宝</span>扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+        </div>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.2.0/zepto.min.js"></script>
+        <script type="text/javascript">
+          $(".pay_item").click(function(){
+            $(this).addClass('checked').siblings('.pay_item').removeClass('checked');
+            var dataid=$(this).attr('data-id');
+            $(".shang_payimg img").attr("src","/img/"+dataid+"img.jpg");
+            $("#shang_pay_txt").text(dataid=="alipay"?"支付宝":"微信");
+          });
+          function dashangToggle(){
+            
+            $(".hide_box").fadeToggle();
+            $(".shang_box").fadeToggle();
+          }
+        </script>
+      
+    </div>
+    
+  </div>
+  
+    
+
+
+  
+</article>
+
+
+
+<div class="bdsharebuttonbox">
+	<a href="#" class="fx fa-weibo bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+	<a href="#" class="fx fa-weixin bds_weixin" data-cmd="weixin" title="分享到微信"></a>
+	<a href="#" class="fx fa-qq bds_sqq" data-cmd="sqq" title="分享到QQ好友"></a>
+	<a href="#" class="fx fa-facebook-official bds_fbook" data-cmd="fbook" title="分享到Facebook"></a>
+	<a href="#" class="fx fa-twitter bds_twi" data-cmd="twi" title="分享到Twitter"></a>
+	<a href="#" class="fx fa-linkedin bds_linkedin" data-cmd="linkedin" title="分享到linkedin"></a>
+	<a href="#" class="fx fa-files-o bds_copy" data-cmd="copy" title="分享到复制网址"></a>
+</div>
+<script>window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"2","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];</script>
+
+
+
+
+    
+        <section id="comments">
+  <div id="disqus_thread"></div>
+    <script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'zhangdongxuan'; // required: replace example with your forum shortname
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+    
+
+
+
+
+
+    <script>
+        
+    </script>
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                &copy; 2019 Code Honor
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank">Hexo</a>  Theme <a href="https://github.com/luuman/hexo-theme-spfk" target="_blank">spfk</a> by luuman
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" >访问: 
+                            <span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>, </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit">本页阅读量: 
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+
+    </div>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script src="/js/main.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            var backgroundnum = 24;
+            var backgroundimg = "url(/background/bg-x.jpg)".replace(/x/gi, Math.ceil(Math.random() * backgroundnum));
+            $("#mobile-nav").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+            $(".left-col").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+        })
+    </script>
+
+
+
+
+
+<div class="scroll" id="scroll">
+    <a href="#"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    $(document).ready(function() {
+        if ($("#comments").length < 1) {
+            $("#scroll > a:nth-child(2)").hide();
+        };
+    })
+</script>
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+
+  <script language="javascript">
+    $(function() {
+        $("a[title]").each(function() {
+            var a = $(this);
+            var title = a.attr('title');
+            if (title == undefined || title == "") return;
+            a.data('title', title).removeAttr('title').hover(
+
+            function() {
+                var offset = a.offset();
+                $("<div id=\"anchortitlecontainer\"></div>").appendTo($("body")).html(title).css({
+                    top: offset.top - a.outerHeight() - 15,
+                    left: offset.left + a.outerWidth()/2 + 1
+                }).fadeIn(function() {
+                    var pop = $(this);
+                    setTimeout(function() {
+                        pop.remove();
+                    }, pop.text().length * 800);
+                });
+            }, function() {
+                $("#anchortitlecontainer").remove();
+            });
+        });
+    });
+</script>
+
+
+  </div>
+</body>
+</html>

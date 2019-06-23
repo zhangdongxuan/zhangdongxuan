@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>Coding Honor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="中文分词--基于字符串匹配的分词方法 -                                                     #top {         background-color: #FFF;         background-image: linear-gradient(#FFFFFF,#E5E5E5);         background-i">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Coding Honor">
+<meta property="og:url" content="http://coderhonor.com/articles/中文分词--基于字符串匹配的分词方法.html">
+<meta property="og:site_name" content="Coding Honor">
+<meta property="og:description" content="中文分词--基于字符串匹配的分词方法 -                                                     #top {         background-color: #FFF;         background-image: linear-gradient(#FFFFFF,#E5E5E5);         background-i">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://coderhonor.com/images/feed.png">
+<meta property="og:image" content="http://gravatar.duoshuo.com/avatar/16c683fdb3c2d95a3d8655f5c0f658dc?s=60">
+<meta property="og:image" content="http://gravatar.duoshuo.com/avatar/85c030d5ae6d968b9572fb85381b4e56?s=60">
+<meta property="og:updated_time" content="2019-06-23T15:16:11.945Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Coding Honor">
+<meta name="twitter:description" content="中文分词--基于字符串匹配的分词方法 -                                                     #top {         background-color: #FFF;         background-image: linear-gradient(#FFFFFF,#E5E5E5);         background-i">
+<meta name="twitter:image" content="http://coderhonor.com/images/feed.png">
+  
+    <link rel="alternative" href="/atom.xml" title="Coding Honor" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/img/favicon.png">
+  
+  
+      <link rel="stylesheet" href="//cdn.bootcss.com/animate.css/3.5.0/animate.min.css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  
+  
+      <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  
+  <!-- 加载特效 -->
+    <script src="/js/pace.js"></script>
+    <link href="/css/pace/pace-theme-flash.css" rel="stylesheet">
+  <script>
+      var yiliaConfig = {
+          rootUrl: '/',
+          fancybox: true,
+          animate: true,
+          isHome: false,
+          isPost: false,
+          isArchive: false,
+          isTag: false,
+          isCategory: false,
+          open_in_new: false
+      }
+  </script>
+</head></html>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <a href="/" class="profilepic">
+            
+            <img lazy-src="/img/head.jpeg" class="js-avatar">
+            
+        </a>
+
+        <hgroup>
+          <h1 class="header-author"><a href="/" title="Hi Mate">Code Honor</a></h1>
+        </hgroup>
+
+        
+        <p class="header-subtitle">明月别枝惊鹊，清风半夜鸣蝉。稻花香里说丰年，听取蛙声一片。</p>
+        
+        
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        <div class="icon-wrap icon-link hide" data-idx="2">
+                            <div class="loopback_l"></div>
+                            <div class="loopback_r"></div>
+                        </div>
+                        
+                        
+                    </div>
+                    
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>菜单</li>
+                        <li>标签</li>
+                        
+                        <li>友情链接</li>
+                        
+                        
+                    </ul>
+                </div>
+            </div>
+        
+
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fl github" target="_blank" href="https://github.com/zhangdongxuan/" title="github">github</a>
+                            
+                                <a class="fl iteye" target="_blank" href="http://dxz.iteye.com" title="iteye">iteye</a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <a href="/tags/AVFoundation/" style="font-size: 10px;">AVFoundation</a> <a href="/tags/C/" style="font-size: 10px;">C++</a> <a href="/tags/UI/" style="font-size: 20px;">UI</a> <a href="/tags/iOS/" style="font-size: 10px;">iOS</a> <a href="/tags/大杂烩/" style="font-size: 10px;">大杂烩</a> <a href="/tags/编译原理/" style="font-size: 10px;">编译原理</a> <a href="/tags/设计模式/" style="font-size: 10px;">设计模式</a> <a href="/tags/音视频/" style="font-size: 20px;">音视频</a>
+                    </div>
+                </section>
+                
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://www.zhangdongxuan.com">name</a>
+                    
+                    </div>
+                </section>
+                
+
+                
+            </div>
+        </div>
+    </header>                
+</div>
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="Me">Code Honor</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                
+                    <img lazy-src="/img/head.jpeg" class="js-avatar">
+                
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="Me">Code Honor</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">明月别枝惊鹊，清风半夜鸣蝉。稻花香里说丰年，听取蛙声一片。</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                <div class="social">
+                    
+                        <a class="github" target="_blank" href="https://github.com/zhangdongxuan/" title="github">github</a>
+                    
+                        <a class="iteye" target="_blank" href="http://dxz.iteye.com" title="iteye">iteye</a>
+                    
+                </div>
+            </nav>
+        </header>                
+    </div>
+</nav>
+      <div class="body-wrap"><article id="page-" class="article article-type-page" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/articles/中文分词--基于字符串匹配的分词方法.html" class="article-date">
+      <time datetime="2019-06-23T15:16:11.945Z" itemprop="datePublished">2019-06-23</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+              <style>
+    .article-meta {
+        display: none;
+    }
+    #container .article .article-title {
+        padding-right: 0;
+    }
+    .article-header {
+        padding: 0;
+        padding-top: 26px;
+        border-left: none;
+        text-align: center;
+    }
+    .article-header:hover {
+        border-left: none;
+    }
+    .article-title {
+        font-size: 1.6em
+    }
+    .article-meta {
+        display: none;
+    }
+    .article-entry hr {
+        margin: 0;
+    }
+    #container .article-info-post.article-info {
+      display: none;
+      }
+    #container .article .article-title {
+    padding: 0;
+    }
+</style>
+
+
+          
+        <!DOCTYPE html>
+<html>
+    <head>
+<meta charset="utf-8">
+<title>中文分词--基于字符串匹配的分词方法 - </title>
+        <meta name="keywords" content="算法">
+        <meta name="description" content>
+<meta name="author" content>
+<meta name="generator" content="B3log Solo">
+<meta name="copyright" content="B3log">
+<meta name="owner" content="B3log Team">
+<meta name="revised" content=", 2016">
+<meta http-equiv="Window-target" content="_top">
+<link type="text/css" rel="stylesheet" href="/skins/ease/css/ease.min.css?1470839176339" charset="utf-8">
+<link href="http://7xnusv.com1.z0.glb.clouddn.com/blog-articles-rss.do" title="RSS" type="application/rss+xml" rel="alternate">
+<link rel="icon" type="image/png" href="/favicon.png">
+
+    </head>
+    <body>
+        <style type="text/css">
+    #top {
+        background-color: #FFF;
+        background-image: linear-gradient(#FFFFFF,#E5E5E5);
+        background-image: -ms-linear-gradient(#FFFFFF,#E5E5E5);
+        background-image: -o-linear-gradient(#FFFFFF,#E5E5E5);
+        background-image: -webkit-linear-gradient(#FFFFFF,#E5E5E5);
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#FFFFFF', endColorstr='#E5E5E5');
+        border-bottom: 1px solid #E5E5E5;
+        line-height: 26px;
+        display: none;
+    }
+
+    #top a, #top span span {
+        border-right: 1px solid #D9D9D9;
+        color: #4C4C4C;
+        float: left;
+        line-height: 14px;
+        margin: 6px 0;
+        padding: 0 6px;
+        text-decoration: none;
+        text-shadow: 0 -1px 0 #FFFFFF;
+        font-weight: normal;
+    }
+
+    #top a:hover, #top a.hover {
+        background-color: #EEF2FA;
+        border-left-color: #707070;
+        border-radius: 0 13px 13px 0;
+        margin: 0px;
+        line-height: 26px;
+    }
+
+    #showTop {
+        background-image: url("/images/arrow-right.png");
+        cursor: pointer;
+        height: 26px;
+        right: 0;
+        position: absolute;
+        top: 0;
+        width: 26px;
+        border-radius: 0 0 0 15px;
+        z-index: 10;
+    }
+
+    #showTop:hover {
+        background-image: url("/images/arrow-right.gif");
+    }
+
+    #top #hideTop {
+        background-image: url("/images/arrow-left.png");
+        height: 26px;
+        margin: 0;
+        padding: 0;
+        width: 26px;
+        border: 0;
+    }
+
+    #top #hideTop:hover {
+        background-image: url("/images/arrow-left.gif");
+        border-radius: 0;    
+    }
+</style>
+<div id="showTop"></div>
+<div id="top">
+    <a href="https://github.com/b3log/solo" target="_blank" class="hover">
+        Solo
+    </a>
+    <span class="left">&nbsp;当前访客：1</span>
+    <span class="right" id="admin" data-login="false">
+            <a href="/login?goto=http%3A%2F%2F7xnusv.com1.z0.glb.clouddn.com%2Fadmin-index.do%23main" title="登录">登录</a>
+            <a href="http://7xnusv.com1.z0.glb.clouddn.com/register" title="注册" target="_blank" rel="noopener">注册</a>
+        <a href="javascript:void(0)" id="hideTop" target="_blank" rel="noopener"></a>
+    </span>
+    <div class="clear"></div>
+</div>
+<div class="header">
+    <div class="wrapper banner">
+        <div class="left">
+            <h1>
+                <a class="title ft-gray" href="http://7xnusv.com1.z0.glb.clouddn.com" target="_blank" rel="noopener">
+                    
+                </a>
+            </h1>
+            <span class="sub-title">大猴子的窝</span>
+        </div>
+        <div class="notice">
+            合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下
+        </div>
+        <div class="clear"></div>
+    </div>
+    <div class="nav">
+        <div class="wrapper">
+            <ul>
+                <li>
+                    <a rel="noopener" href="http://7xnusv.com1.z0.glb.clouddn.com/" target="_blank">首页</a>
+                </li>  
+                <li>
+                    <a href="http://zhangdongxuan.com/tags/Java" target="_self">Java</a>
+                </li>
+                <li>
+                    <a href="http://zhangdongxuan.com/tags/C" target="_self">C</a>
+                </li>
+                <li>
+                    <a href="http://zhangdongxuan.com/tags/Objective-C" target="_self">Objective-C</a>
+                </li>
+                <li>
+                    <a href="http://zhangdongxuan.com/tags/非技术" target="_self">随笔</a>
+                </li>
+                <li>
+                    <a href="http://zhangdongxuan.com/AboutMe" target="_self">关于我</a>
+                </li>
+                <li>
+                    <a href="http://7xnusv.com1.z0.glb.clouddn.com/dynamic.html" target="_blank" rel="noopener">动态</a>
+                </li>
+                <li>
+                    <a href="http://7xnusv.com1.z0.glb.clouddn.com/tags.html" target="_blank" rel="noopener">标签墙</a>  
+                </li>
+                <li>
+                    <a href="http://7xnusv.com1.z0.glb.clouddn.com/archives.html" target="_blank" rel="noopener">存档</a>
+                </li>
+                <li>
+                    <a href="http://7xnusv.com1.z0.glb.clouddn.com/links.html" target="_blank" rel="noopener">友情链接</a>
+                </li>
+                <li>
+                    <a rel="noopener" href="http://7xnusv.com1.z0.glb.clouddn.com/blog-articles-rss.do" target="_blank">RSS<img src="/images/feed.png" alt="RSS"></a>
+                </li>
+            </ul>
+            <form target="_blank" action="http://zhannei.baidu.com/cse/site">
+                <input id="search" type="text" name="q">
+                <input type="submit" value class="none">
+                <input type="hidden" name="cc" value="7xnusv.com1.z0.glb.clouddn.com">
+            </form>
+            <div class="clear"></div>
+        </div>
+    </div>
+</div>        <div class="main">
+            <div class="wrapper">
+                <div class="article">
+                    <div class="article-title">
+                        <h2>
+                            <a class="ft-gray" href="http://7xnusv.com1.z0.glb.clouddn.com/articles/2016/03/26/145900577285.html" target="_blank" rel="noopener">
+                                中文分词--基于字符串匹配的分词方法
+                            </a>
+                        </h2>
+                        <div class="right">
+                            <a rel="noopener" class="ft-gray" href="http://7xnusv.com1.z0.glb.clouddn.com/articles/2016/03/26/145900577285.html#comments" target="_blank">
+                                2&nbsp;&nbsp;评论
+                            </a>&nbsp;&nbsp;
+                            <a rel="noopener" class="ft-gray" href="http://7xnusv.com1.z0.glb.clouddn.com/articles/2016/03/26/145900577285.html" target="_blank">
+                                1,418&nbsp;&nbsp;浏览
+                            </a>
+                        </div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="article-body">
+                        <link rel="stylesheet" type="text/css" href="/plugins/list/style.css"><ul class="b3-solo-list"></ul><p>基于字符串匹配的分词方法又叫做机械分词方法，它是按照一定的策略将待分析的汉字串与一个“充分大的”机器词典中的词条进行区配，若在词典中找到某个字符串，则匹配成功（识别出一个词）。按照扫描方向的不同，串匹配分词方法可以分为正向匹配和逆向匹配；按照不同长度优先匹配的情况，可以分为最大（最长）匹配和最小（最短）匹配；按照是否与词性标注过程相结合，又可以分为单纯分词方法和分词与标注相结合的一体化方法。常用的几种机械分词方法如下：<br>&nbsp;&nbsp;&nbsp; 1）正向最大匹配法（由左到右的方向）；<br>&nbsp;&nbsp;&nbsp; 2）逆向最大匹配法（由右到左的方向）；<br>&nbsp;&nbsp;&nbsp; 3）最少切分（使每一句中切出的词数最小）。</p> 
+<p>这几种分词方法的基本原理相同， 1和2基本上只是一个方向的区别，而由于我们习惯都是正向的来理解句子，所以反向分词的匹配的错误率会稍小。据网上的统计数据表明，单纯使用正向最大匹配的错误率为1/169，单纯使用逆向最大匹配的错误率为1/245。但有时候正向分出的结果却比反向更优，所以通过需要通过计算总的概率来选择最优的分词结果：<br>比如： 中国是世界上5个常任理事国之一<br>反向： 中/国是/世界/上/5/个/常任/理事国/之一/<br>正向： 中国/是/世界/上/5/个/常任/理事国/之一/</p> 
+<p>方法3就是在在前两种方法的结果基础上用统计方法找出切出词最小的匹配方法。</p> 
+<p>下面我们来看看一个机械分词算法的基本实现。首先，需要有一个词库。用来在其中对搜索串中可能为词的子串进行一个搜索，如果找到则表明是一个词。让计算机能够按照语言习惯进行切分，往往需要机器有一个比较丰富的词库才能够比较准确的识别出语句中的单词。理论上来说，词库越大越好。但由于考虑到加载后的速度问题，一般的词库都保持在几十万字的水平。一般应用中词库都是预先加载至内存中。下面是我看到的几种常见的字典加载的方法（当然词库的建法都是与后面的具体算法对应的）：</p> 
+<p>l ）直接建一个链表(LinkedList)加载，可用于二分查找匹配。<br>2）对字典建一个哈希表(HashTable)或键值对(Map)，可以建立首字哈希搜索，也可以加入权重值进行搜索时的权重控制。还可以用值来标明匹配时目前的匹配是否有“潜力”成为一个词。<br>3）树形字典： 树的每个节点包含一个字. 比方 中国&nbsp;&nbsp; 中国人 中华民族 中华人民共和国 几个词,构成的树的结构:<br>&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 中<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 国^&nbsp;&nbsp;&nbsp; 华<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 人^&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 人&nbsp;&nbsp;&nbsp; 民<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 民&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 族^<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 共<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 和<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 国^<br>树中结点标明匹配到这一点是否已经成词，否则说明继续往下（添加输入字）才可成词。<br>4）将字典构造为一个对象后，将其序列化再写入文件，直接将字典作为一个对象来进行操作。</p> 
+<p>加载了词库后，主要的算法步骤如下（正向最大匹配）：<br>1， 待处理的短语为S;<br>2， 测试S.substring(0,k)是否是词语，如果是，保存其长度max=k。否则将k加1后继续在字典中匹配，重复此步骤。这里k为2到字典的词语的最大长度。<br>3， 得到一个最大词语，长为max。<br>4， 返回2，继续处理S = S.substring(max)，即余下的字符。</p> 
+<p>反向匹配与此类似， 如下（最大匹配）：<br>1， 得到搜索串中的一个子串S（0，k）;<br>2， 测试S.substring(0,k)是否是词语，如果是，保存其长度max=k。否则继续在字典中匹配S.substring(1,k)，重复此步骤。这里k为2到字典的词语的最大长度。<br>3， 得到一个最大词语，长为max。<br>4， 如果max=k，返回1以取得新的子串进行匹配；否则返回2，继续处理S = S.substring(0，k-max)，即余下的字符。</p> 
+<p>实际应用中，这种算法的精度还远远不能满足需要。实际使用的分词系统，都是把机械分词作为一种初分手段，还需通过利用各种其它的语言信息来进一步提高切分的准确率。公司文档中提出的一种办法是增加辅助切分词语。这些词语并不是词语，它们是词语组合。它们来辅助的进行词语切分。比如，对于短语“吃面的地方”来说，当后向切词的时候，它会被切分为：吃、面的、地方。显然这是不对的。所以，可以增加一个辅助切词短语：“吃面的”，这个短语固定切分为：吃面、的。当发现某些短语切分不准确的时候，可以通过增加辅助切词词语来修正切分。当然这就需要一个额外的辅助切词短语的短语库，网上有没有现成的我还没有找过。</p> 
+<p>下面是一些网上找到的具体算法实现：</p> 
+<p>http://www.javaeye.com/topic/58701<br>http://sourceforge.net/projects/wordsegment/<br>http://www.solol.org/technologic/java/j-lucene2/index.html#top<br>http://www.javaeye.com/topic/59121</p> 
+<p>转自：</p> 
+<p>http://www.liyanblog.cn/articles/2012/09/19/1348048118293.html</p> 
+<p>test update</p>
+                    </div>
+                    <div class="right ft-gray">
+                        16-03-26 23:24
+                        <a rel="noopener" href="http://7xnusv.com1.z0.glb.clouddn.com/authors/1446883982894" target="_blank">ZDX</a>
+                    </div>
+                    <div class="left ft-gray">
+                        标签：
+                        <a rel="noopener" href="http://7xnusv.com1.z0.glb.clouddn.com/tags/%E7%AE%97%E6%B3%95" target="_blank">算法</a>
+                    </div>
+                    <div class="clear"></div>
+                    <div class="fn-mgtb10">
+                        <div id="relevantArticles" class="article-relative"></div>
+                        <div id="randomArticles" class="article-relative"></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="right">
+                        <a href="http://7xnusv.com1.z0.glb.clouddn.com/articles/2016/02/04/1454577721968.html" target="_blank" rel="noopener">iOS 绘制渐变</a> 
+                        <span class="ft-gray">&gt;</span>
+                    </div>
+                    <div class="clear"></div>
+                </div>
+<div id="comments">
+    <div id="1459502997192">
+        <img class="comment-header" title="ZDX" alt="ZDX" src="http://gravatar.duoshuo.com/avatar/16c683fdb3c2d95a3d8655f5c0f658dc?s=60">
+        <div class="comment-panel">
+            <div class="left">
+                <a>ZDX</a>
+                            </div>
+            <span class="clear"></span>
+            <div class="article-body">@panda0 jieba是python实现的，我目前使用java来实现，我是要做一个分词器<p class="cmtFromSym"><i>该评论同步自 <a href="http://hacpai.com:80/article/1459005917436#1459502997192" target="_blank">黑客派</a></i></p></div>
+        </div>
+        <span class="clear"></span>
+    </div>
+    <div id="1459183229078">
+        <img class="comment-header" title="panda0" alt="panda0" src="http://gravatar.duoshuo.com/avatar/85c030d5ae6d968b9572fb85381b4e56?s=60">
+        <div class="comment-panel">
+            <div class="left">
+                <a>panda0</a>
+                            </div>
+            <span class="clear"></span>
+            <div class="article-body">用jieba分词不就好了吗<p class="cmtFromSym"><i>该评论同步自 <a href="http://hacpai.com:80/article/1459005917436#1459183229078" target="_blank">黑客派</a></i></p></div>
+        </div>
+        <span class="clear"></span>
+    </div>
+</div>
+            </div>
+        </div>
+<div class="footer">
+    <div class="wrapper">
+        <div style="text-align:center">
+            <span class="ft-gray">&copy; 2016</span> - <a href="http://7xnusv.com1.z0.glb.clouddn.com" target="_blank" rel="noopener"></a>
+            •<a href="http://www.miitbeian.gov.cn/state/outPortal/loginPortal.action" target="_blank" rel="noopener"> 豫ICP备15031658号-1</a>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			 浏览次数：
+                <span class="ft-gray">
+                    15,640
+                </span>
+                &nbsp;&nbsp;
+                文章总数：
+                <span class="ft-gray">
+                    25
+                </span>
+                &nbsp;&nbsp;
+                评论总数：
+                <span class="ft-gray">
+                    2
+                </span>
+        </div>
+       
+        <div class="clear"></div>
+    </div>
+</div>
+<div id="goTop" onclick="Util.goTop()">TOP</div>
+<script type="text/javascript">
+    var latkeConfig = {
+        "servePath": "http://7xnusv.com1.z0.glb.clouddn.com",
+        "staticServePath": ""
+    };
+    
+    var Label = {
+        "tag1Label": "标签：",
+        "viewLabel": "浏览",
+        "commentLabel": "评论",
+        "topArticleLabel": "置顶！",
+        "updatedLabel": "有更新！",
+        "contentLabel": "全文",
+        "abstractLabel": "摘要",
+        "adminLabel": "管理",
+        "logoutLabel": "登出",
+        "skinDirName": "ease",
+        "loginLabel": "登录",
+        "em00Label": "微笑",
+        "em01Label": "大笑",
+        "em02Label": "高兴",
+        "em03Label": "悲伤",
+        "em04Label": "哭泣",
+        "em05Label": "无语",
+        "em06Label": "烦躁",
+        "em07Label": "生气",
+        "em08Label": "我瞅",
+        "em09Label": "惊讶",
+        "em10Label": "酷",
+        "em11Label": "顽皮",
+        "em12Label": "爱心",
+        "em13Label": "心碎",
+        "em14Label": "魔鬼"
+    };
+</script>
+<script type="text/javascript" src="/js/lib/jquery/jquery.min.js" charset="utf-8"></script>
+<script type="text/javascript" src="/js/common.min.js?1470839176339" charset="utf-8"></script>
+<script type="text/javascript" src="/skins/ease/js/ease.min.js?1470839176339" charset="utf-8"></script>
+<script type="text/javascript">
+    (function () {
+        var $groups =  $("a[rel=group]"),
+        $fancybox = $(".fancybox");
+        if ($groups.length > 0 || $fancybox.length > 0) {
+            if (document.createStyleSheet) {
+                document.createStyleSheet("/plugins/fancybox/js/jquery.fancybox.css");
+            } else {
+                $("head").append($("<link rel='stylesheet' href='/plugins/fancybox/js/jquery.fancybox.css' type='text/css' charset='utf-8' />"));
+            } 
+            
+            $.ajax({
+                url: "/plugins/fancybox/js/jquery.fancybox.pack.js",
+                dataType: "script",
+                cache: true,
+                complete: function() {
+                    $groups.fancybox({
+                        openEffect  : 'none',
+                        closeEffect : 'none',
+                        prevEffect : 'none',
+                        nextEffect : 'none'
+                    });
+                    $fancybox.fancybox({
+                        openEffect  : 'none',
+                        closeEffect : 'none',
+                        prevEffect : 'none',
+                        nextEffect : 'none'
+                    });
+                }
+            });
+        }
+    })();
+</script>
+
+<script type="text/javascript" src="/js/page.min.js?1470839176339" charset="utf-8"></script>
+<script type="text/javascript">
+                       var page = new Page({
+                           "nameTooLongLabel": "姓名只能为 2 到 20 个字符！",
+                           "mailCannotEmptyLabel": "邮箱不能为空！",
+                           "mailInvalidLabel": "邮箱格式不正确！",
+                           "commentContentCannotEmptyLabel": "评论内容只能为 2 到 500 个字符！",
+                           "captchaCannotEmptyLabel": "验证码不能为空！",
+                           "captchaErrorLabel": "验证码错误",
+                           "loadingLabel": "载入中....",
+                           "oId": "1459005877285",
+                           "skinDirName": "ease",
+                           "blogHost": "7xnusv.com1.z0.glb.clouddn.com:80",
+                           "randomArticles1Label": "随机阅读",
+                           "externalRelevantArticles1Label": "站外相关阅读"
+                       });
+
+                       var addComment = function(result, state) {
+                           var commentHTML = '<div id="' + result.oId + '"><img class="comment-header" \
+                                    title="' + result.userName + '" alt="' + result.userName +
+                                   '" src="' + result.commentThumbnailURL 
+                                   + '"/><div class="comment-panel"><div class="left">' + result.replyNameHTML;
+
+                           if (state !== "") {
+                               var commentOriginalCommentName = $("#" + page.currentCommentId 
+                                       + " .comment-panel>.left a").first().text();
+                               commentHTML += '&nbsp;@&nbsp;<a href="http://7xnusv.com1.z0.glb.clouddn.com' 
+                                       + result.commentSharpURL.split("#")[0] + '#' + page.currentCommentId + '"'
+                                       + 'onmouseover="page.showComment(this, \'' + page.currentCommentId + '\', 20);"'
+                                       + 'onmouseout="page.hideComment(\'' + page.currentCommentId + '\')">' 
+                                       + commentOriginalCommentName + '</a>';
+                           }
+
+                           commentHTML += '</div><div class="right ft-gray">' + result.commentDate.substring(2, 16)
+                                   + '&nbsp;<a rel="nofollow" href="javascript:replyTo(\'' + result.oId
+                                   + '\');">回复»</a></div><span class="clear"></span><div class="article-body">' +
+                                   Util.replaceEmString($("#comment" + state).val().replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>"))
+                                   + '</div></div><span class="clear"></span></div>';
+
+                           return commentHTML;
+                       };
+
+                       var replyTo = function(id) {
+                           var commentFormHTML = "<table class='form' id='replyForm'>";
+                           page.addReplyForm(id, commentFormHTML);
+                           $("#replyForm label").each(function() {
+                               $this = $(this);
+                               $this.attr("for", $this.attr("for") + "Reply");
+                           });
+                       };
+
+                       $(document).ready(function() {
+                           page.load();
+                           // emotions
+                           page.replaceCommentsEm("#comments .article-body");
+        page.tips.externalRelevantArticlesDisplayCount = "5";
+        page.loadRandomArticles('<h4 class="ft-gray">随机阅读</h4>');
+        page.loadRelevantArticles('1459005877285', '<h4 class="ft-gray">相关阅读</h4>');
+        page.loadExternalRelevantArticles("算法");
+                       });
+</script>
+    <div style="display: none;">Copyright (c) 2009-2016, <a href="http://b3log.org" target="_blank" rel="noopener">b3log.org</a></div>
+    </body>
+</html>
+<!-- Generated by B3log Latke(98 ms), 2016/08/10 22:26:53 -->
+      
+      
+        <div class="page-reward">
+          <p><a href="javascript:void(0)" onclick="dashangToggle()" class="dashang">赏</a></p>
+          <div class="hide_box"></div>
+          <div class="shang_box">
+            <a class="shang_close" href="javascript:void(0)" onclick="dashangToggle()">×</a>
+            <div class="shang_tit">
+              <p>谢谢支持</p>
+            </div>
+            <div class="shang_payimg">
+              <img src="/img/alipayimg.jpg" alt="扫码支持" title="扫一扫" />
+            </div>
+              <div class="pay_explain">扫码打赏，你说多少就多少</div>
+            <div class="shang_payselect">
+              
+                <div class="pay_item checked" data-id="alipay">
+                  <span class="radiobox"></span>
+                  <span class="pay_logo"><img src="/img/alipay.png" alt="支付宝" /></span>
+                </div>
+              
+              
+                <div class="pay_item" data-id="wechat">
+                  <span class="radiobox"></span>
+                  <span class="pay_logo"><img src="/img/weixin.png" alt="微信" /></span>
+                </div>
+              
+            </div>
+            <div class="shang_info">
+              <p>打开<span id="shang_pay_txt">支付宝</span>扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+        </div>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.2.0/zepto.min.js"></script>
+        <script type="text/javascript">
+          $(".pay_item").click(function(){
+            $(this).addClass('checked').siblings('.pay_item').removeClass('checked');
+            var dataid=$(this).attr('data-id');
+            $(".shang_payimg img").attr("src","/img/"+dataid+"img.jpg");
+            $("#shang_pay_txt").text(dataid=="alipay"?"支付宝":"微信");
+          });
+          function dashangToggle(){
+            
+            $(".hide_box").fadeToggle();
+            $(".shang_box").fadeToggle();
+          }
+        </script>
+      
+    </div>
+    
+  </div>
+  
+    
+
+
+  
+</article>
+
+
+
+<div class="bdsharebuttonbox">
+	<a href="#" class="fx fa-weibo bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+	<a href="#" class="fx fa-weixin bds_weixin" data-cmd="weixin" title="分享到微信"></a>
+	<a href="#" class="fx fa-qq bds_sqq" data-cmd="sqq" title="分享到QQ好友"></a>
+	<a href="#" class="fx fa-facebook-official bds_fbook" data-cmd="fbook" title="分享到Facebook"></a>
+	<a href="#" class="fx fa-twitter bds_twi" data-cmd="twi" title="分享到Twitter"></a>
+	<a href="#" class="fx fa-linkedin bds_linkedin" data-cmd="linkedin" title="分享到linkedin"></a>
+	<a href="#" class="fx fa-files-o bds_copy" data-cmd="copy" title="分享到复制网址"></a>
+</div>
+<script>window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"2","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];</script>
+
+
+
+
+    
+        <section id="comments">
+  <div id="disqus_thread"></div>
+    <script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'zhangdongxuan'; // required: replace example with your forum shortname
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+    
+
+
+
+
+
+    <script>
+        
+    </script>
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                &copy; 2019 Code Honor
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank">Hexo</a>  Theme <a href="https://github.com/luuman/hexo-theme-spfk" target="_blank">spfk</a> by luuman
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" >访问: 
+                            <span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>, </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit">本页阅读量: 
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+
+    </div>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script src="/js/main.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            var backgroundnum = 24;
+            var backgroundimg = "url(/background/bg-x.jpg)".replace(/x/gi, Math.ceil(Math.random() * backgroundnum));
+            $("#mobile-nav").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+            $(".left-col").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+        })
+    </script>
+
+
+
+
+
+<div class="scroll" id="scroll">
+    <a href="#"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    $(document).ready(function() {
+        if ($("#comments").length < 1) {
+            $("#scroll > a:nth-child(2)").hide();
+        };
+    })
+</script>
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+
+  <script language="javascript">
+    $(function() {
+        $("a[title]").each(function() {
+            var a = $(this);
+            var title = a.attr('title');
+            if (title == undefined || title == "") return;
+            a.data('title', title).removeAttr('title').hover(
+
+            function() {
+                var offset = a.offset();
+                $("<div id=\"anchortitlecontainer\"></div>").appendTo($("body")).html(title).css({
+                    top: offset.top - a.outerHeight() - 15,
+                    left: offset.left + a.outerWidth()/2 + 1
+                }).fadeIn(function() {
+                    var pop = $(this);
+                    setTimeout(function() {
+                        pop.remove();
+                    }, pop.text().length * 800);
+                });
+            }, function() {
+                $("#anchortitlecontainer").remove();
+            });
+        });
+    });
+</script>
+
+
+  </div>
+</body>
+</html>
