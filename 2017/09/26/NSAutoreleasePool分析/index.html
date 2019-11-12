@@ -77,12 +77,12 @@
 <meta property="og:site_name" content="张东轩的博客">
 <meta property="og:description" content="NSAutoreleasePool是用来做引用计数管理的，当一个对象收到autorelease消息的时候，这个对象就会被放到NSAutoreleasePool中。">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://7xu9x8.com1.z0.glb.clouddn.com/nsautoreleasepool.png">
-<meta property="og:updated_time" content="2018-05-26T15:21:07.000Z">
+<meta property="og:image" content="http://zhangdongxuan.com/images/autorelasepool/nsautoreleasepool.png">
+<meta property="og:updated_time" content="2019-11-12T04:02:07.591Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="NSAutoreleasePool分析">
 <meta name="twitter:description" content="NSAutoreleasePool是用来做引用计数管理的，当一个对象收到autorelease消息的时候，这个对象就会被放到NSAutoreleasePool中。">
-<meta name="twitter:image" content="http://7xu9x8.com1.z0.glb.clouddn.com/nsautoreleasepool.png">
+<meta name="twitter:image" content="http://zhangdongxuan.com/images/autorelasepool/nsautoreleasepool.png">
 
 
 
@@ -371,7 +371,7 @@
 <p>在NSObject的源码中可以看到如下定义：</p>
 <figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> * objc_autoreleasePoolPush(<span class="keyword">void</span>)</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">return</span> AutoreleasePoolPage::push();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span> objc_autoreleasePoolPop(<span class="keyword">void</span> *ctxt)</span><br><span class="line">&#123;</span><br><span class="line">AutoreleasePoolPage::pop(ctxt);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> AutoreleasePoolPage</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> *push()&#123;</span><br><span class="line"><span class="comment">//相当于生成或持有NSAutoreleasePool类对象</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> *push()&#123;</span><br><span class="line"><span class="comment">//相当于废弃NSAutoreleasePool类对象</span></span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h2 id="AutoreleasePoolPage的结构"><a href="#AutoreleasePoolPage的结构" class="headerlink" title="AutoreleasePoolPage的结构"></a>AutoreleasePoolPage的结构</h2><p><img src="http://7xu9x8.com1.z0.glb.clouddn.com/nsautoreleasepool.png" alt></p>
+<h2 id="AutoreleasePoolPage的结构"><a href="#AutoreleasePoolPage的结构" class="headerlink" title="AutoreleasePoolPage的结构"></a>AutoreleasePoolPage的结构</h2><p><img src="/images/autorelasepool/nsautoreleasepool.png" alt></p>
 <blockquote>
 <ul>
 <li>AutoreleasePool是由若干AutoreleasePoolPage以双向链表的形式组合而成的结构（parent、child）。</li>
