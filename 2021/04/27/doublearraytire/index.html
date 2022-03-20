@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/lfavicon.ico" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhangdongxuan.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="Trie是一种常见的用于前缀匹配的数据结构，但是一棵包含大量模式串的Tire树会非常占用内存空间。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于Double Array Tire的AC自动机">
+<meta property="og:url" content="http://zhangdongxuan.com/2021/04/27/doublearraytire/index.html">
+<meta property="og:site_name" content="张东轩的博客">
+<meta property="og:description" content="Trie是一种常见的用于前缀匹配的数据结构，但是一棵包含大量模式串的Tire树会非常占用内存空间。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zhangdongxuan.com/images/algorithm/DAT1.jpg">
+<meta property="og:image" content="http://zhangdongxuan.com/images/algorithm/DAT2.jpg">
+<meta property="og:image" content="http://zhangdongxuan.com/images/algorithm/DAT3.jpg">
+<meta property="og:image" content="http://zhangdongxuan.com/images/algorithm/DAT_1.jpg">
+<meta property="og:image" content="http://zhangdongxuan.com/images/algorithm/DAT_2.jpg">
+<meta property="og:image" content="http://zhangdongxuan.com/images/algorithm/DAT_3.jpg">
+<meta property="og:image" content="http://zhangdongxuan.com/images/algorithm/DAT_4.jpg">
+<meta property="og:image" content="http://zhangdongxuan.com/images/algorithm/DAT_5.jpg">
+<meta property="og:image" content="http://zhangdongxuan.com/images/algorithm/DAT_6.jpg">
+<meta property="og:image" content="http://zhangdongxuan.com/images/algorithm/DAT_ALL.gif">
+<meta property="og:image" content="http://zhangdongxuan.com/images/algorithm/DAT_10.jpg">
+<meta property="og:image" content="http://zhangdongxuan.com/images/algorithm/DAT_11.jpg">
+<meta property="og:image" content="http://zhangdongxuan.com/images/algorithm/dat_q.jpg">
+<meta property="article:published_time" content="2021-04-27T12:00:59.000Z">
+<meta property="article:modified_time" content="2022-03-02T23:57:31.435Z">
+<meta property="article:author" content="Dongxuan Zhang">
+<meta property="article:tag" content="算法">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zhangdongxuan.com/images/algorithm/DAT1.jpg">
+
+<link rel="canonical" href="http://zhangdongxuan.com/2021/04/27/doublearraytire/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>基于Double Array Tire的AC自动机 | 张东轩的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">张东轩的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhangdongxuan.com/2021/04/27/doublearraytire/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Dongxuan Zhang">
+      <meta itemprop="description" content="程序员的成长之路">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="张东轩的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          基于Double Array Tire的AC自动机
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-04-27 20:00:59" itemprop="dateCreated datePublished" datetime="2021-04-27T20:00:59+08:00">2021-04-27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-03-03 07:57:31" itemprop="dateModified" datetime="2022-03-03T07:57:31+08:00">2022-03-03</time>
+              </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus：</span>
+    
+    <a title="disqus" href="/2021/04/27/doublearraytire/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2021/04/27/doublearraytire/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+            <div class="post-description">Trie是一种常见的用于前缀匹配的数据结构，但是一棵包含大量模式串的Tire树会非常占用内存空间。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="一、背景"><a href="#一、背景" class="headerlink" title="一、背景"></a>一、背景</h2><p>AC自动机以Trie树为基础的，每一个状态都由一个<code>TrieNode</code>来表示，TireNode的定义如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">struct TrieNode &#123;</span><br><span class="line">    bool flag;</span><br><span class="line">    wstring keyword;</span><br><span class="line">    TrieNode *fail;</span><br><span class="line">    map&lt;wstring, TrieNode *&gt; next;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>测试过程中29W个关键词来构建出的Trie树有<code>762922</code>个TrieNode节点，每个节点占用内存空间20byte，则占用内存空间为</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">762922 * 20 / 1024 / 1024 = 46M</span><br></pre></td></tr></table></figure>
+<p>仅仅是TireNode节点占用的空间已经达到了46M，加上额外keyword和map指向的内存占用，会直接达到100M左右，显然在内存受限的场景中是无法接受的。</p>
+<p>因此基于双数组Tire树的AC自动机被提出，以降低AC自动机的内存占用。</p>
+<h2 id="二、双数组Tire树介绍"><a href="#二、双数组Tire树介绍" class="headerlink" title="二、双数组Tire树介绍"></a>二、双数组Tire树介绍</h2><blockquote>
+<p><font size=2>双数组Trie (Double-Array Trie)结构由日本人JUN-ICHI AOE于1989年提出的，是Trie结构的压缩形式，仅用两个线性数组来表示Trie树，该结构有效结合了数字搜索树(Digital Search Tree)检索时间高效的特点和链式表示的Trie空间结构紧凑的特点。双数组Trie的本质是一个确定有限状态自动机（DFA），每个节点代表自动机的一个状态，根据变量不同，进行状态转移，当到达结束状态或无法转移时，完成一次查询操作。在双数组所有键中包含的字符之间的联系都是通过简单的数学加法运算表示，不仅提高了检索速度，而且省去了链式结构中使用的大量指针，节省了存储空间。——《基于双数组Trie树算法的字典改进和实现》</font></p>
+</blockquote>
+<p>双数组Trie树主要的优点就是相比链式结构Trie树大大降低了内存占用，是一种空间复杂度低的Trie树，其使用两个一维数组 BASE 和 CHECK 来表示整棵树。<br><br>DAT中有几个基本的概念</p>
+<blockquote>
+<font size=2> 
+STATE : 状态，实际是BASE数组的下标；<br>
+CODE : 字符编码表；<br>
+BASE : 表示后继节点的基地址的数组；<br>
+CHECK : 表示前驱节点的地址的数组；
+</font>
+</blockquote>
+<p>BASE 和 CHECK 构建的规则如下</p>
+<blockquote>
+<font size=2> 
+BASE[s] + c = t <br>
+CHECK[t] = BASE[s]
+</font>
+</blockquote>
+<p>举个🌰 ， 如果字符<code>h</code>，加上字符<code>e</code>，可以组成前缀<code>he</code>。<br><img src="/images/algorithm/DAT1.jpg" width="200"/></p>
+<p>则有<code>BASE[h] + e = he</code>，表示<code>h</code>和<code>e</code>的状态转移关系，另外<code>CHECK[he] = h</code>确保该状态转移的正确性。</p>
+<h3 id="三、构建双数组Tire树"><a href="#三、构建双数组Tire树" class="headerlink" title="三、构建双数组Tire树"></a>三、构建双数组Tire树</h3><p>这里以模式串 { he, hers, his, she} 为例，来讲解双数组trie的构建，其对应的Trie树结构如下图所示。<br><img src="/images/algorithm/DAT2.jpg" width="300"/></p>
+<h4 id="1-构建CODE编码表"><a href="#1-构建CODE编码表" class="headerlink" title="1. 构建CODE编码表"></a>1. 构建CODE编码表</h4><img src="/images/algorithm/DAT3.jpg" width="500"/>
+
+<h4 id="2-构建BASE和CHECK状态表"><a href="#2-构建BASE和CHECK状态表" class="headerlink" title="2. 构建BASE和CHECK状态表"></a>2. 构建BASE和CHECK状态表</h4><p>假设当前状态为S，S的后继节点的字符为{A、B、C…}，BASE[S]需满足</p>
+<blockquote>
+<font size=2> 
+BASE[S] + CODE(A) = BASE[S] + CODE(B) = BASE[S] +CODE(C) = ... = 0 <br>
+CHECK[BASE[S] + CODE(A)] = CHECK[BASE[S] + CODE(B)] = CHECK[...] = 0
+</font>
+</blockquote>
+<p>确定了BASE[S]的值之后，需要将子节点位置的CHECK值设为S</p>
+<blockquote>
+<font size=2> 
+CHECK[BASE[S] + CODE(A)] = CHECK[BASE[S] + CODE(B)] = ... = S
+</font>
+</blockquote>
+<h5 id="2-1-初始化Double-Array"><a href="#2-1-初始化Double-Array" class="headerlink" title="2.1 初始化Double Array"></a>2.1 初始化Double Array</h5><p>将根节点状态置为1，check置为0，将第一层结点<code>h</code>和<code>s</code>对应位置的值初始化为1，因为没有前缀，将CHECK设为-1（也可以是1）<br><img src="/images/algorithm/DAT_1.jpg" width="600"/></p>
+<h5 id="2-2-第一层节点的字符s"><a href="#2-2-第一层节点的字符s" class="headerlink" title="2.2 第一层节点的字符s"></a>2.2 第一层节点的字符<code>s</code></h5><p>首先处理第一层节点的字符<code>s</code>，由于<code>CODE(s) = 3</code>，即确定 BASE[3]的值。<br></p>
+<p>BASE[3]的后继子节点字符为<code>h</code>，<code>CODE(h) = 1</code>，可以得出其begin值为1，即 BASE[3] &#x3D; 1。<br>同时状态转移需要满足：</p>
+<blockquote>
+<font size=2> 
+CHECK[t] = BASE[s]， 即 CHECK[2] = 3
+</font>
+</blockquote>
+<p>赋值后的 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_2.jpg" width="600"/></p>
+<h5 id="2-3-第一层节点的字符h"><a href="#2-3-第一层节点的字符h" class="headerlink" title="2.3 第一层节点的字符h"></a>2.3 第一层节点的字符<code>h</code></h5><p>第一层节点的字符<code>h</code>，由于<code>CODE(h) = 1</code>，即确定 BASE[1]的值。<br><br>BASE[1]的后继子节点字符为<code>e</code>、<code>i</code>，CODE(e) &#x3D; 2，CODE(i) &#x3D; 4 <br></p>
+<ul>
+<li>当begin &#x3D; 0的话，由于CHECK[2] !&#x3D; 0，所以不成立；<br></li>
+<li>当begin &#x3D; 1的话，由于BASE[3] !&#x3D; 0，所以不成立；<br></li>
+<li>当begin &#x3D; 2的话，<code>BASE[4] == BASE[6] == 0 &amp;&amp; CHECK[4] == CHECK[6] == 0</code>，则begin值可为2，即 BASE[1] &#x3D; 2。<br></li>
+</ul>
+<p>另外给子节点的CHECK进行赋值</p>
+<blockquote>
+<font size=2> 
+CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
+</font>
+</blockquote>
+<p>赋值后的 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_3.jpg" width="600"/></p>
+<h5 id="2-4-第二层节点的字符h"><a href="#2-4-第二层节点的字符h" class="headerlink" title="2.4 第二层节点的字符h"></a>2.4 第二层节点的字符<code>h</code></h5><p>第二层节点的字符<code>h</code>对应的状态是BASE[2]，只有一个子节点<code>e</code>，CODE(e) &#x3D; 2; <br> </p>
+<ul>
+<li>当begin &#x3D; 0，CHECK[2] !&#x3D; 0，不成立；<br></li>
+<li>当begin &#x3D; 1，BASE[3] !&#x3D; 0，不成立；<br></li>
+<li>当begin &#x3D; 2，CHECK[4] !&#x3D; 0，不成立；<br></li>
+<li>当begin &#x3D; 3，BASE[5] &#x3D;&#x3D; 0 &amp; CHECK[5] &#x3D;&#x3D; 0，成立，则BASE[2] &#x3D; 3，CHECK[5] &#x3D; 2；<br></li>
+</ul>
+<p>赋值后的 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_4.jpg" width="600"/></p>
+<h5 id="2-5-第二层节点的字符e"><a href="#2-5-第二层节点的字符e" class="headerlink" title="2.5 第二层节点的字符e"></a>2.5 第二层节点的字符<code>e</code></h5><p>第二层节点的字符<code>e</code>对应的状态是BASE[4]，只有一个子节点<code>r</code>，CODE(r) &#x3D; 5; <br> </p>
+<ul>
+<li>当begin &#x3D; 0，CHECK[2] !&#x3D; 0，不成立；<br></li>
+<li>当begin &#x3D; 1，BASE[3] !&#x3D; 0，不成立；<br></li>
+<li>当begin &#x3D; 2，BASE[7] &#x3D;&#x3D; 0 &amp; CHECK[7] &#x3D;&#x3D; 0，成立，则BASE[4] &#x3D; 2，CHECK[7] &#x3D; 4；<br></li>
+</ul>
+<p>因为<code>he</code>为关键词，则将其base状态设置为负值，赋值后的 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_5.jpg" width="600"/></p>
+<h5 id="2-6-第二层节点的字符i"><a href="#2-6-第二层节点的字符i" class="headerlink" title="2.6 第二层节点的字符i"></a>2.6 第二层节点的字符<code>i</code></h5><p>第二层节点的字符<code>e</code>对应的状态是BASE[6]，只有一个子节点<code>s</code>，CODE(s) &#x3D; 3; <br><br>根据上面的规则可得，begin &#x3D; 5，则则BASE[6] &#x3D; 5，CHECK[8] &#x3D; 6；<br><br>赋值后的 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_6.jpg" width="600"/></p>
+<h5 id="2-7-按规则初始化第三层和第四层节点"><a href="#2-7-按规则初始化第三层和第四层节点" class="headerlink" title="2.7 按规则初始化第三层和第四层节点"></a>2.7 按规则初始化第三层和第四层节点</h5><p>整个初始化的过程如下<br><img src="/images/algorithm/DAT_ALL.gif" width="800"/></p>
+<p>最终 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_10.jpg" width="600"/></p>
+<h3 id="四、构建适配数组"><a href="#四、构建适配数组" class="headerlink" title="四、构建适配数组"></a>四、构建适配数组</h3><p>AC自动机是由Tire树配合适配指针构成，Trie树由双数组表示后，适配信息也由数组的方式来表示。<br>下图中的虚线是由指针形式表示的适配信息。<br><img src="/images/algorithm/DAT_11.jpg" width="600"/></p>
+<h3 id="五、内存占用"><a href="#五、内存占用" class="headerlink" title="五、内存占用"></a>五、内存占用</h3><p>测试过程中29W个关键词来构建出的基于双数组Trie树的AC自动机，占用内存超过60M。<br><br>其中<br></p>
+<blockquote>
+<p>2110589长度的check 和 base数组(16M)<br><br>758618长度的&lt;int, int&gt; fail状态转移 map (5.7M)<br><br>29W个&lt;int, string&gt; 的状态到关键词的map(23M)<br></p>
+</blockquote>
+<img src="/images/algorithm/dat_q.jpg" width="100"/>
+内存还是很高，虽然内存还有优化的空间，但是也很难做出一个数量级的优化，那对于在内存受限的设备上，如何实现更性能高效，低内存占用的多模式匹配呢？
+
+<p><a target="_blank" rel="noopener" href="https://github.com/zhangdongxuan/CodeSlice/tree/master/algorithm/Aho%E2%80%93Corasic/DoubleArrayTrieAC">点击查看源码</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E7%AE%97%E6%B3%95/" rel="tag"># 算法</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/04/18/Aho-Corasick/" rel="prev" title="多模匹配之AC自动机">
+      <i class="fa fa-chevron-left"></i> 多模匹配之AC自动机
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-md/" rel="next" title="Audio Session编程指南(一)">
+      Audio Session编程指南(一) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%8F%8C%E6%95%B0%E7%BB%84Tire%E6%A0%91%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">二、双数组Tire树介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E6%9E%84%E5%BB%BA%E5%8F%8C%E6%95%B0%E7%BB%84Tire%E6%A0%91"><span class="nav-number">2.1.</span> <span class="nav-text">三、构建双数组Tire树</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E6%9E%84%E5%BB%BACODE%E7%BC%96%E7%A0%81%E8%A1%A8"><span class="nav-number">2.1.1.</span> <span class="nav-text">1. 构建CODE编码表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E6%9E%84%E5%BB%BABASE%E5%92%8CCHECK%E7%8A%B6%E6%80%81%E8%A1%A8"><span class="nav-number">2.1.2.</span> <span class="nav-text">2. 构建BASE和CHECK状态表</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#2-1-%E5%88%9D%E5%A7%8B%E5%8C%96Double-Array"><span class="nav-number">2.1.2.1.</span> <span class="nav-text">2.1 初始化Double Array</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-2-%E7%AC%AC%E4%B8%80%E5%B1%82%E8%8A%82%E7%82%B9%E7%9A%84%E5%AD%97%E7%AC%A6s"><span class="nav-number">2.1.2.2.</span> <span class="nav-text">2.2 第一层节点的字符s</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-3-%E7%AC%AC%E4%B8%80%E5%B1%82%E8%8A%82%E7%82%B9%E7%9A%84%E5%AD%97%E7%AC%A6h"><span class="nav-number">2.1.2.3.</span> <span class="nav-text">2.3 第一层节点的字符h</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-4-%E7%AC%AC%E4%BA%8C%E5%B1%82%E8%8A%82%E7%82%B9%E7%9A%84%E5%AD%97%E7%AC%A6h"><span class="nav-number">2.1.2.4.</span> <span class="nav-text">2.4 第二层节点的字符h</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-5-%E7%AC%AC%E4%BA%8C%E5%B1%82%E8%8A%82%E7%82%B9%E7%9A%84%E5%AD%97%E7%AC%A6e"><span class="nav-number">2.1.2.5.</span> <span class="nav-text">2.5 第二层节点的字符e</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-6-%E7%AC%AC%E4%BA%8C%E5%B1%82%E8%8A%82%E7%82%B9%E7%9A%84%E5%AD%97%E7%AC%A6i"><span class="nav-number">2.1.2.6.</span> <span class="nav-text">2.6 第二层节点的字符i</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-7-%E6%8C%89%E8%A7%84%E5%88%99%E5%88%9D%E5%A7%8B%E5%8C%96%E7%AC%AC%E4%B8%89%E5%B1%82%E5%92%8C%E7%AC%AC%E5%9B%9B%E5%B1%82%E8%8A%82%E7%82%B9"><span class="nav-number">2.1.2.7.</span> <span class="nav-text">2.7 按规则初始化第三层和第四层节点</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E6%9E%84%E5%BB%BA%E9%80%82%E9%85%8D%E6%95%B0%E7%BB%84"><span class="nav-number">2.2.</span> <span class="nav-text">四、构建适配数组</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8"><span class="nav-number">2.3.</span> <span class="nav-text">五、内存占用</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Dongxuan Zhang"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Dongxuan Zhang</p>
+  <div class="site-description" itemprop="description">程序员的成长之路</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zhangdongxuan" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zhangdongxuan" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Dongxuan Zhang</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://zhangdongxuan.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://zhangdongxuan.com/2021/04/27/doublearraytire/";
+    this.page.identifier = "2021/04/27/doublearraytire/";
+    this.page.title = "基于Double Array Tire的AC自动机";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://zhangdongxuan.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/lfavicon.ico" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhangdongxuan.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="OC对象主要可以分为实例对象、类对象和元类对象">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Objective-C 中对象的分类">
+<meta property="og:url" content="http://zhangdongxuan.com/2021/04/09/Objective-C-%E4%B8%AD%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%86%E7%B1%BB/index.html">
+<meta property="og:site_name" content="张东轩的博客">
+<meta property="og:description" content="OC对象主要可以分为实例对象、类对象和元类对象">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zhangdongxuan.com/images/ios/4.jpeg">
+<meta property="article:published_time" content="2021-04-09T15:32:02.000Z">
+<meta property="article:modified_time" content="2022-03-02T23:57:31.435Z">
+<meta property="article:author" content="Dongxuan Zhang">
+<meta property="article:tag" content="iOS基础">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zhangdongxuan.com/images/ios/4.jpeg">
+
+<link rel="canonical" href="http://zhangdongxuan.com/2021/04/09/Objective-C-%E4%B8%AD%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%86%E7%B1%BB/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Objective-C 中对象的分类 | 张东轩的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">张东轩的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhangdongxuan.com/2021/04/09/Objective-C-%E4%B8%AD%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%86%E7%B1%BB/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Dongxuan Zhang">
+      <meta itemprop="description" content="程序员的成长之路">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="张东轩的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Objective-C 中对象的分类
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-04-09 23:32:02" itemprop="dateCreated datePublished" datetime="2021-04-09T23:32:02+08:00">2021-04-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-03-03 07:57:31" itemprop="dateModified" datetime="2022-03-03T07:57:31+08:00">2022-03-03</time>
+              </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus：</span>
+    
+    <a title="disqus" href="/2021/04/09/Objective-C-%E4%B8%AD%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%86%E7%B1%BB/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2021/04/09/Objective-C-中对象的分类/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+            <div class="post-description">OC对象主要可以分为实例对象、类对象和元类对象</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="一、对象的分类"><a href="#一、对象的分类" class="headerlink" title="一、对象的分类"></a>一、对象的分类</h3><h3 id="instance对象"><a href="#instance对象" class="headerlink" title="instance对象"></a>instance对象</h3><pre><code>实例对象就是通过alloc出来的对象，每次调用alloc都会产生新的instance对象；
+</code></pre>
+<p>实例对象的存储信息</p>
+<blockquote>
+<ol>
+<li>isa指针</li>
+<li>其他成员变量</li>
+</ol>
+</blockquote>
+<h3 id="class对象"><a href="#class对象" class="headerlink" title="class对象"></a>class对象</h3><pre><code>每个类的内存中有且只有一个类对象
+</code></pre>
+<p>类对象的存储信息</p>
+<blockquote>
+<ul>
+<li>isa指针</li>
+<li>superClass指针</li>
+<li>类的属性信息（@property），类的对象方法信息（method），类的协议信息（protocol），类的成员变量信息（ivar）</li>
+</ul>
+</blockquote>
+<p>类对象是由程序员定义并在运行时由编译器创建的，它没有自己的实例变量，这里需要注意的是类的成员变量和实例方法列表是属于实例对象的，但其存储于类对象当中的。</p>
+<h3 id="meta-class对象"><a href="#meta-class对象" class="headerlink" title="meta-class对象"></a>meta-class对象</h3><pre><code>每个类的内存中有且只有一个元类对象
+</code></pre>
+<p>元类的存储信息</p>
+<blockquote>
+<ul>
+<li>isa指针</li>
+<li>superClass指针</li>
+<li>类的属性信息（@property），类的对象方法信息（method），类的协议信息（protocol），类的成员变量信息（ivar）</li>
+</ul>
+</blockquote>
+<p><strong>元类和类的存储结构是一样的，但是用途不一样</strong></p>
+<h3 id="二、类及相应meta-class类的继承体系"><a href="#二、类及相应meta-class类的继承体系" class="headerlink" title="二、类及相应meta-class类的继承体系"></a>二、类及相应meta-class类的继承体系</h3><p><img src="/images/ios/4.jpeg"></p>
+<p><strong>instance的isa指向class对象（类对象），当调用对象方法时，通过instance的isa找到class对象（类对象），最后找到对象方法的实现进行调用；</strong></p>
+<p><strong>class的isa指向meta-class，当调用类方法时，通过class的isa找到meta-class，最后找到类方法的实现进行调用；</strong></p>
+<p>objective-c源码中对对象的定义是这样的</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//类的实例</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> objc_object *<span class="type">id</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Represents an instance of a class.</span></span><br><span class="line"><span class="keyword">struct</span> objc_object &#123;</span><br><span class="line">    <span class="comment">// 这里的isa指针指向当前实例的类对象</span></span><br><span class="line">    Class isa  OBJC_ISA_AVAILABILITY;</span><br><span class="line">&#125;;</span><br><span class="line">----------------------------------------------------</span><br><span class="line"></span><br><span class="line"><span class="comment">/// An opaque type that represents an Objective-C class.</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> objc_class *Class;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> objc_class &#123;</span><br><span class="line">    Class isa  OBJC_ISA_AVAILABILITY; <span class="comment">//</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> !__OBJC2__</span></span><br><span class="line">    Class super_class                                        OBJC2_UNAVAILABLE;<span class="comment">//父类</span></span><br><span class="line">    <span class="keyword">const</span> <span class="type">char</span> *name                                         OBJC2_UNAVAILABLE;<span class="comment">//类名</span></span><br><span class="line">    <span class="type">long</span> version                                             OBJC2_UNAVAILABLE;</span><br><span class="line">    <span class="type">long</span> info                                                OBJC2_UNAVAILABLE;</span><br><span class="line">    <span class="type">long</span> instance_size                                       OBJC2_UNAVAILABLE;<span class="comment">//实例大小</span></span><br><span class="line">    <span class="keyword">struct</span> objc_ivar_list *ivars                             OBJC2_UNAVAILABLE;<span class="comment">//成员变量列表</span></span><br><span class="line">    <span class="keyword">struct</span> objc_method_list **methodLists                    OBJC2_UNAVAILABLE;<span class="comment">//方法列表</span></span><br><span class="line">    <span class="keyword">struct</span> objc_cache *cache                                 OBJC2_UNAVAILABLE;<span class="comment">//方法缓存</span></span><br><span class="line">    <span class="keyword">struct</span> objc_protocol_list *protocols                     OBJC2_UNAVAILABLE;<span class="comment">//协议列表</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">&#125; OBJC2_UNAVAILABLE;</span><br><span class="line"><span class="comment">/* Use `Class` instead of `struct objc_class *` */</span></span><br><span class="line"></span><br><span class="line">这里也是有个isa 指针，其实这个isa 指向的就是  **元类**</span><br><span class="line">----------------------------------------------------</span><br></pre></td></tr></table></figure>
+
+<p>这里介绍一下元类，介绍之前先理解以下概念</p>
+<blockquote>
+<p>类对象 &#x3D;&#x3D; object_getClass(实例对象) &#x3D;&#x3D; [实例对象 class] &#x3D;&#x3D; [类对象 class]<br>object_getClass(类对象) &#x3D;&#x3D; 类对象的isa &#x3D;&#x3D; 元类<br>object_getClass(类对象) !&#x3D; [类对象 class]</p>
+</blockquote>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Test</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> p1;</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Test</span></span></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        Test *test = [[Test alloc] init];</span><br><span class="line">        </span><br><span class="line">        </span><br><span class="line">        <span class="comment">// Test的类对象</span></span><br><span class="line">        Class cls1 = test.class; <span class="comment">//获取当前的类的对象，就是isa指向的类对象</span></span><br><span class="line">        <span class="comment">// Test的类对象</span></span><br><span class="line">        Class cls2 = object_getClass(test);</span><br><span class="line">        <span class="comment">// Test的类对象</span></span><br><span class="line">        Class cls3 = Test.class;</span><br><span class="line">        <span class="comment">// 还是Test的类对象</span></span><br><span class="line">        Class cls4 = [cls1 <span class="keyword">class</span>];  <span class="comment">//类对象的isa指向的类对象本身</span></span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;cls1:%p cls2:%p cls3:%p cls4:%p&quot;</span>, cls1, cls2, cls3, cls4);</span><br><span class="line"><span class="comment">//        cls1:0x100008188 cls2:0x100008188 cls3:0x100008188 cls4:0x100008188</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// Test的Class的元类</span></span><br><span class="line">        Class cls5 = object_getClass(cls1);</span><br><span class="line">        <span class="comment">// Test的Class的元类</span></span><br><span class="line">        Class cls6 = objc_getMetaClass(object_getClassName(test));</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;cls5:%p cls6:%p&quot;</span>, cls5, cls6);</span><br><span class="line"><span class="comment">//        cls5:0x100008160 cls6:0x100008160</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">const</span> <span class="type">char</span> *cls2_name = object_getClassName(cls2);</span><br><span class="line">        <span class="keyword">const</span> <span class="type">char</span> *cls6_name = object_getClassName(cls6);</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;cls2_name:%s cls6_name:%s&quot;</span>, cls2_name, cls6_name);</span><br><span class="line"><span class="comment">//        cls2_name:Test cls6_name:NSObject</span></span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>很奇怪，为什么<code>cls6_name</code>是<code>NSObject</code>，通过<code>object_getClassName</code>的源码可以知道，这个方法获取的是isa指向的名称。</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="type">char</span> *object_getClassName(<span class="type">id</span> obj)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> class_getName(obj ? obj-&gt;getIsa() : <span class="literal">nil</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>总结一下实例对象，类对象以及元类对象之间的isa指向和继承关系的规则为:<br>规则一: 实例对象的isa指向该类，类的isa指向元类(metaClass)<br>规则二: 类的superClass指向其父类，如果该类为根类则值为nil<br>规则三: 元类的isa指向根元类，如果该元类是根元类则指向自身<br>规则四: 元类的superClass指向父元类，若根元类则指向该根类</p>
+<h3 id="三、实践"><a href="#三、实践" class="headerlink" title="三、实践"></a>三、实践</h3><h4 id="实践一"><a href="#实践一" class="headerlink" title="实践一"></a>实践一</h4><p>考虑以下代码：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Sark</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Sark</span></span></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">     <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        <span class="type">BOOL</span> res1 = [(<span class="type">id</span>)[<span class="built_in">NSObject</span> <span class="keyword">class</span>] isKindOfClass:[<span class="built_in">NSObject</span> <span class="keyword">class</span>]];</span><br><span class="line">        <span class="type">BOOL</span> res2 = [(<span class="type">id</span>)[<span class="built_in">NSObject</span> <span class="keyword">class</span>] isMemberOfClass:[<span class="built_in">NSObject</span> <span class="keyword">class</span>]];</span><br><span class="line">        <span class="type">BOOL</span> res3 = [(<span class="type">id</span>)[Sark <span class="keyword">class</span>] isKindOfClass:[Sark <span class="keyword">class</span>]];</span><br><span class="line">        <span class="type">BOOL</span> res4 = [(<span class="type">id</span>)[Sark <span class="keyword">class</span>] isMemberOfClass:[Sark <span class="keyword">class</span>]];</span><br><span class="line"></span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;%d %d %d %d&quot;</span>, res1, res2, res3, res4);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>先来分析一下源码这两个函数的对象实现</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">+ (Class)<span class="keyword">class</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">self</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (Class)<span class="keyword">class</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> object_getClass(<span class="keyword">self</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Class object_getClass(<span class="type">id</span> obj)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (obj) <span class="keyword">return</span> obj-&gt;getIsa();</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">return</span> Nil;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">inline</span> Class </span><br><span class="line">objc_object::getIsa() </span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (isTaggedPointer()) &#123;</span><br><span class="line">        uintptr_t slot = ((uintptr_t)<span class="variable language_">this</span> &gt;&gt; TAG_SLOT_SHIFT) &amp; TAG_SLOT_MASK;</span><br><span class="line">        <span class="keyword">return</span> objc_tag_classes[slot];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> ISA();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">inline</span> Class </span><br><span class="line">objc_object::ISA() </span><br><span class="line">&#123;</span><br><span class="line">    assert(!isTaggedPointer()); </span><br><span class="line">    <span class="keyword">return</span> (Class)(isa.bits &amp; ISA_MASK);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="type">BOOL</span>)isKindOfClass:(Class)cls &#123;</span><br><span class="line">    <span class="keyword">for</span> (Class tcls = object_getClass((<span class="type">id</span>)<span class="keyword">self</span>); tcls; tcls = tcls-&gt;superclass) &#123;</span><br><span class="line">        <span class="keyword">if</span> (tcls == cls) <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">BOOL</span>)isKindOfClass:(Class)cls &#123;</span><br><span class="line">    <span class="keyword">for</span> (Class tcls = [<span class="keyword">self</span> <span class="keyword">class</span>]; tcls; tcls = tcls-&gt;superclass) &#123;</span><br><span class="line">        <span class="keyword">if</span> (tcls == cls) <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="type">BOOL</span>)isMemberOfClass:(Class)cls &#123;</span><br><span class="line">    <span class="keyword">return</span> object_getClass((<span class="type">id</span>)<span class="keyword">self</span>) == cls;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">BOOL</span>)isMemberOfClass:(Class)cls &#123;</span><br><span class="line">    <span class="keyword">return</span> [<span class="keyword">self</span> <span class="keyword">class</span>] == cls;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>首先题目中NSObject 和 Sark分别调用了class方法。</p>
+<p><code>+ (BOOL)isKindOfClass:(Class)cls</code>方法内部，会先去获得<code>object_getClass</code>的类，而<code>object_getClass</code>的源码实现是去调用当前类的<code>obj-&gt;getIsa()</code>，最后在ISA()方法中获得<code>meta class</code>的指针。</p>
+<p>接着在<code>isKindOfClass</code>中有一个循环，先判断<code>class</code>是否等于<code>meta class</code>，不等就继续循环判断是否等于<code>super class</code>，不等再继续取<code>super class</code>，如此循环下去。</p>
+<p><code>[NSObject class]</code>执行完之后调用<code>isKindOfClass</code>，第一次判断先判断<code>NSObject</code> 和 <code>NSObject</code>的<code>meta class</code>是否相等，之前讲到<code>meta class</code>的时候放了一张很详细的图，从图上我们也可以看出，<code>NSObject</code>的<code>meta class</code>与本身不等。接着第二次循环判断NSObject与<code>meta class</code>的<code>superclass</code>是否相等。还是从那张图上面我们可以看到：<code>Root class(meta)</code> 的<code>superclass</code> 就是 <code>Root class(class)</code>，也就是<code>NSObject</code>本身。所以第二次循环相等，于是第一行res1输出应该为YES。</p>
+<p>同理，<code>[Sark class]</code>执行完之后调用<code>isKindOfClass</code>，第一次for循环，<code>Sark</code>的<code>Meta Class</code>与<code>[Sark class]</code>不等，第二次for循环，<code>Sark Meta Class</code>的<code>super class</code> 指向的是 <code>NSObject Meta Class</code>， 和 <code>Sark Class</code>不相等。第三次for循环，<code>NSObject Meta Class</code>的<code>super class</code>指向的是<code>NSObject Class</code>，和 <code>Sark Class </code>不相等。第四次循环，<code>NSObject Class</code> 的<code>super class</code> 指向 nil， 和 <code>Sark Class</code>不相等。第四次循环之后，退出循环，所以第三行的res3输出为NO。</p>
+<p>如果把这里的Sark改成它的实例对象，<code>[sark isKindOfClass:[Sark class]</code>，那么此时就应该输出YES了。因为在<code>isKindOfClass</code>函数中，判断<code>sark</code>的<code>isa</code>指向是否是自己的类<code>Sark</code>，第一次for循环就能输出YES了。</p>
+<p><code>isMemberOfClass</code>的源码实现是拿到自己的isa指针和自己比较，是否相等。<br>第二行isa 指向<code>NSObject</code>的 <code>Meta Class</code>，所以和<code> NSObject Class</code>不相等。第四行，isa指向Sark的<code>Meta Class</code>，和<code>Sark Class</code>也不等，所以第二行res2和第四行res4都输出NO。</p>
+<h4 id="实践二"><a href="#实践二" class="headerlink" title="实践二"></a>实践二</h4><p>考虑以下代码是否可以正常运行</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Sark</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">copy</span>) <span class="built_in">NSString</span> *name;</span><br><span class="line">- (<span class="type">void</span>)speak;</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Sark</span></span></span><br><span class="line">- (<span class="type">void</span>)speak &#123;</span><br><span class="line">   <span class="built_in">NSLog</span>(<span class="string">@&quot;my name is aaa&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        <span class="type">id</span> cls = [Sark <span class="keyword">class</span>];</span><br><span class="line">        <span class="type">void</span> *obj = &amp;cls;</span><br><span class="line">        <span class="type">id</span> obj_new = (__bridge <span class="type">id</span>)obj;</span><br><span class="line">        [obj_new speak];</span><br><span class="line">        </span><br><span class="line">        size_t cls_size = class_getInstanceSize(Sark.class);</span><br><span class="line">        size_t obj_size = malloc_size(obj);</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;cls_size:%zu, obj_size:%zu&quot;</span>, cls_size, obj_size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>答案是可以的，因为obj是指向类对象Sark的指针，将obj转为iOS对象obj_new，因为iOS对象的前8个字节是isa指针，指向类对象Sark，这里obj_new就相当于在内存中只占用8个字节的栈对象，所以是可以进行方法调用的，但是由于是栈对象，所以obj_size的值是0；</p>
+<p>所以输出的结果如下</p>
+<blockquote>
+<p>2021-04-12 00:06:13.596537+0800 ClassTest[6501:1363097] my name is aaa<br>2021-04-12 00:06:13.596620+0800 ClassTest[6501:1363097] cls_size:16, obj_size:0</p>
+</blockquote>
+<p>参考<br><a target="_blank" rel="noopener" href="https://halfrost.com/objc_runtime_isa_class/">https://halfrost.com/objc_runtime_isa_class/</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/iOS%E5%9F%BA%E7%A1%80/" rel="tag"># iOS基础</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/04/09/NSObject%E5%AF%B9%E8%B1%A1%E5%8D%A0%E7%94%A8%E5%A4%9A%E5%B0%91%E5%86%85%E5%AD%98/" rel="prev" title="NSObject对象占用多少内存">
+      <i class="fa fa-chevron-left"></i> NSObject对象占用多少内存
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/04/11/oc_load_initialize/" rel="next" title="Objective-C 中的load和initialize">
+      Objective-C 中的load和initialize <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%86%E7%B1%BB"><span class="nav-number">1.</span> <span class="nav-text">一、对象的分类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#instance%E5%AF%B9%E8%B1%A1"><span class="nav-number">2.</span> <span class="nav-text">instance对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#class%E5%AF%B9%E8%B1%A1"><span class="nav-number">3.</span> <span class="nav-text">class对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#meta-class%E5%AF%B9%E8%B1%A1"><span class="nav-number">4.</span> <span class="nav-text">meta-class对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E7%B1%BB%E5%8F%8A%E7%9B%B8%E5%BA%94meta-class%E7%B1%BB%E7%9A%84%E7%BB%A7%E6%89%BF%E4%BD%93%E7%B3%BB"><span class="nav-number">5.</span> <span class="nav-text">二、类及相应meta-class类的继承体系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E8%B7%B5"><span class="nav-number">6.</span> <span class="nav-text">三、实践</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%9E%E8%B7%B5%E4%B8%80"><span class="nav-number">6.1.</span> <span class="nav-text">实践一</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%9E%E8%B7%B5%E4%BA%8C"><span class="nav-number">6.2.</span> <span class="nav-text">实践二</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Dongxuan Zhang"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Dongxuan Zhang</p>
+  <div class="site-description" itemprop="description">程序员的成长之路</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zhangdongxuan" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zhangdongxuan" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Dongxuan Zhang</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://zhangdongxuan.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://zhangdongxuan.com/2021/04/09/Objective-C-%E4%B8%AD%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%86%E7%B1%BB/";
+    this.page.identifier = "2021/04/09/Objective-C-中对象的分类/";
+    this.page.title = "Objective-C 中对象的分类";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://zhangdongxuan.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

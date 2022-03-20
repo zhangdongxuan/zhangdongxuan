@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/lfavicon.ico" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhangdongxuan.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="相比于单模式匹配，多模匹配就是给定多个模式子串，要求在给定文本中找出包含的所有子串。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="多模匹配之AC自动机">
+<meta property="og:url" content="http://zhangdongxuan.com/2021/04/18/Aho-Corasick/index.html">
+<meta property="og:site_name" content="张东轩的博客">
+<meta property="og:description" content="相比于单模式匹配，多模匹配就是给定多个模式子串，要求在给定文本中找出包含的所有子串。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zhangdongxuan.com/images/algorithm/1.png">
+<meta property="og:image" content="http://zhangdongxuan.com/images/algorithm/trie.gif">
+<meta property="og:image" content="http://zhangdongxuan.com/images/algorithm/ac2.gif">
+<meta property="og:image" content="http://zhangdongxuan.com/images/algorithm/ac3.gif">
+<meta property="article:published_time" content="2021-04-18T07:21:25.000Z">
+<meta property="article:modified_time" content="2022-03-02T23:57:31.434Z">
+<meta property="article:author" content="Dongxuan Zhang">
+<meta property="article:tag" content="算法">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zhangdongxuan.com/images/algorithm/1.png">
+
+<link rel="canonical" href="http://zhangdongxuan.com/2021/04/18/Aho-Corasick/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>多模匹配之AC自动机 | 张东轩的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">张东轩的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhangdongxuan.com/2021/04/18/Aho-Corasick/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Dongxuan Zhang">
+      <meta itemprop="description" content="程序员的成长之路">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="张东轩的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          多模匹配之AC自动机
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-04-18 15:21:25" itemprop="dateCreated datePublished" datetime="2021-04-18T15:21:25+08:00">2021-04-18</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-03-03 07:57:31" itemprop="dateModified" datetime="2022-03-03T07:57:31+08:00">2022-03-03</time>
+              </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus：</span>
+    
+    <a title="disqus" href="/2021/04/18/Aho-Corasick/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2021/04/18/Aho-Corasick/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+            <div class="post-description">相比于单模式匹配，多模匹配就是给定多个模式子串，要求在给定文本中找出包含的所有子串。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <img src="/images/algorithm/1.png" width="700"/>
+
+<p><code>根据爱奇艺、优酷、腾讯视频等公布的相关票房数据，整理出了全网网络电影票房分账榜TOP10。</code></p>
+<p>在文本中找出<code>爱奇艺</code>是否存在，这种单个关键词的查找，称为<strong>单模式匹配</strong><br>在文本中找出<code>爱奇艺</code>，<code>优酷</code>，<code>腾讯视频</code>是否存在，这种多个关键词的查找，称为<strong>多模式匹配</strong></p>
+<p>多模匹配常用于关键字过滤、入侵检测、病毒检测、分词等场景；</p>
+<p>常用的多模匹配算法有AC算法和WM算法，这里只介绍AC算法；</p>
+<p>Aho-Corasick算法简称AC算法，通过将模式串预处理为确定有限状态自动机，扫描文本一遍就能结束。其复杂度为O(n)，即与模式串的数量和长度无关。</p>
+<h2 id="AC自动机的构成"><a href="#AC自动机的构成" class="headerlink" title="AC自动机的构成"></a>AC自动机的构成</h2><p>AC 自动机是 以 <strong>Trie 的结构为基础</strong>，结合 <strong>KMP 的思想</strong> 建立的，其由Tire树 + 失配信息所构成。<br>简单来讲建立AC自动机有两个步骤</p>
+<ol>
+<li>基础的 Trie 结构：将所有的模式串构成一棵 Trie。</li>
+<li>KMP 的思想：对 Trie 树上所有的结点构造失配指针。</li>
+</ol>
+<p>以{she, he, hers, his}为模式串，构建AC自动机。</p>
+<h3 id="Trie树的构建"><a href="#Trie树的构建" class="headerlink" title="Trie树的构建"></a>Trie树的构建</h3><p>将 {she, he, hers, his} 模式串建立Trie树，Trie树也成为前缀树或者字典树，形式化地说，于若干个模式串$s_1,s_2…s_n$，将它们构建一棵Trie树后的所有状态的集合记作$Q$。<br><img src="/images/algorithm/trie.gif" width="800"/>这里需要仔细解释一下 Trie 的结点的含义，尽管这很小儿科，但在之后的理解中极其重要。<br>Trie 中的结点表示的是某个模式串的前缀。我们在后文也将其称作状态。一个结点表示一个状态，Trie 的边就是状态的转移。</p>
+<p>其中一个节点的表示代码如下</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">TrieNode</span> &#123;</span><br><span class="line">    <span class="type">bool</span> flag;          <span class="comment">// 表示是否当前节点可以表示为一个词的结束</span></span><br><span class="line">    string keyword;     <span class="comment">// 当当前可以表示为一个词的结束的时候，该节点所表示的关键词</span></span><br><span class="line">    map&lt;<span class="type">char</span>, TrieNode *&gt; next;    <span class="comment">// 该节点可以转移的节点，中文可以使用wchar_t</span></span><br><span class="line">    TrieNode *fail;                <span class="comment">// 当输入字符时没有可转移节点，跳转的节点</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="失配指针"><a href="#失配指针" class="headerlink" title="失配指针"></a>失配指针</h3><p>AC 自动机利用一个 fail 指针来辅助多模式串的匹配。<br>状态$u$的fail指针指向另外一个状态$v$，其中$v \in Q$，且$v$是$u$的最长后缀。<br>fail指针与KMP的next数组相比区别如下</p>
+<p>共同点：</p>
+<blockquote>
+<p>都是在失配的时候用于跳转的信息；<br></p>
+</blockquote>
+<p>不同点：</p>
+<blockquote>
+<ol>
+<li>next 指针求的是最长 Border（即最长的相同前后缀）；</li>
+<li>fail指针则是所有模式串的前缀中匹配当前状态的最长后缀；</li>
+</ol>
+</blockquote>
+<p>因为KMP是对一个模式串做匹配，而AC自动机则对应多个模式串做匹配。</p>
+<p>对{she, he, hers, his} 模式串的Trie树构造失配指针过程如图<br><img src="/images/algorithm/ac2.gif" width="500"/></p>
+<p>1、第一层根节点的fail指针指向自己，即输入<code>≠  &#123;s, h&#125;</code>的时候指向自己；<br><br>2、第二层的1、4的结点的fail指针指向根节点；<br><br>3、对于第三层的2号结点，先找到2号结点的父结点（1）的fail结点(root)，遇到字符h可以转移到4号结点，则将2号结点的fail指针指向4号结点；<br><br>4、对于第三层的5号结点，先找到5号结点的父结点（4）的fail结点(root)，遇到字符e（≠ {s, h}）不能转移，将2号结点的fail指针指向root结点；<br></p>
+<p>具体的init fail代码过程如下</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">init_fail</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    vector&lt;TrieNode *&gt; queue;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 先处理root的孩子结点</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">auto</span> iterator = root_node-&gt;next.<span class="built_in">begin</span>(); iterator != root_node-&gt;next.<span class="built_in">end</span>(); iterator ++) &#123;</span><br><span class="line">        TrieNode *it_node = iterator-&gt;second;</span><br><span class="line">        it_node-&gt;fail = root_node;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">//将root孩子结点入队</span></span><br><span class="line">        queue.<span class="built_in">push_back</span>(it_node);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">while</span> (queue.<span class="built_in">size</span>() != <span class="number">0</span>) &#123;</span><br><span class="line">        TrieNode *node = queue[<span class="number">0</span>];</span><br><span class="line">        queue.<span class="built_in">erase</span>(queue.<span class="built_in">begin</span>());</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 遍历node结点的next孩子结点</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">auto</span> iterator = node-&gt;next.<span class="built_in">begin</span>(); iterator != node-&gt;next.<span class="built_in">end</span>(); iterator ++) &#123;</span><br><span class="line">            <span class="type">char</span> ch = iterator-&gt;first;</span><br><span class="line">            TrieNode *it_node = iterator-&gt;second;</span><br><span class="line">            queue.<span class="built_in">push_back</span>(it_node);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 先指向父结点的fail指针</span></span><br><span class="line">            TrieNode *fail_node = node-&gt;fail;</span><br><span class="line">            <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">                <span class="comment">/* 说明找到了根结点还没有找到，则将fail指针指向根节点 */</span></span><br><span class="line">                <span class="keyword">if</span> (fail_node == <span class="literal">NULL</span>) &#123;</span><br><span class="line">                    it_node-&gt;fail = root_node;</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">if</span> (fail_node-&gt;next.<span class="built_in">count</span>(ch) &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                    <span class="comment">// 如果父结点的fail指针的孩子中有和当前元素ch匹配的孩子结点，说明可以转移，fail指针指向匹配的孩子结点</span></span><br><span class="line">                    it_node-&gt;fail = fail_node-&gt;next[ch];</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="comment">// 如果父结点的fail指针的孩子中，没有和当前元素ch匹配的孩子结点，则说明不能转移，将fail_node指向父结点的fail指针，重复此过程</span></span><br><span class="line">                    fail_node = fail_node-&gt;fail;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="匹配过程"><a href="#匹配过程" class="headerlink" title="匹配过程"></a>匹配过程</h3><img src="/images/algorithm/ac3.gif" width="800"/>
+以模式串 {she, he, hers, his} ，文本“ushers”来简单的对匹配过程借助上图所示进行说明
+
+<p>1、输入字符u ≠ {s, h}，则root结点不进行状态转移；<br><br>2、输入字符s，从root结点转移到状态1结点；<br><br>3、输入字符h，从状态1转移到状态2；<br><br>4、输入字符e，从状态2转移到状态3，3号结点是关键字结束结点，则匹配到模式串<code>she</code>;<br><br>5、输入字符r，状态3无法正常转移，则根据fail指针转移到状态5，5号结点是关键字结束结点，则匹配到模式串<code>he</code>;<br><br>6、5号结点处理输入的r之后，转移到状态6结点；<br>7、输入字符s，从状态6转移到状态7，7号结点是关键字结束结点，则匹配到模式串<code>hers</code>;<br><br>8. 文本输入结束，最终匹配到<code>she、he、hers</code></p>
+<p>如果文本是“ushershis”，状态机在会怎样运行，会匹配到哪些模式串呢？<br>这个留给读者来思考吧。</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/zhangdongxuan/CodeSlice/tree/master/algorithm/Aho%E2%80%93Corasic/Aho%E2%80%93Corasic">点击查看源码</a></p>
+<p><a target="_blank" rel="noopener" href="https://oysz2016.github.io/post/8611e6fb.html">如何在博客中使用数学符号</a><br><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/7ab21c7f0674">在Hexo中渲染MathJax数学公式</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E7%AE%97%E6%B3%95/" rel="tag"># 算法</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/04/17/%E6%B5%85%E8%B0%88Trie%E6%A0%91/" rel="prev" title="浅谈Trie树">
+      <i class="fa fa-chevron-left"></i> 浅谈Trie树
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/04/27/doublearraytire/" rel="next" title="基于Double Array Tire的AC自动机">
+      基于Double Array Tire的AC自动机 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#AC%E8%87%AA%E5%8A%A8%E6%9C%BA%E7%9A%84%E6%9E%84%E6%88%90"><span class="nav-number">1.</span> <span class="nav-text">AC自动机的构成</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Trie%E6%A0%91%E7%9A%84%E6%9E%84%E5%BB%BA"><span class="nav-number">1.1.</span> <span class="nav-text">Trie树的构建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%B1%E9%85%8D%E6%8C%87%E9%92%88"><span class="nav-number">1.2.</span> <span class="nav-text">失配指针</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8C%B9%E9%85%8D%E8%BF%87%E7%A8%8B"><span class="nav-number">1.3.</span> <span class="nav-text">匹配过程</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Dongxuan Zhang"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Dongxuan Zhang</p>
+  <div class="site-description" itemprop="description">程序员的成长之路</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zhangdongxuan" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zhangdongxuan" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Dongxuan Zhang</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://zhangdongxuan.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://zhangdongxuan.com/2021/04/18/Aho-Corasick/";
+    this.page.identifier = "2021/04/18/Aho-Corasick/";
+    this.page.title = "多模匹配之AC自动机";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://zhangdongxuan.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

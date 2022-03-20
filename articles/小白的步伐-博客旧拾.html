@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/lfavicon.ico" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhangdongxuan.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="之前有自己买过服务器搭建博客的，但是由于经费问题，不得不将博客迁到github上了，但是以前写的东西自己感觉扔了还是蛮可惜的，所以将生成的静态网页放在了七牛上。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="小白的步伐-博客旧拾">
+<meta property="og:url" content="http://zhangdongxuan.com/articles/%E5%B0%8F%E7%99%BD%E7%9A%84%E6%AD%A5%E4%BC%90-%E5%8D%9A%E5%AE%A2%E6%97%A7%E6%8B%BE.html">
+<meta property="og:site_name" content="张东轩的博客">
+<meta property="og:description" content="之前有自己买过服务器搭建博客的，但是由于经费问题，不得不将博客迁到github上了，但是以前写的东西自己感觉扔了还是蛮可惜的，所以将生成的静态网页放在了七牛上。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2016-08-08T16:26:13.000Z">
+<meta property="article:modified_time" content="2022-03-02T23:57:31.439Z">
+<meta property="article:author" content="Dongxuan Zhang">
+<meta property="article:tag" content="大杂烩">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zhangdongxuan.com/articles/%E5%B0%8F%E7%99%BD%E7%9A%84%E6%AD%A5%E4%BC%90-%E5%8D%9A%E5%AE%A2%E6%97%A7%E6%8B%BE">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : false,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>小白的步伐-博客旧拾 | 张东轩的博客
+</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">张东轩的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+  
+  
+
+          <div class="content page posts-expand">
+            
+
+    
+    
+    
+    <div class="post-block" lang="zh-CN">
+      <header class="post-header">
+
+<h1 class="post-title" itemprop="name headline">小白的步伐-博客旧拾
+</h1>
+
+<div class="post-meta">
+    <div class="post-description">之前有自己买过服务器搭建博客的，但是由于经费问题，不得不将博客迁到github上了，但是以前写的东西自己感觉扔了还是蛮可惜的，所以将生成的静态网页放在了七牛上。</div>
+  
+
+</div>
+
+</header>
+
+      
+      
+      
+      <div class="post-body">
+          <p>之前有自己买过服务器搭建博客的，但是由于经费问题，不得不将博客迁到github上了，但是以前写的东西自己感觉扔了还是蛮可惜的，所以将生成的静态网页放在了七牛上。</p>
+<p><a href="/articles/About%20Me.html">About Me</a></p>
+<p><a href="/articles/C%E8%AF%AD%E8%A8%80%E4%B8%AD%E7%9A%84%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B.html">C语言中的数据类型</a></p>
+<p><a href="/articles/C%E4%B8%AD%E7%9A%84%E6%9E%9A%E4%B8%BE%E7%B1%BB%E5%9E%8B%20.html">C中的枚举类型</a> </p>
+<p><a href="/articles/C%E6%8C%87%E9%92%88%E5%92%8C%E5%AD%97%E7%AC%A6%E4%B8%B2.html">C指针和字符串</a></p>
+<p><a href="/articles/C%E6%8C%87%E9%92%88%E5%92%8C%E7%BB%93%E6%9E%84%E4%BD%93.html">C指针和结构体</a></p>
+<p><a href="/articles/C%E6%8C%87%E9%92%88%E5%92%8C%E6%95%B0%E7%BB%84.html">C指针和数组</a></p>
+<p><a href="/articles/C%E6%8C%87%E9%92%88%E5%92%8C%E7%BB%93%E6%9E%84%E4%BD%93.html">C指针和函数</a></p>
+<p><a href="/articles/C%E8%AF%AD%E8%A8%80%E9%A2%84%E5%A4%84%E7%90%86%E4%B9%8B%E6%9D%A1%E4%BB%B6%E5%8C%85%E5%90%AB.html">C语言预处理之宏定义</a></p>
+<p><a href="/articles/C%E8%AF%AD%E8%A8%80%E4%B8%AD%E7%9A%84typedef.html">C语言中的typedef</a></p>
+<p><a href="/articles/C%E8%AF%AD%E8%A8%80%E9%A2%84%E5%A4%84%E7%90%86%E4%B9%8B%E6%9D%A1%E4%BB%B6%E5%8C%85%E5%90%AB.html">C语言预处理之条件包含</a></p>
+<p><a href="/articles/Objective-C%E5%90%AF%E7%A8%8B.html">Objective-C启程</a></p>
+<p><a href="/articles/Objective%20C%E4%B9%8B%E7%AC%AC%E4%B8%80%E4%B8%AA%E7%B1%BB.html">Objective C之第一个类</a></p>
+<p><a href="/articles/iOS.html">iOS</a></p>
+<p><a href="/articles/iOS%E9%A1%B5%E9%9D%A2%E4%B9%8B%E9%97%B4%E7%9A%84%E8%B7%B3%E8%BD%AC%E4%B9%8B%E4%B8%80.html">iOS页面之间的跳转之一</a></p>
+<p><a href="/articles/iOS%E4%B8%AD%E5%B0%86%E5%9B%BE%E7%89%87%E4%BD%9C%E4%B8%BAUIView%E8%83%8C%E6%99%AF%E7%9A%84%E4%B8%A4%E7%A7%8D%E6%96%B9%E5%BC%8F.html">iOS中将图片作为UIView背景的两种方式</a></p>
+<p><a href="/articles/iOS%20%E7%BB%98%E5%88%B6%E6%B8%90%E5%8F%98.html">iOS 绘制渐变</a></p>
+<p><a href="/articles/iOS%E7%BB%98%E5%88%B6%E9%98%B4%E5%BD%B1.html">iOS绘制阴影</a></p>
+<p><a href="/articles/iOS%E4%B8%AD%E5%85%B3%E4%BA%8EUIButton%E4%BB%A5%E5%8F%8A%E5%85%B6%E7%82%B9%E5%87%BB%E4%BA%8B%E4%BB%B6%E7%9A%84%E7%AE%80%E5%8D%95%E6%80%BB%E7%BB%93.html">iOS中关于UIButton以及其点击事件的简单总结</a></p>
+<p><a href="/articles/iOS%E7%BB%84%E5%BB%BAUIScrollView%20%E7%9A%84%E7%AE%80%E5%8D%95%E4%BB%8B%E7%BB%8D.html">iOS组建UIScrollView 的简单介绍</a></p>
+<p><a href="/articles/%E5%85%B3%E4%BA%8EiOS%E5%BB%B6%E8%BF%9F%E6%96%B9%E6%B3%95performSelector.html">关于iOS延迟方法performSelector: withObject:afterDelay:的总结</a></p>
+<p><a href="/articles/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D--%E5%9F%BA%E4%BA%8E%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%8C%B9%E9%85%8D%E7%9A%84%E5%88%86%E8%AF%8D%E6%96%B9%E6%B3%95.html">中文分词–基于字符串匹配的分词方法</a></p>
+
+      </div>
+      
+      
+      
+    </div>
+    
+
+    
+    
+    
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Dongxuan Zhang"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Dongxuan Zhang</p>
+  <div class="site-description" itemprop="description">程序员的成长之路</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zhangdongxuan" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zhangdongxuan" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Dongxuan Zhang</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://zhangdongxuan.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://zhangdongxuan.com/articles/%E5%B0%8F%E7%99%BD%E7%9A%84%E6%AD%A5%E4%BC%90-%E5%8D%9A%E5%AE%A2%E6%97%A7%E6%8B%BE.html";
+    this.page.identifier = "articles/小白的步伐-博客旧拾.html";
+    this.page.title = "小白的步伐-博客旧拾";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://zhangdongxuan.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

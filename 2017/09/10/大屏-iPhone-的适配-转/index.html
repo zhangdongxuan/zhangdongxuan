@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/lfavicon.ico" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhangdongxuan.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="自从苹果出了大屏 iPhone 后，iOS 开发也要做适配了，想必 Android 程序员正在偷着乐呢 , 这里大概总结下这几天了解到的大屏适配的注意事项。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="大屏 iPhone 的适配[转]">
+<meta property="og:url" content="http://zhangdongxuan.com/2017/09/10/%E5%A4%A7%E5%B1%8F-iPhone-%E7%9A%84%E9%80%82%E9%85%8D-%E8%BD%AC/index.html">
+<meta property="og:site_name" content="张东轩的博客">
+<meta property="og:description" content="自从苹果出了大屏 iPhone 后，iOS 开发也要做适配了，想必 Android 程序员正在偷着乐呢 , 这里大概总结下这几天了解到的大屏适配的注意事项。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.ibireme.com/wp-content/uploads/2014/09/LaunchFile.png">
+<meta property="og:image" content="https://blog.ibireme.com/wp-content/uploads/2014/09/DownScale.png">
+<meta property="og:image" content="http://zhangdongxuan.com/images/SIZE.jpg">
+<meta property="article:published_time" content="2017-09-10T10:15:36.000Z">
+<meta property="article:modified_time" content="2022-03-02T23:57:31.436Z">
+<meta property="article:author" content="Dongxuan Zhang">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.ibireme.com/wp-content/uploads/2014/09/LaunchFile.png">
+
+<link rel="canonical" href="http://zhangdongxuan.com/2017/09/10/%E5%A4%A7%E5%B1%8F-iPhone-%E7%9A%84%E9%80%82%E9%85%8D-%E8%BD%AC/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>大屏 iPhone 的适配[转] | 张东轩的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">张东轩的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhangdongxuan.com/2017/09/10/%E5%A4%A7%E5%B1%8F-iPhone-%E7%9A%84%E9%80%82%E9%85%8D-%E8%BD%AC/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Dongxuan Zhang">
+      <meta itemprop="description" content="程序员的成长之路">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="张东轩的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          大屏 iPhone 的适配[转]
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-09-10 18:15:36" itemprop="dateCreated datePublished" datetime="2017-09-10T18:15:36+08:00">2017-09-10</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-03-03 07:57:31" itemprop="dateModified" datetime="2022-03-03T07:57:31+08:00">2022-03-03</time>
+              </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus：</span>
+    
+    <a title="disqus" href="/2017/09/10/%E5%A4%A7%E5%B1%8F-iPhone-%E7%9A%84%E9%80%82%E9%85%8D-%E8%BD%AC/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2017/09/10/大屏-iPhone-的适配-转/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+            <div class="post-description">自从苹果出了大屏 iPhone 后，iOS 开发也要做适配了，想必 Android 程序员正在偷着乐呢 , 这里大概总结下这几天了解到的大屏适配的注意事项。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>自从苹果出了大屏 iPhone 后，iOS 开发也要做适配了，想必 Android 程序员正在偷着乐呢 , 这里大概总结下这几天了解到的大屏适配的注意事项。</p>
+<h3 id="启用高分辨率模式"><a href="#启用高分辨率模式" class="headerlink" title="启用高分辨率模式"></a>启用高分辨率模式</h3><p>从 Xcode6 GM 版本开始，模拟器新增了 iPhone6 和 iPhone6 Plus 两种，如果旧的工程直接跑到这两个模拟器中时，默认是”兼容模式”，即系统会简单的把内容等比例放大，显示效果有些模糊但尚可接受。此时 App 内部获取到的设备分辨率和 iPhone5 是一样的：320*568 point。</p>
+<p>启用高分辨率模式有2个方法(目前我能找到的)：</p>
+<p>1.添加大屏的 LaunchImage:<br>在 Images.xcassets 里，新建或更改 LaunchImage 组，添加对应高分辨率的图片。对此，这里有一篇更详细的图文介绍：<a target="_blank" rel="noopener" href="http://matthewpalmer.net/blog/2014/09/10/iphone-6-plus-launch-image-adaptive-mode/">How to Add a Launch Image for the iPhone 6</a>。如果想要快速测试一下新的效果，<a target="_blank" rel="noopener" href="https://blog.ibireme.com/wp-content/uploads/2014/09/iPhone6LaunchBlanks.zip">这里</a>有3张示例图片下载。</p>
+<p>2.添加 Launch Screen File<br>Launch Screen 是 Xcode6 和 iOS8 新加的功能，它用一个 xib 文件来作为启动画面。App 在旧版 iOS 启动时，该属性会被自动忽略，不会造成异常。<br>首先，点击 New File -&gt;iOS User Interface -&gt;Launch Screen，然后在工程设置项里启用它：<br><img src="https://blog.ibireme.com/wp-content/uploads/2014/09/LaunchFile.png"><br>上面两处设置，只要启用任意一个即可让 App 进入高分辨率模式；但如果两处都没有设置，则 App 会回退到兼容模式。鉴于现在不少 App 还需要兼容 iOS5，而第一种方法在 iOS5 上据说可能有<a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/19220082/support-of-ios-5-0-icons-with-xcode-5">bug</a>，所以这里推荐用第二种方法。</p>
+<p>资源的显示<br>一图胜千言，首先这里是一个完整的图表：  <a target="_blank" rel="noopener" href="http://www.paintcodeapp.com/news/ultimate-guide-to-iphone-resolutions">http://www.paintcodeapp.com/news/ultimate-guide-to-iphone-resolutions</a>。</p>
+<p>简单的说：iPhone4、iPhone5、iPhone6 这几个设备的 ppi 都是相同的，默认图片优先是 @2x。iPhone6 Plus 的像素密度更高，默认图片优先是 @3x。</p>
+<p>另外，iPhone6 Plus 有一点和其他设备不同：在 App 内部获得的屏幕分辨率是 1242<em>2208，但设备实际分辨率是 1920</em>1080，这时系统会把整体的显示内容做一个缩放，downscale 到1&#x2F;1.15。这个特性在 OSX 上也有出现过：<br><img src="https://blog.ibireme.com/wp-content/uploads/2014/09/DownScale.png"></p>
+<BR>
+
+<p>下面列举一些可能有用的数据：<br><img src="/images/SIZE.jpg"></p>
+<p>note:转自:<a target="_blank" rel="noopener" href="https://blog.ibireme.com/2014/09/16/adapted_to_iphone6/#more-41560">大屏 iPhone 的适配</a> From ibireme</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/09/05/iOS-%E5%9B%BE%E7%89%87%E5%8E%8B%E7%BC%A9/" rel="prev" title="iOS 图片压缩">
+      <i class="fa fa-chevron-left"></i> iOS 图片压缩
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/09/26/NSAutoreleasePool%E5%88%86%E6%9E%90/" rel="next" title="NSAutoreleasePool分析">
+      NSAutoreleasePool分析 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%AF%E7%94%A8%E9%AB%98%E5%88%86%E8%BE%A8%E7%8E%87%E6%A8%A1%E5%BC%8F"><span class="nav-number">1.</span> <span class="nav-text">启用高分辨率模式</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Dongxuan Zhang"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Dongxuan Zhang</p>
+  <div class="site-description" itemprop="description">程序员的成长之路</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zhangdongxuan" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zhangdongxuan" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Dongxuan Zhang</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<script>
+document.querySelectorAll('.pdfobject-container').forEach(element => {
+  let url = element.dataset.target;
+  let pdfOpenParams = {
+    navpanes : 0,
+    toolbar  : 0,
+    statusbar: 0,
+    pagemode : 'thumbs',
+    view     : 'FitH'
+  };
+  let pdfOpenFragment = '#' + Object.entries(pdfOpenParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
+  let fullURL = `/lib/pdf/web/viewer.html?file=${encodeURIComponent(url)}${pdfOpenFragment}`;
+
+  if (NexT.utils.supportsPDFs()) {
+    element.innerHTML = `<embed class="pdfobject" src="${url + pdfOpenFragment}" type="application/pdf" style="height: ${element.dataset.height};">`;
+  } else {
+    element.innerHTML = `<iframe src="${fullURL}" style="height: ${element.dataset.height};" frameborder="0"></iframe>`;
+  }
+});
+</script>
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://zhangdongxuan.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://zhangdongxuan.com/2017/09/10/%E5%A4%A7%E5%B1%8F-iPhone-%E7%9A%84%E9%80%82%E9%85%8D-%E8%BD%AC/";
+    this.page.identifier = "2017/09/10/大屏-iPhone-的适配-转/";
+    this.page.title = "大屏 iPhone 的适配[转]";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://zhangdongxuan.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>
