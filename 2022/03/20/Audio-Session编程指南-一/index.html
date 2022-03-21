@@ -28,8 +28,10 @@
 <meta property="og:description" content="Audio 是被iOS系统接管的服务，系统通过Audio Session管理了第三方App、系统内置App以及设备级别的音频行为。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://zhangdongxuan.com/images/audio/AudioSession_1.png">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/multiroute_output_2x.png">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/background_modes.png">
 <meta property="article:published_time" content="2022-03-20T04:01:12.000Z">
-<meta property="article:modified_time" content="2022-03-21T03:35:22.001Z">
+<meta property="article:modified_time" content="2022-03-21T11:18:50.464Z">
 <meta property="article:author" content="Dongxuan Zhang">
 <meta property="article:tag" content="音视频">
 <meta name="twitter:card" content="summary">
@@ -189,7 +191,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-03-21 11:35:22" itemprop="dateModified" datetime="2022-03-21T11:35:22+08:00">2022-03-21</time>
+                <time title="修改时间：2022-03-21 19:18:50" itemprop="dateModified" datetime="2022-03-21T19:18:50+08:00">2022-03-21</time>
               </span>
 
           
@@ -218,18 +220,18 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>Audio 是被iOS系统接管的服务，系统通过Audio Session管理了第三方App、系统内置App以及设备级别的音频行为。</p>
+        <h2 id="一、介绍"><a href="#一、介绍" class="headerlink" title="一、介绍"></a>一、介绍</h2><p>Audio 是被iOS系统接管的服务，系统通过Audio Session管理了第三方App、系统内置App以及设备级别的音频行为。</p>
 <img src="/images/audio/AudioSession_1.png" width="600"/>
 
 <p>你可以通过Audio Session告诉系统你想在你的App中怎样使用音频，Audio Session扮演了Application与操作系统或者说是底层音频硬件之间的中介者，这样在和音频硬件进行互动时就不用进行详细的配置说明，将这些细节由Audio Session管理可以可以确保音频的使用体验。</p>
-<h2 id="概要"><a href="#概要" class="headerlink" title="概要"></a>概要</h2><p> 我们使用AVAudioSession实例来和App的audio session来进行交互，</p>
+<h2 id="二、概要"><a href="#二、概要" class="headerlink" title="二、概要"></a>二、概要</h2><p> 我们使用AVAudioSession实例来和App的audio session来进行交互，</p>
 <ul>
 <li>配置audio session的 category and mode 来告诉系统你的App打算如何使用音频；</li>
 <li>激活App的audio session从而使得category and mode生效；</li>
 <li>订阅audio session的notifications，并对audio interruptions 和 route changes事件作出响应；</li>
 <li>执行高级的音频设配配置，例如设置采样率、 I&#x2F;O buffer duration 和 声道数；</li>
 </ul>
-<h2 id="Category"><a href="#Category" class="headerlink" title="Category"></a>Category</h2><p> audio session category 是代表音频行为的主要机制，通过设置category可以设置App用是输入还是输出路由，并且可以设置在播放音频的同时是否同时播放其他App的音乐。<br>AVFoundation定义了一系列的audio session categories，不同的categories分别可以支持playback、recording、playback with recording。</p>
+<h2 id="三、Category"><a href="#三、Category" class="headerlink" title="三、Category"></a>三、Category</h2><p> audio session category 是代表音频行为的主要机制，通过设置category可以设置App用是输入还是输出路由，并且可以设置在播放音频的同时是否同时播放其他App的音乐。<br>AVFoundation定义了一系列的audio session categories，不同的categories分别可以支持playback、recording、playback with recording。</p>
 <p>Audio Session Category 的表现行为</p>
 <table>
 <thead>
@@ -285,30 +287,39 @@
 </tbody></table>
 <p>总结各种Category的特点</p>
 <ul>
-<li>AVAudioSessionCategoryAmbient<blockquote>
+<li><p>AVAudioSessionCategoryAmbient</p>
+<blockquote>
 <p><font size=3> Ambient中文意思是四周的，环绕的，只用于播放，并且可以和其他App音频的音频一起播放，例如可以玩游戏的同时听其他App播放的音乐。跟随静音键和锁屏静音。</font></p>
 </blockquote>
 </li>
-<li>AVAudioSessionCategorySoloAmbient<blockquote>
+<li><p>AVAudioSessionCategorySoloAmbient</p>
+<blockquote>
 <p><font size=3> Solo中文意思是独奏，独唱的，也是只用于播放，但是不能和其他App音频的音频一起播放。跟随静音键和锁屏静音。</font></p>
 </blockquote>
 </li>
-<li>AVAudioSessionCategoryPlayback<blockquote>
+<li><p>AVAudioSessionCategoryPlayback</p>
+<blockquote>
 <p><font size=3>只用于播放，不能和其他App一起播放，不跟随锁屏或者静音键，同时可以在退后台的时候继续播放。像QQ音乐，会使用这种模式</font></p>
 </blockquote>
 </li>
-<li>AVAudioSessionCategoryRecord<blockquote>
+<li><p>AVAudioSessionCategoryRecord</p>
+<blockquote>
 <p><font size=3>只用于录音，启动时会打断其他App的音频</font></p>
 </blockquote>
 </li>
-<li>AVAudioSessionCategoryPlayAndRecord<blockquote>
+<li><p>AVAudioSessionCategoryPlayAndRecord</p>
+<blockquote>
 <p><font size=3>只用于录音和播放，比如在微信VOIP语音通话场景，自己既需要录音，也需要播放其他人的声音</font></p>
 </blockquote>
 </li>
-</ul>
-<p>另外为了让自己的App可以在锁屏或者静音键打开的情况下继续播放音频，需要在Info.plist文件的<code>UIBackgroundModes</code>中加入<code>audio</code>。<br>官方建议在更改audio session的category或者其他的audio session的属性前，最好的audio session进行deactivate，这样可以避免在这些改变导致audio系统进行不必要的重新配置。</p>
+<li><p>AVAudioSessionCategoryMultiRoute</p>
 <blockquote>
+<p><img src="/images/audio/multiroute_output_2x.png" width="260"/>其他的Category都是使用最后一个接入的设备作为输入输出的源，MultiRoute可以使用所有的接入设备作为输出源，例如可以将声音同时输出到耳机和HDMI设备；支持的组合如下:<br>USB and headphones、HDMI and headphones、LineOut and headphones，另外只支持一个录音设备的接入；</p>
 </blockquote>
+</li>
+</ul>
+<h2 id="四、提示"><a href="#四、提示" class="headerlink" title="四、提示"></a>四、提示</h2><h5 id="后台播放"><a href="#后台播放" class="headerlink" title="后台播放"></a>后台播放</h5><p>为了让自己的App可以在锁屏、静音键打开、退后台、画中画的情况下继续播放音频，或<br>需要在Info.plist文件的<code>UIBackgroundModes</code>中加入<code>audio</code>或者项目的配置页中Background Modes中的“Audio, AirPlay, and Picture in Picture”选项打开<br><img src="/images/audio/background_modes.png" width="500"/></p>
+<h5 id="category切换"><a href="#category切换" class="headerlink" title="category切换"></a>category切换</h5><p>官方建议在更改audio session的category或者其他的audio session的属性前，最好将audio session进行deactivate，这样可以避免audio系统在category等配置改变的时候进行不必要的重新配置。</p>
 
     </div>
 
@@ -399,7 +410,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%A6%81"><span class="nav-number">2.</span> <span class="nav-text">概要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Category"><span class="nav-number">3.</span> <span class="nav-text">Category</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">一、介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%A6%82%E8%A6%81"><span class="nav-number">2.</span> <span class="nav-text">二、概要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81Category"><span class="nav-number">3.</span> <span class="nav-text">三、Category</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E6%8F%90%E7%A4%BA"><span class="nav-number">4.</span> <span class="nav-text">四、提示</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%90%8E%E5%8F%B0%E6%92%AD%E6%94%BE"><span class="nav-number">4.0.0.1.</span> <span class="nav-text">后台播放</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#category%E5%88%87%E6%8D%A2"><span class="nav-number">4.0.0.2.</span> <span class="nav-text">category切换</span></a></li></ol></li></ol></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
