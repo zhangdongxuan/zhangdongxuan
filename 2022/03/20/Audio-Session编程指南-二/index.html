@@ -20,22 +20,20 @@
     var CONFIG = {"hostname":"zhangdongxuan.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="Audio 是被iOS系统接管的服务，系统通过Audio Session管理了第三方App、系统内置App以及设备级别的音频行为。">
+  <meta name="description" content="系统会为App预先配置audio session的行为">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Audio Session编程指南(一)">
-<meta property="og:url" content="http://zhangdongxuan.com/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-md/index.html">
+<meta property="og:title" content="Audio Session编程指南(二)">
+<meta property="og:url" content="http://zhangdongxuan.com/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-%E4%BA%8C/index.html">
 <meta property="og:site_name" content="张东轩的博客">
-<meta property="og:description" content="Audio 是被iOS系统接管的服务，系统通过Audio Session管理了第三方App、系统内置App以及设备级别的音频行为。">
+<meta property="og:description" content="系统会为App预先配置audio session的行为">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://zhangdongxuan.com/images/audio/AudioSession_1.png">
-<meta property="article:published_time" content="2022-03-20T04:01:12.000Z">
-<meta property="article:modified_time" content="2022-03-20T13:26:11.869Z">
+<meta property="article:published_time" content="2022-03-20T13:38:10.000Z">
+<meta property="article:modified_time" content="2022-03-21T02:48:44.580Z">
 <meta property="article:author" content="Dongxuan Zhang">
 <meta property="article:tag" content="音视频">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://zhangdongxuan.com/images/audio/AudioSession_1.png">
 
-<link rel="canonical" href="http://zhangdongxuan.com/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-md/">
+<link rel="canonical" href="http://zhangdongxuan.com/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-%E4%BA%8C/">
 
 
 <script id="page-configurations">
@@ -48,7 +46,7 @@
   };
 </script>
 
-  <title>Audio Session编程指南(一) | 张东轩的博客</title>
+  <title>Audio Session编程指南(二) | 张东轩的博客</title>
   
 
 
@@ -159,7 +157,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://zhangdongxuan.com/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-md/">
+    <link itemprop="mainEntityOfPage" href="http://zhangdongxuan.com/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-%E4%BA%8C/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -172,7 +170,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Audio Session编程指南(一)
+          Audio Session编程指南(二)
         </h1>
 
         <div class="post-meta">
@@ -181,10 +179,16 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2022-03-20 12:01:12 / 修改时间：21:26:11" itemprop="dateCreated datePublished" datetime="2022-03-20T12:01:12+08:00">2022-03-20</time>
+              <time title="创建时间：2022-03-20 21:38:10" itemprop="dateCreated datePublished" datetime="2022-03-20T21:38:10+08:00">2022-03-20</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-03-21 10:48:44" itemprop="dateModified" datetime="2022-03-21T10:48:44+08:00">2022-03-21</time>
+              </span>
 
           
   
@@ -195,13 +199,13 @@
       </span>
       <span class="post-meta-item-text">Disqus：</span>
     
-    <a title="disqus" href="/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-md/#disqus_thread" itemprop="discussionUrl">
-      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2022/03/20/Audio-Session编程指南-md/" itemprop="commentCount"></span>
+    <a title="disqus" href="/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-%E4%BA%8C/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2022/03/20/Audio-Session编程指南-二/" itemprop="commentCount"></span>
     </a>
   </span>
   
   
-            <div class="post-description">Audio 是被iOS系统接管的服务，系统通过Audio Session管理了第三方App、系统内置App以及设备级别的音频行为。</div>
+            <div class="post-description">系统会为App预先配置audio session的行为</div>
 
         </div>
       </header>
@@ -212,72 +216,13 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>Audio 是被iOS系统接管的服务，系统通过Audio Session管理了第三方App、系统内置App以及设备级别的音频行为。</p>
-<img src="/images/audio/AudioSession_1.png" width="600"/>
-
-<p>你可以通过Audio Session告诉系统你想在你的App中怎样使用音频，Audio Session扮演了Application与操作系统或者说是底层音频硬件之间的中介者，这样在和音频硬件进行互动时就不用进行详细的配置说明，将这些细节由Audio Session管理可以可以确保音频的使用体验。</p>
-<h2 id="概要"><a href="#概要" class="headerlink" title="概要"></a>概要</h2><p> 我们使用AVAudioSession实例来和App的audio session来进行交互，</p>
-<ul>
-<li>配置audio session的 category and mode 来告诉系统你的App打算如何使用音频；</li>
-<li>激活App的audio session从而使得category and mode生效；</li>
-<li>订阅audio session的notifications，并对audio interruptions 和 route changes事件作出响应；</li>
-<li>执行高级的音频设配配置，例如设置采样率、 I&#x2F;O buffer duration 和 声道数；</li>
+        <h2 id="Audio-Session的默认行为"><a href="#Audio-Session的默认行为" class="headerlink" title="Audio Session的默认行为"></a>Audio Session的默认行为</h2><ul>
+<li>可以播放，但不能进行录制；</li>
+<li>静音开关设置为静音模式的时候，这个App的任何的音频播放都会被设置为静音；</li>
+<li>当设备锁屏时，这个app的音频会被静音；</li>
+<li>当App播放音频时，其他在后台播放的音频都会被静音；</li>
 </ul>
-<h2 id="Category"><a href="#Category" class="headerlink" title="Category"></a>Category</h2><p> audio session category 是代表音频行为的主要机制，通过设置category可以设置App用是输入还是输出路由，并且可以设置在播放音频的同时是否同时播放其他App的音乐。<br>AVFoundation定义了一系列的audio session categories，不同的categories分别可以支持playback、recording、playback with recording。</p>
-<p>Audio Session Category的表现行为</p>
-<table>
-<thead>
-<tr>
-<th align="left">Category</th>
-<th align="left">是否遵循静音键<br>OR锁屏</th>
-<th align="right">是否打断其他App</th>
-<th align="right">要求输入或输出</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">AVAudioSessionCategoryAmbient</td>
-<td align="left">Yes</td>
-<td align="right">No(混音播放)</td>
-<td align="right">Output only</td>
-</tr>
-<tr>
-<td align="left">AVAudioSessionCategorySoloAmbient</td>
-<td align="left">Yes</td>
-<td align="right">YES(独占播放)</td>
-<td align="right">Output only</td>
-</tr>
-<tr>
-<td align="left">AVAudioSessionCategoryPlayback</td>
-<td align="left">NO</td>
-<td align="right">Yes(独占播放，可后台播放)<br>NO(override switch)</td>
-<td align="right">Output only</td>
-</tr>
-<tr>
-<td align="left">AVAudioSessionCategoryRecord</td>
-<td align="left">NO<br>(锁屏录音继续)</td>
-<td align="right">YES(录音模式)</td>
-<td align="right">Input only</td>
-</tr>
-<tr>
-<td align="left">AVAudioSessionCategoryPlayAndRecord</td>
-<td align="left">No</td>
-<td align="right">Yes(播放和录音，可录音可播放)<br>NO(override switch)</td>
-<td align="right">Input and output</td>
-</tr>
-<tr>
-<td align="left">AVAudioSessionCategoryMultiRoute</td>
-<td align="left">No</td>
-<td align="right">Yes(多种输入输出，<br>例如可以耳机、USB设备同时播放)</td>
-<td align="right">Input and output</td>
-</tr>
-<tr>
-<td align="left">AVAudioSessionCategoryAudioProcessing</td>
-<td align="left">No</td>
-<td align="right">Yes(硬件解码音频，<br>此时不能播放和录制)</td>
-<td align="right">Input and output</td>
-</tr>
-</tbody></table>
-<p>另外为了让自己的App可以在锁屏或者静音键打开的情况下继续播放音频，需要在Info.plist文件的<code>UIBackgroundModes</code>中加入<code>audio</code>。<br>官方建议在更改audio session的category或者其他的audio session的属性前，最好的audio session进行deactivate，这样可以避免在这些改变导致audio系统进行不必要的重新配置。</p>
+<h2 id="配置Audio-Session"><a href="#配置Audio-Session" class="headerlink" title="配置Audio Session"></a>配置Audio Session</h2><p>在categories设置了Audio最基本的行为的同时，可以通过设置category的mode更进一步的设置Audio的行为。例如拥有Voice over IP (VoIP)功能的App，它会在使用<code>AVAudioSessionCategoryPlayAndRecord</code>的同时，将Audio Session的mode也设置为<code>AVAudioSessionModeVoiceChat</code>，这样可以通过系统级别的数字信号处理使音频信号得到提升。<br>某些categories支持使用设置options重写category默认的Audio行为，举例来讲，Category为<code>AVAudioSessionCategoryPlayback</code>的Audio Session 在active的时候，会打断系统其他的Audio，大多数场景我们都需要这样的表现，但是如果想和系统其他音频进行混播，可以通过设置Category的options为<code>AVAudioSessionCategoryOptionMixWithOthers</code>来进行实现。</p>
 
     </div>
 
@@ -296,8 +241,8 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2021/04/27/doublearraytire/" rel="prev" title="基于Double Array Tire的AC自动机">
-      <i class="fa fa-chevron-left"></i> 基于Double Array Tire的AC自动机
+    <a href="/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-%E4%B8%80/" rel="prev" title="Audio Session编程指南(一)">
+      <i class="fa fa-chevron-left"></i> Audio Session编程指南(一)
     </a></div>
       <div class="post-nav-item"></div>
     </div>
@@ -365,7 +310,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%A6%81"><span class="nav-number">2.</span> <span class="nav-text">概要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Category"><span class="nav-number">3.</span> <span class="nav-text">Category</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Audio-Session%E7%9A%84%E9%BB%98%E8%AE%A4%E8%A1%8C%E4%B8%BA"><span class="nav-number">1.</span> <span class="nav-text">Audio Session的默认行为</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEAudio-Session"><span class="nav-number">2.</span> <span class="nav-text">配置Audio Session</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -381,7 +326,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-count">21</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -518,9 +463,9 @@ document.querySelectorAll('.pdfobject-container').forEach(element => {
 </script>
 <script>
   var disqus_config = function() {
-    this.page.url = "http://zhangdongxuan.com/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-md/";
-    this.page.identifier = "2022/03/20/Audio-Session编程指南-md/";
-    this.page.title = "Audio Session编程指南(一)";
+    this.page.url = "http://zhangdongxuan.com/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-%E4%BA%8C/";
+    this.page.identifier = "2022/03/20/Audio-Session编程指南-二/";
+    this.page.title = "Audio Session编程指南(二)";
     };
   NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
     if (window.DISQUS) {

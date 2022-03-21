@@ -30,7 +30,7 @@
 <meta property="og:image" content="http://zhangdongxuan.com/images/old/Observer.png">
 <meta property="og:image" content="http://zhangdongxuan.com/images/old/result.png">
 <meta property="article:published_time" content="2016-08-06T08:45:16.000Z">
-<meta property="article:modified_time" content="2022-03-02T23:57:31.435Z">
+<meta property="article:modified_time" content="2022-03-21T02:17:36.306Z">
 <meta property="article:author" content="Dongxuan Zhang">
 <meta property="article:tag" content="设计模式">
 <meta name="twitter:card" content="summary">
@@ -190,7 +190,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-03-03 07:57:31" itemprop="dateModified" datetime="2022-03-03T07:57:31+08:00">2022-03-03</time>
+                <time title="修改时间：2022-03-21 10:17:36" itemprop="dateModified" datetime="2022-03-21T10:17:36+08:00">2022-03-21</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -270,7 +270,7 @@
 <figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">Subject * subject = [[Subject alloc]init];</span><br><span class="line">        </span><br><span class="line">ConcreteObserver *observer1 = [[ConcreteObserver alloc]init];</span><br><span class="line">ConcreteObserver *observer2= [[ConcreteObserver alloc]init];</span><br><span class="line">ConcreteObserver *observer3 = [[ConcreteObserver alloc]init];</span><br><span class="line">ConcreteObserver *observer4 = [[ConcreteObserver alloc]init];</span><br><span class="line"></span><br><span class="line">observer1.subject = subject;</span><br><span class="line">observer2.subject = subject;</span><br><span class="line">observer3.subject = subject;</span><br><span class="line">observer4.subject = subject;</span><br><span class="line"></span><br><span class="line">[subject addObserver:observer1];</span><br><span class="line">[subject addObserver:observer2];</span><br><span class="line">[subject addObserver:observer3];</span><br><span class="line">[subject addObserver:observer4];</span><br><span class="line"></span><br><span class="line">[subject setState:<span class="built_in">CLASS_ON</span>];</span><br><span class="line">[subject notify];</span><br><span class="line">        </span><br><span class="line">[subject setState:<span class="built_in">CLASS_OFF</span>];</span><br><span class="line">[subject notify];</span><br></pre></td></tr></table></figure>
 <p>运动结果：<br><img src="/images/old/result.png"></p>
 <hr>
-<h2 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h2><p>&amp;ensp;&amp;ensp;&amp;ensp;&amp;ensp;以上是比较复杂的观察着模式，在更新观察者的状态的时候需要获被观察者的状态。但是在很多情况下，我们并不需获取被观察者的状态，也就不需要持有被观察者的对象，这样会大大的简化模式模型。<br>&amp;ensp;&amp;ensp;&amp;ensp;&amp;ensp;比如在网络层和业务层之间，网络层下载数据之后如何通知业务层进行更新呢？如果像以上这种做法很显然观察者和被观察者之间相互依赖，层次之间的耦合度还是比较高的，所以代码应该如何组织呢？</p>
+<h2 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h2><p>以上是比较复杂的观察着模式，在更新观察者的状态的时候需要获被观察者的状态。但是在很多情况下，我们并不需获取被观察者的状态，也就不需要持有被观察者的对象，这样会大大的简化模式模型。<br>比如在网络层和业务层之间，网络层下载数据之后如何通知业务层进行更新呢？如果像以上这种做法很显然观察者和被观察者之间相互依赖，层次之间的耦合度还是比较高的，所以代码应该如何组织呢？</p>
 
     </div>
 
@@ -377,7 +377,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-count">21</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
