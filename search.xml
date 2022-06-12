@@ -309,80 +309,6 @@
       </tags>
   </entry>
   <entry>
-    <title>NSAutoreleasePool分析</title>
-    <url>/2017/09/26/NSAutoreleasePool%E5%88%86%E6%9E%90/</url>
-    <content><![CDATA[<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p><code>NSAutoreleasePool</code>是用来做引用计数管理的，当一个对象收到<code>autorelease</code>消息的时候，这个对象就会被放到<code>NSAutoreleasePool</code>中。当<code>NSAutoreleasePool</code>被销毁的时候，<code>NSAutoreleasePool</code>向它包含的每一个对象发送<code>release</code>消息，也就是说调用<code>autorelease</code>并不会立马销毁对象，这样就延长了这个对象的生命周期。</p>
-<h2 id="用法"><a href="#用法" class="headerlink" title="用法"></a>用法</h2><p><code>autorelease pool</code>的用法如下：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line"><span class="comment">// Code that creates autoreleased objects.</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>等同于</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="built_in">NSAutoreleasePool</span> *pool = [[<span class="built_in">NSAutoreleasePool</span> alloc] init];</span><br><span class="line"></span><br><span class="line"><span class="comment">// Code that creates autoreleased objects.</span></span><br><span class="line">[pool drain];</span><br></pre></td></tr></table></figure>
-<p>Cocoa建议在autorelease pool中执行我们的代码，否则造成一个autorelease的对象无法释放导致内存泄露。AppKit和UIKit会在每次event runloop进行的开始创建autorelease pool，在runloop结束的时候会释放autorelease pool，所以我们一般不需要自己创建一个autorelease pool。</p>
-<p>但是还是需要自己创建autorelease pool的场景有如下三种：</p>
-<ul>
-<li>不是基于UI Framework的程序，例如命令行程序。</li>
-<li>创建了其他线程，而且要创建子该线程启动之前，否则会造成内存泄露。</li>
-<li>在循环中创建了很多临时对象，特别是比较占内存的object，这种情况使用runloop会大大减少内存占用。典型的例子是读取大量图像的同时对图像进行压缩，图像文件读入到NSData对象，并从中生成UIImage对象，改变该UIImage的尺寸之后生成新的UIImage对象，这种情况下会成成大量的autorelease的对象，这个时候内存会暴涨。<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(...)&#123;</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">* read image data</span></span><br><span class="line"><span class="comment">* compress image </span></span><br><span class="line"><span class="comment">* get new image</span></span><br><span class="line"><span class="comment">* 在循环中产生了大量的autorelease对象，会导致内存不足</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-由于大量的autorelease对象没有得到释放，在for循环中内存会暴涨，特别是在内存受限的场景例如Share Extension（内存限制在100M）,在这种情况下就很有必要在合适的地方创建自己的autoreleasepool。<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(...)&#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@autoreleasepool</span>&#123;</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">* read image data</span></span><br><span class="line"><span class="comment">* compress image </span></span><br><span class="line"><span class="comment">* get new image</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-这种方式会极大的减少内存的占用，因为每次循环都会释放autoreleasepool的block中产生的临时对象。</li>
-</ul>
-<h2 id="autoreleasepool的本质"><a href="#autoreleasepool的本质" class="headerlink" title="@autoreleasepool的本质"></a>@autoreleasepool的本质</h2><p>代码</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>用clang -rewrite-objc main.m进行转换，得到如下：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* @autoreleasepool */</span> </span><br><span class="line">&#123; __AtAutoreleasePool __autoreleasepool; </span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>其中__AtAutoreleasePool的定义如下:</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">struct</span> __AtAutoreleasePool &#123;</span><br><span class="line">__AtAutoreleasePool() &#123;atautoreleasepoolobj = objc_autoreleasePoolPush();&#125;</span><br><span class="line">~__AtAutoreleasePool() &#123;objc_autoreleasePoolPop(atautoreleasepoolobj);&#125;</span><br><span class="line"><span class="type">void</span> * atautoreleasepoolobj;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>__AtAutoreleasePool在创建时会执行objc_autoreleasePoolPush，在被销毁的时候会执行objc_autoreleasePoolPop(atautoreleasepoolobj)<br>很明显@autoreleasepool{}被转换成了</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">&#123; __AtAutoreleasePool __autoreleasepool; </span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>也就是说在该代码块开始执行的时候会创建结构体__autoreleasepool也就是执行:</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> *atautoreleasepoolobj = objc_autoreleasePoolPush();</span><br></pre></td></tr></table></figure>
-<p>在改代码块结束执行结束的时候会销毁结构体__autoreleasepool，也就是执行</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">objc_autoreleasePoolPop(atautoreleasepoolobj);</span><br></pre></td></tr></table></figure>
-<p>所以@autoreleasepool{}也就相当于：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> *atautoreleasepoolobj = objc_autoreleasePoolPush();</span><br><span class="line"><span class="comment">/*..代码..*/</span></span><br><span class="line">objc_autoreleasePoolPop(atautoreleasepoolobj)</span><br></pre></td></tr></table></figure>
-<p>在NSObject的源码中可以看到如下定义：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> * objc_autoreleasePoolPush(<span class="type">void</span>)</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">return</span> AutoreleasePoolPage::push();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> objc_autoreleasePoolPop(<span class="type">void</span> *ctxt)</span><br><span class="line">&#123;</span><br><span class="line">AutoreleasePoolPage::pop(ctxt);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> AutoreleasePoolPage</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">void</span> *push()&#123;</span><br><span class="line"><span class="comment">//相当于生成或持有NSAutoreleasePool类对象</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">void</span> *push()&#123;</span><br><span class="line"><span class="comment">//相当于废弃NSAutoreleasePool类对象</span></span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="AutoreleasePoolPage的结构"><a href="#AutoreleasePoolPage的结构" class="headerlink" title="AutoreleasePoolPage的结构"></a>AutoreleasePoolPage的结构</h2><p><img src="http://7xu9x8.com1.z0.glb.clouddn.com/nsautoreleasepool.png"></p>
-<blockquote>
-<ul>
-<li>AutoreleasePool是由若干AutoreleasePoolPage以双向链表的形式组合而成的结构（parent、child）。</li>
-<li>thread 指向当前页所在线程。</li>
-<li>AutoreleasePoolPage每个对象会开辟4096字节内存（也就是虚拟内存一页的大小），除了上面的实例变量所占空间，剩下的空间全部用来储存autorelease对象的地址。</li>
-<li>AutoreleasePoolPage用栈结构来存储block中的临时对象地址，next指向了下一个将要加入到栈顶的内存地址。当栈满之后会开辟新的page来继续添加。</li>
-</ul>
-</blockquote>
-<h3 id="代码分析"><a href="#代码分析" class="headerlink" title="代码分析"></a>代码分析</h3><h4 id="哨兵（POOL-BOUNDARY）"><a href="#哨兵（POOL-BOUNDARY）" class="headerlink" title="哨兵（POOL_BOUNDARY）"></a>哨兵（POOL_BOUNDARY）</h4><p>每当AutoreleasePoolPage::push()调用的时候向stack中添加一个哨兵对象(POOL_BOUNDARY)，并将该哨兵对象返回。</p>
-<h4 id="AutoreleasePoolPage-push"><a href="#AutoreleasePoolPage-push" class="headerlink" title="AutoreleasePoolPage::push"></a>AutoreleasePoolPage::push</h4><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">void</span> *push() &#123;</span><br><span class="line"><span class="type">id</span> *dest;</span><br><span class="line"><span class="keyword">if</span> (DebugPoolAllocation) &#123;</span><br><span class="line"><span class="comment">// Each autorelease pool starts on a new pool page.</span></span><br><span class="line">dest = autoreleaseNewPage(POOL_BOUNDARY);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">dest = autoreleaseFast(POOL_BOUNDARY);</span><br><span class="line">&#125;</span><br><span class="line">assert(dest == EMPTY_POOL_PLACEHOLDER || *dest == POOL_BOUNDARY);</span><br><span class="line"><span class="keyword">return</span> dest;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>当AutoreleasePoolPage::pop(ctxt);调用的时候会将比ctxt（哨兵对象，也就是__AtAutoreleasePool中保存的atautoreleasepoolobj）后面加入的对象释放（When the pool is popped, every object hotter than the sentinel is released）。</p>
-<h4 id="AutoreleasePoolPage-autoreleaseFast"><a href="#AutoreleasePoolPage-autoreleaseFast" class="headerlink" title="AutoreleasePoolPage::autoreleaseFast"></a>AutoreleasePoolPage::autoreleaseFast</h4><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">id</span> *autoreleaseFast(<span class="type">id</span> obj)</span><br><span class="line">&#123;</span><br><span class="line">AutoreleasePoolPage *page = hotPage();</span><br><span class="line"><span class="keyword">if</span> (page &amp;&amp; !page-&gt;full()) &#123;</span><br><span class="line"><span class="comment">//page存在且没满，将哨兵加入栈</span></span><br><span class="line"><span class="keyword">return</span> page-&gt;add(obj);</span><br><span class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> (page) &#123;</span><br><span class="line"><span class="comment">//page 满了，创建新的page，并将哨兵加入栈</span></span><br><span class="line"><span class="keyword">return</span> autoreleaseFullPage(obj, page);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line"><span class="comment">//没有page，创建page，并将哨兵加入栈</span></span><br><span class="line"><span class="keyword">return</span> autoreleaseNoPage(obj);</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<h4 id="NSObject-autorelease"><a href="#NSObject-autorelease" class="headerlink" title="NSObject::autorelease"></a>NSObject::autorelease</h4><p>然后我们知道在ARC下，我们生成的对象会自动调用autorelease。autorelease在NSObject.mm中的定义为</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="type">id</span>)autorelease &#123;</span><br><span class="line"><span class="keyword">return</span> ((<span class="type">id</span>)<span class="keyword">self</span>)-&gt;rootAutorelease();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">id</span> objc_object::rootAutorelease2()</span><br><span class="line">&#123;</span><br><span class="line">assert(!isTaggedPointer());</span><br><span class="line"><span class="keyword">return</span> AutoreleasePoolPage::autorelease((<span class="type">id</span>)<span class="variable language_">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>AutoreleasePoolPage中autorelease的定义如下：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">id</span> autorelease(<span class="type">id</span> obj)</span><br><span class="line">&#123;</span><br><span class="line">assert(obj);</span><br><span class="line">assert(!obj-&gt;isTaggedPointer());</span><br><span class="line"><span class="type">id</span> *dest __unused = autoreleaseFast(obj);</span><br><span class="line">assert(!dest  ||  dest == EMPTY_POOL_PLACEHOLDER  ||  *dest == obj);</span><br><span class="line"><span class="keyword">return</span> obj;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>可以知道@autoreleasepool{}中创建的对象都会被加入到AutoreleasePoolPage的栈中，AutoreleasePoolPage的栈中只有两种对象一种是POOL_BOUNDARY，一种是在@autoreleasepool{}创建的临时对象。</p>
-<h4 id="AutoreleasePoolPage-pop"><a href="#AutoreleasePoolPage-pop" class="headerlink" title="AutoreleasePoolPage::pop"></a>AutoreleasePoolPage::pop</h4><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">void</span> pop(<span class="type">void</span> *token) </span><br><span class="line">&#123;</span><br><span class="line">AutoreleasePoolPage *page;</span><br><span class="line"><span class="type">id</span> *stop;</span><br><span class="line"></span><br><span class="line">page = pageForPointer(token);</span><br><span class="line">stop = (<span class="type">id</span> *)token;</span><br><span class="line"></span><br><span class="line">page-&gt;releaseUntil(stop);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (page-&gt;child) &#123;</span><br><span class="line"><span class="keyword">if</span> (page-&gt;lessThanHalfFull()) &#123;</span><br><span class="line">page-&gt;child-&gt;kill();</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (page-&gt;child-&gt;child) &#123;</span><br><span class="line">page-&gt;child-&gt;child-&gt;kill();</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>由上文可以当autoreleasepool的block结束时会先调用</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">objc_autoreleasePoolPop(atautoreleasepoolobj)</span><br></pre></td></tr></table></figure>
-<p>这里的atautoreleasepoolobj对象就是哨兵对象POOL_BOUNDARY,当然这里也可以理解为任何对象。</p>
-<blockquote>
-<p>1、pop会根据传入的对象拿到其所在的page。<br>2、然后调用releaseUntil释放token以及比其晚入栈的对象。<br>3、然后会将空的page给销毁掉。</p>
-</blockquote>
-<h3 id="TLS-Thread-Local-Storage"><a href="#TLS-Thread-Local-Storage" class="headerlink" title="TLS(Thread Local Storage)"></a>TLS(Thread Local Storage)</h3><p>比较有趣的是page是用tls来进行存储的，hotPage使用tls_get_direct来获取当前页，tls中将一块内存作为某个线程专有的存储，以key-value的形式进行读写的，这里和Java中的ThreadLocal是一样的道理。</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> AutoreleasePoolPage *hotPage() </span><br><span class="line">&#123;</span><br><span class="line">AutoreleasePoolPage *result = (AutoreleasePoolPage *)</span><br><span class="line">tls_get_direct(key);</span><br><span class="line"><span class="keyword">if</span> (result) result-&gt;fastcheck();</span><br><span class="line"><span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p>参考：<br><a href="https://developer.apple.com/documentation/foundation/nsautoreleasepool#//apple_ref/occ/cl/NSAutoreleasePool">https://developer.apple.com/documentation/foundation/nsautoreleasepool#//apple_ref/occ/cl/NSAutoreleasePool</a><br><a href="http://www.jianshu.com/p/32265cbb2a26">http://www.jianshu.com/p/32265cbb2a26</a><br><a href="https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/mmAutoreleasePools.html">https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/mmAutoreleasePools.html</a><br><a href="http://blog.sunnyxx.com/2014/10/15/behind-autorelease/">http://blog.sunnyxx.com/2014/10/15/behind-autorelease/</a></p>
-]]></content>
-      <tags>
-        <tag>iOS</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>NSObject对象占用多少内存</title>
     <url>/2021/04/09/NSObject%E5%AF%B9%E8%B1%A1%E5%8D%A0%E7%94%A8%E5%A4%9A%E5%B0%91%E5%86%85%E5%AD%98/</url>
     <content><![CDATA[<h3 id="NSObject的本质"><a href="#NSObject的本质" class="headerlink" title="NSObject的本质"></a>NSObject的本质</h3><figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&lt;Foundation/Foundation.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSObject</span> *obj = [[<span class="built_in">NSObject</span> alloc] init];</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;Hello, World!&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -514,6 +440,80 @@
 ]]></content>
       <tags>
         <tag>iOS基础</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>NSAutoreleasePool分析</title>
+    <url>/2017/09/26/NSAutoreleasePool%E5%88%86%E6%9E%90/</url>
+    <content><![CDATA[<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p><code>NSAutoreleasePool</code>是用来做引用计数管理的，当一个对象收到<code>autorelease</code>消息的时候，这个对象就会被放到<code>NSAutoreleasePool</code>中。当<code>NSAutoreleasePool</code>被销毁的时候，<code>NSAutoreleasePool</code>向它包含的每一个对象发送<code>release</code>消息，也就是说调用<code>autorelease</code>并不会立马销毁对象，这样就延长了这个对象的生命周期。</p>
+<h2 id="用法"><a href="#用法" class="headerlink" title="用法"></a>用法</h2><p><code>autorelease pool</code>的用法如下：</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line"><span class="comment">// Code that creates autoreleased objects.</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>等同于</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="built_in">NSAutoreleasePool</span> *pool = [[<span class="built_in">NSAutoreleasePool</span> alloc] init];</span><br><span class="line"></span><br><span class="line"><span class="comment">// Code that creates autoreleased objects.</span></span><br><span class="line">[pool drain];</span><br></pre></td></tr></table></figure>
+<p>Cocoa建议在autorelease pool中执行我们的代码，否则造成一个autorelease的对象无法释放导致内存泄露。AppKit和UIKit会在每次event runloop进行的开始创建autorelease pool，在runloop结束的时候会释放autorelease pool，所以我们一般不需要自己创建一个autorelease pool。</p>
+<p>但是还是需要自己创建autorelease pool的场景有如下三种：</p>
+<ul>
+<li>不是基于UI Framework的程序，例如命令行程序。</li>
+<li>创建了其他线程，而且要创建子该线程启动之前，否则会造成内存泄露。</li>
+<li>在循环中创建了很多临时对象，特别是比较占内存的object，这种情况使用runloop会大大减少内存占用。典型的例子是读取大量图像的同时对图像进行压缩，图像文件读入到NSData对象，并从中生成UIImage对象，改变该UIImage的尺寸之后生成新的UIImage对象，这种情况下会成成大量的autorelease的对象，这个时候内存会暴涨。<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(...)&#123;</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">* read image data</span></span><br><span class="line"><span class="comment">* compress image </span></span><br><span class="line"><span class="comment">* get new image</span></span><br><span class="line"><span class="comment">* 在循环中产生了大量的autorelease对象，会导致内存不足</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+由于大量的autorelease对象没有得到释放，在for循环中内存会暴涨，特别是在内存受限的场景例如Share Extension（内存限制在100M）,在这种情况下就很有必要在合适的地方创建自己的autoreleasepool。<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(...)&#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@autoreleasepool</span>&#123;</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">* read image data</span></span><br><span class="line"><span class="comment">* compress image </span></span><br><span class="line"><span class="comment">* get new image</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+这种方式会极大的减少内存的占用，因为每次循环都会释放autoreleasepool的block中产生的临时对象。</li>
+</ul>
+<h2 id="autoreleasepool的本质"><a href="#autoreleasepool的本质" class="headerlink" title="@autoreleasepool的本质"></a>@autoreleasepool的本质</h2><p>代码</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>用clang -rewrite-objc main.m进行转换，得到如下：</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* @autoreleasepool */</span> </span><br><span class="line">&#123; __AtAutoreleasePool __autoreleasepool; </span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中__AtAutoreleasePool的定义如下:</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">struct</span> __AtAutoreleasePool &#123;</span><br><span class="line">__AtAutoreleasePool() &#123;atautoreleasepoolobj = objc_autoreleasePoolPush();&#125;</span><br><span class="line">~__AtAutoreleasePool() &#123;objc_autoreleasePoolPop(atautoreleasepoolobj);&#125;</span><br><span class="line"><span class="type">void</span> * atautoreleasepoolobj;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>__AtAutoreleasePool在创建时会执行objc_autoreleasePoolPush，在被销毁的时候会执行objc_autoreleasePoolPop(atautoreleasepoolobj)<br>很明显@autoreleasepool{}被转换成了</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">&#123; __AtAutoreleasePool __autoreleasepool; </span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>也就是说在该代码块开始执行的时候会创建结构体__autoreleasepool也就是执行:</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> *atautoreleasepoolobj = objc_autoreleasePoolPush();</span><br></pre></td></tr></table></figure>
+<p>在改代码块结束执行结束的时候会销毁结构体__autoreleasepool，也就是执行</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">objc_autoreleasePoolPop(atautoreleasepoolobj);</span><br></pre></td></tr></table></figure>
+<p>所以@autoreleasepool{}也就相当于：</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> *atautoreleasepoolobj = objc_autoreleasePoolPush();</span><br><span class="line"><span class="comment">/*..代码..*/</span></span><br><span class="line">objc_autoreleasePoolPop(atautoreleasepoolobj)</span><br></pre></td></tr></table></figure>
+<p>在NSObject的源码中可以看到如下定义：</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> * objc_autoreleasePoolPush(<span class="type">void</span>)</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">return</span> AutoreleasePoolPage::push();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> objc_autoreleasePoolPop(<span class="type">void</span> *ctxt)</span><br><span class="line">&#123;</span><br><span class="line">AutoreleasePoolPage::pop(ctxt);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> AutoreleasePoolPage</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">void</span> *push()&#123;</span><br><span class="line"><span class="comment">//相当于生成或持有NSAutoreleasePool类对象</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">void</span> *push()&#123;</span><br><span class="line"><span class="comment">//相当于废弃NSAutoreleasePool类对象</span></span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="AutoreleasePoolPage的结构"><a href="#AutoreleasePoolPage的结构" class="headerlink" title="AutoreleasePoolPage的结构"></a>AutoreleasePoolPage的结构</h2><p><img src="http://7xu9x8.com1.z0.glb.clouddn.com/nsautoreleasepool.png"></p>
+<blockquote>
+<ul>
+<li>AutoreleasePool是由若干AutoreleasePoolPage以双向链表的形式组合而成的结构（parent、child）。</li>
+<li>thread 指向当前页所在线程。</li>
+<li>AutoreleasePoolPage每个对象会开辟4096字节内存（也就是虚拟内存一页的大小），除了上面的实例变量所占空间，剩下的空间全部用来储存autorelease对象的地址。</li>
+<li>AutoreleasePoolPage用栈结构来存储block中的临时对象地址，next指向了下一个将要加入到栈顶的内存地址。当栈满之后会开辟新的page来继续添加。</li>
+</ul>
+</blockquote>
+<h3 id="代码分析"><a href="#代码分析" class="headerlink" title="代码分析"></a>代码分析</h3><h4 id="哨兵（POOL-BOUNDARY）"><a href="#哨兵（POOL-BOUNDARY）" class="headerlink" title="哨兵（POOL_BOUNDARY）"></a>哨兵（POOL_BOUNDARY）</h4><p>每当AutoreleasePoolPage::push()调用的时候向stack中添加一个哨兵对象(POOL_BOUNDARY)，并将该哨兵对象返回。</p>
+<h4 id="AutoreleasePoolPage-push"><a href="#AutoreleasePoolPage-push" class="headerlink" title="AutoreleasePoolPage::push"></a>AutoreleasePoolPage::push</h4><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">void</span> *push() &#123;</span><br><span class="line"><span class="type">id</span> *dest;</span><br><span class="line"><span class="keyword">if</span> (DebugPoolAllocation) &#123;</span><br><span class="line"><span class="comment">// Each autorelease pool starts on a new pool page.</span></span><br><span class="line">dest = autoreleaseNewPage(POOL_BOUNDARY);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">dest = autoreleaseFast(POOL_BOUNDARY);</span><br><span class="line">&#125;</span><br><span class="line">assert(dest == EMPTY_POOL_PLACEHOLDER || *dest == POOL_BOUNDARY);</span><br><span class="line"><span class="keyword">return</span> dest;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当AutoreleasePoolPage::pop(ctxt);调用的时候会将比ctxt（哨兵对象，也就是__AtAutoreleasePool中保存的atautoreleasepoolobj）后面加入的对象释放（When the pool is popped, every object hotter than the sentinel is released）。</p>
+<h4 id="AutoreleasePoolPage-autoreleaseFast"><a href="#AutoreleasePoolPage-autoreleaseFast" class="headerlink" title="AutoreleasePoolPage::autoreleaseFast"></a>AutoreleasePoolPage::autoreleaseFast</h4><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">id</span> *autoreleaseFast(<span class="type">id</span> obj)</span><br><span class="line">&#123;</span><br><span class="line">AutoreleasePoolPage *page = hotPage();</span><br><span class="line"><span class="keyword">if</span> (page &amp;&amp; !page-&gt;full()) &#123;</span><br><span class="line"><span class="comment">//page存在且没满，将哨兵加入栈</span></span><br><span class="line"><span class="keyword">return</span> page-&gt;add(obj);</span><br><span class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> (page) &#123;</span><br><span class="line"><span class="comment">//page 满了，创建新的page，并将哨兵加入栈</span></span><br><span class="line"><span class="keyword">return</span> autoreleaseFullPage(obj, page);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line"><span class="comment">//没有page，创建page，并将哨兵加入栈</span></span><br><span class="line"><span class="keyword">return</span> autoreleaseNoPage(obj);</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h4 id="NSObject-autorelease"><a href="#NSObject-autorelease" class="headerlink" title="NSObject::autorelease"></a>NSObject::autorelease</h4><p>然后我们知道在ARC下，我们生成的对象会自动调用autorelease。autorelease在NSObject.mm中的定义为</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="type">id</span>)autorelease &#123;</span><br><span class="line"><span class="keyword">return</span> ((<span class="type">id</span>)<span class="keyword">self</span>)-&gt;rootAutorelease();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">id</span> objc_object::rootAutorelease2()</span><br><span class="line">&#123;</span><br><span class="line">assert(!isTaggedPointer());</span><br><span class="line"><span class="keyword">return</span> AutoreleasePoolPage::autorelease((<span class="type">id</span>)<span class="variable language_">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>AutoreleasePoolPage中autorelease的定义如下：</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">id</span> autorelease(<span class="type">id</span> obj)</span><br><span class="line">&#123;</span><br><span class="line">assert(obj);</span><br><span class="line">assert(!obj-&gt;isTaggedPointer());</span><br><span class="line"><span class="type">id</span> *dest __unused = autoreleaseFast(obj);</span><br><span class="line">assert(!dest  ||  dest == EMPTY_POOL_PLACEHOLDER  ||  *dest == obj);</span><br><span class="line"><span class="keyword">return</span> obj;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以知道@autoreleasepool{}中创建的对象都会被加入到AutoreleasePoolPage的栈中，AutoreleasePoolPage的栈中只有两种对象一种是POOL_BOUNDARY，一种是在@autoreleasepool{}创建的临时对象。</p>
+<h4 id="AutoreleasePoolPage-pop"><a href="#AutoreleasePoolPage-pop" class="headerlink" title="AutoreleasePoolPage::pop"></a>AutoreleasePoolPage::pop</h4><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">void</span> pop(<span class="type">void</span> *token) </span><br><span class="line">&#123;</span><br><span class="line">AutoreleasePoolPage *page;</span><br><span class="line"><span class="type">id</span> *stop;</span><br><span class="line"></span><br><span class="line">page = pageForPointer(token);</span><br><span class="line">stop = (<span class="type">id</span> *)token;</span><br><span class="line"></span><br><span class="line">page-&gt;releaseUntil(stop);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (page-&gt;child) &#123;</span><br><span class="line"><span class="keyword">if</span> (page-&gt;lessThanHalfFull()) &#123;</span><br><span class="line">page-&gt;child-&gt;kill();</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (page-&gt;child-&gt;child) &#123;</span><br><span class="line">page-&gt;child-&gt;child-&gt;kill();</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>由上文可以当autoreleasepool的block结束时会先调用</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">objc_autoreleasePoolPop(atautoreleasepoolobj)</span><br></pre></td></tr></table></figure>
+<p>这里的atautoreleasepoolobj对象就是哨兵对象POOL_BOUNDARY,当然这里也可以理解为任何对象。</p>
+<blockquote>
+<p>1、pop会根据传入的对象拿到其所在的page。<br>2、然后调用releaseUntil释放token以及比其晚入栈的对象。<br>3、然后会将空的page给销毁掉。</p>
+</blockquote>
+<h3 id="TLS-Thread-Local-Storage"><a href="#TLS-Thread-Local-Storage" class="headerlink" title="TLS(Thread Local Storage)"></a>TLS(Thread Local Storage)</h3><p>比较有趣的是page是用tls来进行存储的，hotPage使用tls_get_direct来获取当前页，tls中将一块内存作为某个线程专有的存储，以key-value的形式进行读写的，这里和Java中的ThreadLocal是一样的道理。</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> AutoreleasePoolPage *hotPage() </span><br><span class="line">&#123;</span><br><span class="line">AutoreleasePoolPage *result = (AutoreleasePoolPage *)</span><br><span class="line">tls_get_direct(key);</span><br><span class="line"><span class="keyword">if</span> (result) result-&gt;fastcheck();</span><br><span class="line"><span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>参考：<br><a href="https://developer.apple.com/documentation/foundation/nsautoreleasepool#//apple_ref/occ/cl/NSAutoreleasePool">https://developer.apple.com/documentation/foundation/nsautoreleasepool#//apple_ref/occ/cl/NSAutoreleasePool</a><br><a href="http://www.jianshu.com/p/32265cbb2a26">http://www.jianshu.com/p/32265cbb2a26</a><br><a href="https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/mmAutoreleasePools.html">https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/mmAutoreleasePools.html</a><br><a href="http://blog.sunnyxx.com/2014/10/15/behind-autorelease/">http://blog.sunnyxx.com/2014/10/15/behind-autorelease/</a></p>
+]]></content>
+      <tags>
+        <tag>iOS</tag>
       </tags>
   </entry>
   <entry>
@@ -812,6 +812,25 @@ CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
       </tags>
   </entry>
   <entry>
+    <title>Objective-C 中的load和initialize</title>
+    <url>/2021/04/11/oc_load_initialize/</url>
+    <content><![CDATA[<h3 id="load调用时机"><a href="#load调用时机" class="headerlink" title="load调用时机"></a>load调用时机</h3><blockquote>
+<p>在这个文件被程序装载时调用。</p>
+</blockquote>
+<p>当我们启动程序时，参与了编译的类、分类都会被加载进内存，load方法就是在这个类被加载的时候调用的，这个过程与这个类是否被使用是无关的，只要是在Compile Sources中出现的文件总是会被装载。<br><code>load</code>是在main之前进行调用。</p>
+<h3 id="load调用顺序"><a href="#load调用顺序" class="headerlink" title="load调用顺序"></a>load调用顺序</h3><p>一个程序中如果所有的类、分类都实现了load方法，那么所有的load方法都会被调用。它们的执行顺序遵循以下规则：</p>
+<p>先执行所有类的<code>load</code>方法，再执行所有分类的<code>load</code>方法。<br>执行类的<code>load</code>方法时，是按照参与编译的顺序，先编译的类先执行，但是如果某个类是继承自另一个类，那么会先执行父类的<code>load</code>方法个再执行自己的<code>load</code>方法。<br>执行分类的<code>load</code>方法时，是按照分类参与编译的顺序，先编译的分类先执行。</p>
+<p>编译顺序是按照项目中<code>Build Phases --&gt; Compile Sources</code>文件排序来进行的，最上面的就最先编译。</p>
+<h3 id="initialize调用时机"><a href="#initialize调用时机" class="headerlink" title="initialize调用时机"></a>initialize调用时机</h3><p><code>initialize</code>方法是在类或它的子类收到第一条消息时被调用的，这里的消息就是指实例方法或类方法的调用，所以所有类的<code>initialize</code>调用是在执行<code>main</code>函数之后调用的。而且一个类只会调用一次<code>initialize</code>方法。如果一个类在程序运行过程中一直没有被使用过，那这个类的<code>initialize</code>方法也就不会被调用，这一点和<code>load</code>方法是不一样的。</p>
+<p>使用initialize要比使用load安全(因为在调用initialize时所有类已经被加载进内存了)，但我们还是要尽量少用initialize这个方法个，尤其要谨慎在分类中实现initialize方法，因为如果在分类中实现了，本类实现的initialize方法将不会被调用。实际开发中initialize方法一般用于初始化全局变量或静态变量。</p>
+<h3 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h3><p><code>load</code>方法通常用来进行<code>Method Swizzle</code>，<code>initialize</code>方法一般用于初始化全局变量或静态变量，<code>load</code>和<code>initialize</code>方法内部使用了锁，因此它们是线程安全的。实现时要尽可能保持简单，避免阻塞线程，不要再使用锁。</p>
+<p>参考<br><a href="https://juejin.cn/post/6844904040703197191">https://juejin.cn/post/6844904040703197191</a></p>
+]]></content>
+      <tags>
+        <tag>iOS基础</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>模式匹配之KMP算法详解</title>
     <url>/2021/04/17/kmp/</url>
     <content><![CDATA[<img src="/images/algorithm/1.png" width="700"/>
@@ -882,25 +901,6 @@ CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
 ]]></content>
       <tags>
         <tag>算法</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Objective-C 中的load和initialize</title>
-    <url>/2021/04/11/oc_load_initialize/</url>
-    <content><![CDATA[<h3 id="load调用时机"><a href="#load调用时机" class="headerlink" title="load调用时机"></a>load调用时机</h3><blockquote>
-<p>在这个文件被程序装载时调用。</p>
-</blockquote>
-<p>当我们启动程序时，参与了编译的类、分类都会被加载进内存，load方法就是在这个类被加载的时候调用的，这个过程与这个类是否被使用是无关的，只要是在Compile Sources中出现的文件总是会被装载。<br><code>load</code>是在main之前进行调用。</p>
-<h3 id="load调用顺序"><a href="#load调用顺序" class="headerlink" title="load调用顺序"></a>load调用顺序</h3><p>一个程序中如果所有的类、分类都实现了load方法，那么所有的load方法都会被调用。它们的执行顺序遵循以下规则：</p>
-<p>先执行所有类的<code>load</code>方法，再执行所有分类的<code>load</code>方法。<br>执行类的<code>load</code>方法时，是按照参与编译的顺序，先编译的类先执行，但是如果某个类是继承自另一个类，那么会先执行父类的<code>load</code>方法个再执行自己的<code>load</code>方法。<br>执行分类的<code>load</code>方法时，是按照分类参与编译的顺序，先编译的分类先执行。</p>
-<p>编译顺序是按照项目中<code>Build Phases --&gt; Compile Sources</code>文件排序来进行的，最上面的就最先编译。</p>
-<h3 id="initialize调用时机"><a href="#initialize调用时机" class="headerlink" title="initialize调用时机"></a>initialize调用时机</h3><p><code>initialize</code>方法是在类或它的子类收到第一条消息时被调用的，这里的消息就是指实例方法或类方法的调用，所以所有类的<code>initialize</code>调用是在执行<code>main</code>函数之后调用的。而且一个类只会调用一次<code>initialize</code>方法。如果一个类在程序运行过程中一直没有被使用过，那这个类的<code>initialize</code>方法也就不会被调用，这一点和<code>load</code>方法是不一样的。</p>
-<p>使用initialize要比使用load安全(因为在调用initialize时所有类已经被加载进内存了)，但我们还是要尽量少用initialize这个方法个，尤其要谨慎在分类中实现initialize方法，因为如果在分类中实现了，本类实现的initialize方法将不会被调用。实际开发中initialize方法一般用于初始化全局变量或静态变量。</p>
-<h3 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h3><p><code>load</code>方法通常用来进行<code>Method Swizzle</code>，<code>initialize</code>方法一般用于初始化全局变量或静态变量，<code>load</code>和<code>initialize</code>方法内部使用了锁，因此它们是线程安全的。实现时要尽可能保持简单，避免阻塞线程，不要再使用锁。</p>
-<p>参考<br><a href="https://juejin.cn/post/6844904040703197191">https://juejin.cn/post/6844904040703197191</a></p>
-]]></content>
-      <tags>
-        <tag>iOS基础</tag>
       </tags>
   </entry>
   <entry>
