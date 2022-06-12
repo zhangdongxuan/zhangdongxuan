@@ -1,0 +1,1099 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>多模匹配之AC自动机</title>
+    <url>/2021/04/18/Aho-Corasick/</url>
+    <content><![CDATA[<img src="/images/algorithm/1.png" width="700"/>
+
+<p><code>根据爱奇艺、优酷、腾讯视频等公布的相关票房数据，整理出了全网网络电影票房分账榜TOP10。</code></p>
+<p>在文本中找出<code>爱奇艺</code>是否存在，这种单个关键词的查找，称为<strong>单模式匹配</strong><br>在文本中找出<code>爱奇艺</code>，<code>优酷</code>，<code>腾讯视频</code>是否存在，这种多个关键词的查找，称为<strong>多模式匹配</strong></p>
+<p>多模匹配常用于关键字过滤、入侵检测、病毒检测、分词等场景；</p>
+<p>常用的多模匹配算法有AC算法和WM算法，这里只介绍AC算法；</p>
+<p>Aho-Corasick算法简称AC算法，通过将模式串预处理为确定有限状态自动机，扫描文本一遍就能结束。其复杂度为O(n)，即与模式串的数量和长度无关。</p>
+<h2 id="AC自动机的构成"><a href="#AC自动机的构成" class="headerlink" title="AC自动机的构成"></a>AC自动机的构成</h2><p>AC 自动机是 以 <strong>Trie 的结构为基础</strong>，结合 <strong>KMP 的思想</strong> 建立的，其由Tire树 + 失配信息所构成。<br>简单来讲建立AC自动机有两个步骤</p>
+<ol>
+<li>基础的 Trie 结构：将所有的模式串构成一棵 Trie。</li>
+<li>KMP 的思想：对 Trie 树上所有的结点构造失配指针。</li>
+</ol>
+<p>以{she, he, hers, his}为模式串，构建AC自动机。</p>
+<h3 id="Trie树的构建"><a href="#Trie树的构建" class="headerlink" title="Trie树的构建"></a>Trie树的构建</h3><p>将 {she, he, hers, his} 模式串建立Trie树，Trie树也成为前缀树或者字典树，形式化地说，于若干个模式串$s_1,s_2…s_n$，将它们构建一棵Trie树后的所有状态的集合记作$Q$。<br><img src="/images/algorithm/trie.gif" width="800"/>这里需要仔细解释一下 Trie 的结点的含义，尽管这很小儿科，但在之后的理解中极其重要。<br>Trie 中的结点表示的是某个模式串的前缀。我们在后文也将其称作状态。一个结点表示一个状态，Trie 的边就是状态的转移。</p>
+<p>其中一个节点的表示代码如下</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">TrieNode</span> &#123;</span><br><span class="line">    <span class="type">bool</span> flag;          <span class="comment">// 表示是否当前节点可以表示为一个词的结束</span></span><br><span class="line">    string keyword;     <span class="comment">// 当当前可以表示为一个词的结束的时候，该节点所表示的关键词</span></span><br><span class="line">    map&lt;<span class="type">char</span>, TrieNode *&gt; next;    <span class="comment">// 该节点可以转移的节点，中文可以使用wchar_t</span></span><br><span class="line">    TrieNode *fail;                <span class="comment">// 当输入字符时没有可转移节点，跳转的节点</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="失配指针"><a href="#失配指针" class="headerlink" title="失配指针"></a>失配指针</h3><p>AC 自动机利用一个 fail 指针来辅助多模式串的匹配。<br>状态$u$的fail指针指向另外一个状态$v$，其中$v \in Q$，且$v$是$u$的最长后缀。<br>fail指针与KMP的next数组相比区别如下</p>
+<p>共同点：</p>
+<blockquote>
+<p>都是在失配的时候用于跳转的信息；<br></p>
+</blockquote>
+<p>不同点：</p>
+<blockquote>
+<ol>
+<li>next 指针求的是最长 Border（即最长的相同前后缀）；</li>
+<li>fail指针则是所有模式串的前缀中匹配当前状态的最长后缀；</li>
+</ol>
+</blockquote>
+<p>因为KMP是对一个模式串做匹配，而AC自动机则对应多个模式串做匹配。</p>
+<p>对{she, he, hers, his} 模式串的Trie树构造失配指针过程如图<br><img src="/images/algorithm/ac2.gif" width="500"/></p>
+<p>1、第一层根节点的fail指针指向自己，即输入<code>≠  &#123;s, h&#125;</code>的时候指向自己；<br><br>2、第二层的1、4的结点的fail指针指向根节点；<br><br>3、对于第三层的2号结点，先找到2号结点的父结点（1）的fail结点(root)，遇到字符h可以转移到4号结点，则将2号结点的fail指针指向4号结点；<br><br>4、对于第三层的5号结点，先找到5号结点的父结点（4）的fail结点(root)，遇到字符e（≠ {s, h}）不能转移，将2号结点的fail指针指向root结点；<br></p>
+<p>具体的init fail代码过程如下</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">init_fail</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    vector&lt;TrieNode *&gt; queue;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 先处理root的孩子结点</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">auto</span> iterator = root_node-&gt;next.<span class="built_in">begin</span>(); iterator != root_node-&gt;next.<span class="built_in">end</span>(); iterator ++) &#123;</span><br><span class="line">        TrieNode *it_node = iterator-&gt;second;</span><br><span class="line">        it_node-&gt;fail = root_node;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">//将root孩子结点入队</span></span><br><span class="line">        queue.<span class="built_in">push_back</span>(it_node);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">while</span> (queue.<span class="built_in">size</span>() != <span class="number">0</span>) &#123;</span><br><span class="line">        TrieNode *node = queue[<span class="number">0</span>];</span><br><span class="line">        queue.<span class="built_in">erase</span>(queue.<span class="built_in">begin</span>());</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 遍历node结点的next孩子结点</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">auto</span> iterator = node-&gt;next.<span class="built_in">begin</span>(); iterator != node-&gt;next.<span class="built_in">end</span>(); iterator ++) &#123;</span><br><span class="line">            <span class="type">char</span> ch = iterator-&gt;first;</span><br><span class="line">            TrieNode *it_node = iterator-&gt;second;</span><br><span class="line">            queue.<span class="built_in">push_back</span>(it_node);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 先指向父结点的fail指针</span></span><br><span class="line">            TrieNode *fail_node = node-&gt;fail;</span><br><span class="line">            <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">                <span class="comment">/* 说明找到了根结点还没有找到，则将fail指针指向根节点 */</span></span><br><span class="line">                <span class="keyword">if</span> (fail_node == <span class="literal">NULL</span>) &#123;</span><br><span class="line">                    it_node-&gt;fail = root_node;</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">if</span> (fail_node-&gt;next.<span class="built_in">count</span>(ch) &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                    <span class="comment">// 如果父结点的fail指针的孩子中有和当前元素ch匹配的孩子结点，说明可以转移，fail指针指向匹配的孩子结点</span></span><br><span class="line">                    it_node-&gt;fail = fail_node-&gt;next[ch];</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="comment">// 如果父结点的fail指针的孩子中，没有和当前元素ch匹配的孩子结点，则说明不能转移，将fail_node指向父结点的fail指针，重复此过程</span></span><br><span class="line">                    fail_node = fail_node-&gt;fail;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="匹配过程"><a href="#匹配过程" class="headerlink" title="匹配过程"></a>匹配过程</h3><img src="/images/algorithm/ac3.gif" width="800"/>
+以模式串 {she, he, hers, his} ，文本“ushers”来简单的对匹配过程借助上图所示进行说明
+
+<p>1、输入字符u ≠ {s, h}，则root结点不进行状态转移；<br><br>2、输入字符s，从root结点转移到状态1结点；<br><br>3、输入字符h，从状态1转移到状态2；<br><br>4、输入字符e，从状态2转移到状态3，3号结点是关键字结束结点，则匹配到模式串<code>she</code>;<br><br>5、输入字符r，状态3无法正常转移，则根据fail指针转移到状态5，5号结点是关键字结束结点，则匹配到模式串<code>he</code>;<br><br>6、5号结点处理输入的r之后，转移到状态6结点；<br>7、输入字符s，从状态6转移到状态7，7号结点是关键字结束结点，则匹配到模式串<code>hers</code>;<br><br>8. 文本输入结束，最终匹配到<code>she、he、hers</code></p>
+<p>如果文本是“ushershis”，状态机在会怎样运行，会匹配到哪些模式串呢？<br>这个留给读者来思考吧。</p>
+<p><a href="https://github.com/zhangdongxuan/CodeSlice/tree/master/algorithm/Aho%E2%80%93Corasic/Aho%E2%80%93Corasic">点击查看源码</a></p>
+<p><a href="https://oysz2016.github.io/post/8611e6fb.html">如何在博客中使用数学符号</a><br><a href="https://www.jianshu.com/p/7ab21c7f0674">在Hexo中渲染MathJax数学公式</a></p>
+]]></content>
+      <tags>
+        <tag>算法</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Audio Session编程指南(一)</title>
+    <url>/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-%E4%B8%80/</url>
+    <content><![CDATA[<h2 id="一、介绍"><a href="#一、介绍" class="headerlink" title="一、介绍"></a>一、介绍</h2><p>Audio 是被iOS系统接管的服务，系统通过Audio Session管理了第三方App、系统内置App以及设备级别的音频行为。</p>
+<img src="/images/audio/AudioSession_1.png" width="600"/>
+
+<p>你可以通过Audio Session告诉系统你想在你的App中怎样使用音频，Audio Session扮演了Application与操作系统或者说是底层音频硬件之间的中介者，这样在和音频硬件进行互动时就不用进行详细的配置说明，将这些细节由Audio Session管理可以可以确保音频的使用体验。</p>
+<h2 id="二、概要"><a href="#二、概要" class="headerlink" title="二、概要"></a>二、概要</h2><p> 我们使用AVAudioSession实例来和App的audio session来进行交互，</p>
+<ul>
+<li>配置audio session的 category and mode 来告诉系统你的App打算如何使用音频；</li>
+<li>激活App的audio session从而使得category and mode生效；</li>
+<li>订阅audio session的notifications，并对audio interruptions 和 route changes事件作出响应；</li>
+<li>执行高级的音频设配配置，例如设置采样率、 I&#x2F;O buffer duration 和 声道数；</li>
+</ul>
+<h2 id="三、Category"><a href="#三、Category" class="headerlink" title="三、Category"></a>三、Category</h2><p> audio session category 是代表音频行为的主要机制，通过设置category可以设置App用是输入还是输出路由，并且可以设置在播放音频的同时是否同时播放其他App的音乐。<br>AVFoundation定义了一系列的audio session categories，不同的categories分别可以支持playback、recording、playback with recording。</p>
+<p>Audio Session Category 的表现行为</p>
+<table>
+<thead>
+<tr>
+<th align="left">Category</th>
+<th align="left">是否遵循静音键<br>OR锁屏</th>
+<th align="right">是否打断其他App</th>
+<th align="right">要求输入或输出</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">AVAudioSessionCategoryAmbient</td>
+<td align="left">Yes</td>
+<td align="right">No(混音播放)</td>
+<td align="right">Output only</td>
+</tr>
+<tr>
+<td align="left">AVAudioSessionCategorySoloAmbient</td>
+<td align="left">Yes</td>
+<td align="right">YES(独占播放)</td>
+<td align="right">Output only</td>
+</tr>
+<tr>
+<td align="left">AVAudioSessionCategoryPlayback</td>
+<td align="left">NO</td>
+<td align="right">Yes(独占播放，可后台播放)<br>NO(override switch)</td>
+<td align="right">Output only</td>
+</tr>
+<tr>
+<td align="left">AVAudioSessionCategoryRecord</td>
+<td align="left">NO<br>(锁屏录音继续)</td>
+<td align="right">YES(录音模式)</td>
+<td align="right">Input only</td>
+</tr>
+<tr>
+<td align="left">AVAudioSessionCategoryPlayAndRecord</td>
+<td align="left">No</td>
+<td align="right">Yes(播放和录音，可录音可播放)<br>NO(override switch)</td>
+<td align="right">Input and output</td>
+</tr>
+<tr>
+<td align="left">AVAudioSessionCategoryMultiRoute</td>
+<td align="left">No</td>
+<td align="right">Yes(多种输入输出，<br>例如可以耳机、USB设备同时播放)</td>
+<td align="right">Input and output</td>
+</tr>
+<tr>
+<td align="left">AVAudioSessionCategoryAudioProcessing</td>
+<td align="left">No</td>
+<td align="right">Yes(硬件解码音频，<br>此时不能播放和录制)</td>
+<td align="right">Input and output</td>
+</tr>
+</tbody></table>
+<p>总结各种Category的特点</p>
+<ul>
+<li><p>AVAudioSessionCategoryAmbient</p>
+<blockquote>
+<p><font size=3> Ambient中文意思是四周的，环绕的，只用于播放，并且可以和其他App音频的音频一起播放，例如可以玩游戏的同时听其他App播放的音乐。跟随静音键和锁屏静音。</font></p>
+</blockquote>
+</li>
+<li><p>AVAudioSessionCategorySoloAmbient</p>
+<blockquote>
+<p><font size=3> Solo中文意思是独奏，独唱的，也是只用于播放，但是不能和其他App音频的音频一起播放。跟随静音键和锁屏静音。</font></p>
+</blockquote>
+</li>
+<li><p>AVAudioSessionCategoryPlayback</p>
+<blockquote>
+<p><font size=3>只用于播放，不能和其他App一起播放，不跟随锁屏或者静音键，同时可以在退后台的时候继续播放。像QQ音乐，会使用这种模式</font></p>
+</blockquote>
+</li>
+<li><p>AVAudioSessionCategoryRecord</p>
+<blockquote>
+<p><font size=3>只用于录音，启动时会打断其他App的音频</font></p>
+</blockquote>
+</li>
+<li><p>AVAudioSessionCategoryPlayAndRecord</p>
+<blockquote>
+<p><font size=3>只用于录音和播放，比如在微信VOIP语音通话场景，自己既需要录音，也需要播放其他人的声音</font></p>
+</blockquote>
+</li>
+<li><p>AVAudioSessionCategoryMultiRoute</p>
+<blockquote>
+<p><img src="/images/audio/multiroute_output_2x.png" width="260"/>其他的Category都是使用最后一个接入的设备作为输入输出的源，MultiRoute可以使用所有的接入设备作为输出源，例如可以将声音同时输出到耳机和HDMI设备；支持的组合如下:<br>USB and headphones、HDMI and headphones、LineOut and headphones，另外只支持一个录音设备的接入；</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="四、提示"><a href="#四、提示" class="headerlink" title="四、提示"></a>四、提示</h2><h5 id="后台播放"><a href="#后台播放" class="headerlink" title="后台播放"></a>后台播放</h5><p>为了让自己的App可以在锁屏、静音键打开、退后台、画中画的情况下继续播放音频，或<br>需要在Info.plist文件的<code>UIBackgroundModes</code>中加入<code>audio</code>或者项目的配置页中Background Modes中的“Audio, AirPlay, and Picture in Picture”选项打开<br><img src="/images/audio/background_modes.png" width="500"/></p>
+<h5 id="category切换"><a href="#category切换" class="headerlink" title="category切换"></a>category切换</h5><p>官方建议在更改audio session的category或者其他的audio session的属性前，最好将audio session进行deactivate，这样可以避免audio系统在category等配置改变的时候进行不必要的重新配置。</p>
+]]></content>
+      <tags>
+        <tag>音视频</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Audio Session编程指南(二)</title>
+    <url>/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-%E4%BA%8C/</url>
+    <content><![CDATA[<h2 id="一、Audio-Session的默认行为"><a href="#一、Audio-Session的默认行为" class="headerlink" title="一、Audio Session的默认行为"></a>一、Audio Session的默认行为</h2><ul>
+<li>可以播放，但不能进行录制；</li>
+<li>静音开关设置为静音模式的时候，这个App的任何的音频播放都会被设置为静音；</li>
+<li>当设备锁屏时，这个app的音频会被静音；</li>
+<li>当App播放音频时，其他在后台播放的音频都会被静音；</li>
+</ul>
+<h2 id="二、配置Audio-Session"><a href="#二、配置Audio-Session" class="headerlink" title="二、配置Audio Session"></a>二、配置Audio Session</h2><p>在categories设置了Audio最基本的行为的同时，可以通过设置category的mode更进一步的设置Audio的行为。例如拥有Voice over IP (VoIP)功能的App，它会在使用<code>AVAudioSessionCategoryPlayAndRecord</code>的同时，将Audio Session的mode也设置为<code>AVAudioSessionModeVoiceChat</code>，这样可以通过系统级别的数字信号处理使音频信号得到提升。<br>某些categories支持使用设置options重写category默认的Audio行为，举例来讲，Category为<code>AVAudioSessionCategoryPlayback</code>的Audio Session 在active的时候，会打断系统其他的Audio，大多数场景我们都需要这样的表现，但是如果想和系统其他音频进行混播，可以通过设置Category的options为<code>AVAudioSessionCategoryOptionMixWithOthers</code>来进行实现，使用的方法为<code> setCategory:mode:options:error:</code>。</p>
+<h2 id="三、冲突的音频需求"><a href="#三、冲突的音频需求" class="headerlink" title="三、冲突的音频需求"></a>三、冲突的音频需求</h2><p>同一时间内可能有多个app需要使用Audio device，系统这里做了一个比较形象的比。将使用Audio Device比作机场的跑道，将app比作正在飞机，系统服务作为塔台:<br><img src="/images/audio/competing_audio_demands.png" width="600"/><br>图中，第一步，你的App请求激活audio session；第二步，系统会判断你配置的category，这里你的app要求其他App进行静音；第三步和第四部，系统deactivates了音乐App的Audio Session，停止了它的音频播放；最后，系统激活了你的audio session，然后你就可以开始播放了；</p>
+<h2 id="四、Audio-Session的激活和释放"><a href="#四、Audio-Session的激活和释放" class="headerlink" title="四、Audio Session的激活和释放"></a>四、Audio Session的激活和释放</h2><p>虽然AVFoundation的播放和录音会自动激活Audio Session，但是手动激活可以让你知道active audio session是否成功。<br>闹钟、来电或者日历提醒的时候，系统会将你的App deactive掉，当用户dismiss或者挂断电话后，系统允许app再次active audio session，这个时候你可以决定是否将自己的AudioSession进行激活。</p>
+<p>激活AudioSession的方法如下</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Configure your audio session category, options, and mode</span></span><br><span class="line">[[<span class="built_in">AVAudioSession</span> sharedInstance] setCategory:<span class="built_in">AVAudioSessionCategoryPlayback</span> withOptions:<span class="number">0</span> error:<span class="literal">nil</span>];</span><br><span class="line"></span><br><span class="line"><span class="comment">// Activate your audio session to enable your custom configuration</span></span><br><span class="line"><span class="built_in">NSError</span> *outError = <span class="literal">nil</span>;</span><br><span class="line"><span class="type">BOOL</span> ret = [[<span class="built_in">AVAudioSession</span> sharedInstance] setActive:<span class="literal">YES</span> error:&amp;outError];</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p> 可以将<code>setActive</code> 的参数设置为NO来释放AudioSession。除了一些VoIP、录音这些App，大多数App并不需要对AudioSession进行显式的释放。</p>
+<blockquote>
+<p>对拥有VoIP功能的App，要确保在后台待机运行的情况下不激活AudioSession，确保只有收到呼叫的时候才激活AudioSession；</p>
+<p>对于使用recording category的App，要确保只有它在录音的时候才处于激活状态。在录音前和录音结束后，要将AudioSession设置为未激活态，这样其他功能的音频提示、消息才能被正确播放出来；</p>
+</blockquote>
+<h2 id="五、处理中断"><a href="#五、处理中断" class="headerlink" title="五、处理中断"></a>五、处理中断</h2><p>为了让App的可以在AudioSesson被电话呼叫、闹钟和其他App的Active事件打断后正常工作，我们需要去监听AudioSession的打断事件。音频的打断来自于那些被激活且未配置mix with others的AudioSession，打断会使我们的AudioSession处于未激活状态，然后结束我们对Audio的使用。</p>
+ <img src="/images/audio/audio_session_interrupted.png" width="600"/>
+
+<p>以上图片演示了一个播放应用程序的AudioSessionz在中断之前、期间和之后的事件序列。</p>
+<p>可以使用<code>AVAudioSessionInterruptionNotification</code> 来监听AudioSession的变化：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">[[<span class="built_in">NSNotificationCenter</span> defaultCenter] addObserver:<span class="keyword">self</span> selector:<span class="keyword">@selector</span>(handleInterruption:) name:<span class="built_in">AVAudioSessionInterruptionNotification</span> object:[<span class="built_in">AVAudioSession</span> sharedInstance]];</span><br></pre></td></tr></table></figure>
+
+<p>在interrupt begin和interrupt end的时候做对应处理，当interruptType为<code>AVAudioSessionInterruptionTypeEnded</code>时，可以从userInfo中通过<code>AVAudioSessionInterruptionOptionKey</code>拿到option，当option的值为<code>AVAudioSessionInterruptionOptionShouldResume</code>时，可以重新激活AudioSession并开始进行record或者play。</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">- (<span class="type">void</span>)handleInterruption:(<span class="built_in">NSNotification</span> *)notification &#123;</span><br><span class="line">    <span class="built_in">NSDictionary</span> *info = notification.userInfo;</span><br><span class="line">    <span class="built_in">AVAudioSessionInterruptionType</span> interruptType = [info[<span class="built_in">AVAudioSessionInterruptionTypeKey</span>] unsignedIntegerValue];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (interruptType == <span class="built_in">AVAudioSessionInterruptionTypeBegan</span>) &#123;</span><br><span class="line">        <span class="comment">// Interruption began, take appropriate actions (save state, update user interface)</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (interruptType == <span class="built_in">AVAudioSessionInterruptionTypeEnded</span>) &#123;</span><br><span class="line">        <span class="built_in">AVAudioSessionInterruptionOptions</span> option = [info[<span class="built_in">AVAudioSessionInterruptionOptionKey</span>] unsignedIntegerValue];</span><br><span class="line">        <span class="keyword">if</span> (option == <span class="built_in">AVAudioSessionInterruptionOptionShouldResume</span>) &#123;</span><br><span class="line">            <span class="comment">// reactive audio session &amp; play</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="六、响应媒体服务重置"><a href="#六、响应媒体服务重置" class="headerlink" title="六、响应媒体服务重置"></a>六、响应媒体服务重置</h2><p>媒体服务通过共享服务进程来提供音频和其他多媒体功能。虽然很罕见，但是在你的App处于active的时候，媒体服务重置的情况还是有可能发生的。可以通过注册 <code>AVAudioSessionMediaServicesWereResetNotification</code> 来监听媒体服务被重置的情况。当这种情况发生时，你需要做一些处理:</p>
+<ul>
+<li>清理之前的audio对象（例如players、recorders、converters和audio queue），重新创建一个新的；</li>
+<li>重置所有正在跟踪的内部音频状态，包括AVAudioSession的所有属性；</li>
+<li>适当时，使用setActive:error:方法重新激活AVAudioSession实例；</li>
+</ul>
+<blockquote>
+<p>Apps 无需重新注册AudioSession的notification，无需对AudioSession的属性进行 key-value 监控进行重置；</p>
+</blockquote>
+]]></content>
+      <tags>
+        <tag>音视频</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>ExtendedLayout</title>
+    <url>/2017/06/15/ExtendedLayout/</url>
+    <content><![CDATA[<p>UIViewController中的定义</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">@property(nonatomic,assign) UIRectEdge edgesForExtendedLayout NS_AVAILABLE_IOS(7_0); // Defaults to UIRectEdgeAll</span><br></pre></td></tr></table></figure>
+<p>当使用NavigationController时，edgesForExtendedLayout的值默认为UIRectEdgeAll，布局默认从navigation Bar的底部开始，所有的元素会下移44pt。可将其设置为UIRectEdgeNone来取消默认设置。</p>
+]]></content>
+      <categories>
+        <category>iOS</category>
+      </categories>
+      <tags>
+        <tag>UI</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>MacOS 编译C++</title>
+    <url>/2016/10/31/MacOS-%E7%BC%96%E8%AF%91C/</url>
+    <content><![CDATA[<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><p>指用编译器(compiler)将源代码(source code)生成二进制目标文件(object file)，在Windows下也就是 .obj 文件，UNIX下是 .o 文件。编译时，编译器需要的是语法的正确，函数与变量的声明的正确，编译器只检测程序语法，和函数、变量是否被声明，函数并不需要被定义。<br>mac os 下编译C++的文件：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ -c test.cpp    </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>-c 是compile的意思<br>生成二进制文件 test.o。</p>
+<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><p>找到所要用到函数所在的目标文件，并把它们链接在一起合成为可执行文件(executable file)。链接时，要确保编译器能找到所有被用到了的函数所在的目标文件。<br>mac os 下编译C++的文件：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o -o output </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>生成可执行文件output。这里可以将多个文件同时</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o test2.o -o output</span><br></pre></td></tr></table></figure>
+<h2 id="结合"><a href="#结合" class="headerlink" title="结合"></a>结合</h2><p>编译和链接两个过程可以结合起来：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp test2.cpp -o output</span><br></pre></td></tr></table></figure>
+<p>一步生成可执行文件output。中间会先编译生成目标文件，然后链接生成可执行文件。</p>
+<p>另外如果只有一个C++文件，可以一步到位，生成执行文件a.out</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>备忘</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Flex &amp; Bison</title>
+    <url>/2018/09/09/Flex-Bison/</url>
+    <content><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><h3 id="Flex"><a href="#Flex" class="headerlink" title="Flex"></a>Flex</h3><p>Flex是一个词法分析工具，词法分析可以称为lexical analysis，或称scanning； </p>
+<blockquote>
+<p>词法分析把输入分割成一个个有意义的词块，称为记号（token）；</p>
+</blockquote>
+<h3 id="Bison"><a href="#Bison" class="headerlink" title="Bison"></a>Bison</h3><p>Bison是一个语法分析工具，语法分析可以称为syntax analysis，或称parsing；</p>
+<blockquote>
+<p>语法分析主要是确定词法分析记号（token）是如何彼此关联的；</p>
+</blockquote>
+<p>基本所有的编译器项目中，都会使用lex或者flex做词法分析，并利用Yacc或者Bison对词法分析的结果进行语法分析。</p>
+<p>flex和bison最早是用来生成编译器的，他们具备处理结构化的输入的能力，后来发现他们可以用在很多地方，例如解析css文件、json文件、XML文件等。</p>
+<h2 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h2><h3 id="上下文无关文法"><a href="#上下文无关文法" class="headerlink" title="上下文无关文法"></a>上下文无关文法</h3><p>当我们编写一个语法分析器，就需要我们用一定的方法来描述记号转化为语法分析树的规则。<br>这种描述的方法在计算机中最常用的就是上下文无关文法Context-Free Grammar。<br>上下文无关文法就是说这个文法中所有的产生式左边只有一个非终结符。</p>
+<p>例如下面这个就是上下文无关文法</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">S -&gt; aSb | ab      这个文法产生了语言 &#123;a^n * b^n : n ≥ 1&#125; </span><br></pre></td></tr></table></figure>
+
+<p>这个文法有两个产生式，每个产生式左边只有一个非终结符S，这就是上下文无关文法，因为你只要找到符合产生式右边的串，就可以把它归约为对应的非终结符。</p>
+<p>要理解什么是上下文无关文法，可以先感受一下上下文有关文法，例如</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">S -&gt; ab</span><br><span class="line"></span><br><span class="line">aSb -&gt; aaSbb</span><br></pre></td></tr></table></figure>
+<p>这就是上下文相关文法，因为它的第一个产生式左边有不止一个符号，所以你在匹配这个产生式中的S的时候必需确保这个S有正确的“上下文”，也就是左边的a和右边的b，所以叫上下文相关文法。</p>
+<p>因为上下文无关文法有足够强的表达力来表示大多数程序设计语言的语法，上下文无关文法又足够简单，使得我们可以构造有效的分析算法来检验一个给定字串是否是由某个上下文无关文法产生的。</p>
+<h3 id="BNF文法"><a href="#BNF文法" class="headerlink" title="BNF文法"></a>BNF文法</h3><p>为了编写一个语法分析器，需要一定的方法来描述语法分析器所使用的把一系列记号转化为语法分析树的规则。在计算机分析程序里最常用的语言就是上下文无关文法（Context-Free Grammar, CFG）。书写上下文无关文法的标准格式就是Backus-Naur范式（BackusNaur Form，BNF）。</p>
+<p>BNF文法用起来是非常简单易懂的，例如我们可以用下面的表达式来表示 1 * 2 + 3 * 4 + 5:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;exp&gt; ::= &lt;factor&gt; | &lt;exp&gt; + &lt;factor&gt;</span><br><span class="line"></span><br><span class="line">&lt;factor&gt; ::= NUMBER | &lt;factor&gt; * NUMBER</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>每一行就是一条规则，用来说明如何创建语法分析树的分支。<br>有效的BNF总是带有递归性的，规则会直接或者间接地指向自身。</p>
+<h3 id="Flex语法结构"><a href="#Flex语法结构" class="headerlink" title="Flex语法结构"></a>Flex语法结构</h3><p>以最简单的word count的程序word_count.l来看</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">%&#123;</span><br><span class="line">	int chars = 0;</span><br><span class="line">	int words = 0;</span><br><span class="line">	int lines = 0; </span><br><span class="line">%&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">%%</span><br><span class="line"></span><br><span class="line">[a-zA-Z]+ 	&#123; words++; chars += strlen(yytext); &#125; </span><br><span class="line">\n 			&#123; chars++; lines++; &#125;</span><br><span class="line">. 			&#123; chars++; &#125;</span><br><span class="line"></span><br><span class="line">%%</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">int main(int argc, char **argv)</span><br><span class="line">&#123;</span><br><span class="line">	yylex();</span><br><span class="line">	printf(&quot;%8d%8d%8d\n&quot;, lines, words, chars); </span><br><span class="line">	return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>MacOS下编译代码命令</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">flex word_count.l</span><br><span class="line">cc lex.yy.c -ll</span><br></pre></td></tr></table></figure>
+
+<h4 id="变量声明"><a href="#变量声明" class="headerlink" title="变量声明"></a>变量声明</h4><p>声明部分可以进行声明和选项设置。<br>可以在%{和%}包围的部分里面定义c代码，里面的内容会被完整地复制到lex.yy.c 的开头，通常会用来放置include、define的信息。</p>
+<h4 id="规则定义"><a href="#规则定义" class="headerlink" title="规则定义"></a>规则定义</h4><p>规则声明部分被两个%%包围，规则为</p>
+<blockquote>
+<p>正则表达式  {匹配到之后执行的C代码}</p>
+</blockquote>
+<p>例如：<br>[a-zA-Z]+     { words++; chars +&#x3D; strlen(yytext); }<br>在任意一个flex的动作中，变量yytext总是被设为指向本次匹配的输入文本。<br>前面的部分就是模式，处于一行的开始位置，后面的部分就是动作，也就是，输入中匹配到了这个模式的时候，对应的进行什么动作。<br>yytext，在输入匹配到该模式的时候，匹配的部分就存储到yytext里面。</p>
+<h4 id="C代码部分"><a href="#C代码部分" class="headerlink" title="C代码部分"></a>C代码部分</h4><p>这部分是C代码，它们会被复制到lex.yy.c的最末尾。</p>
+<p>程序主要由一系列带有指令的正则表达式组成，这些指令确定了正则表达式匹配后相应的动作（action）。</p>
+<h3 id="Bison语法结构"><a href="#Bison语法结构" class="headerlink" title="Bison语法结构"></a>Bison语法结构</h3><p>bison的语法规则也分为三部分，以flex 和 bison协同的计算器程序为例</p>
+<p>flex部分：创建calculator.l并声明</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">%&#123;</span><br><span class="line">    //calculator_def中定义了记号</span><br><span class="line">	#include &quot;calculator_def.h&quot;</span><br><span class="line">%&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">%%</span><br><span class="line"></span><br><span class="line">&quot;+&quot; 	&#123; return ADD; &#125;</span><br><span class="line">&quot;-&quot; 	&#123; return SUB; &#125;</span><br><span class="line">&quot;*&quot; 	&#123; return MUL; &#125;</span><br><span class="line">&quot;/&quot; 	&#123; return DIV; &#125;</span><br><span class="line">&quot;|&quot; 	&#123; return ABS; &#125;</span><br><span class="line">[0-9]+ 	&#123; yylval = atoi(yytext); return NUMBER; &#125; </span><br><span class="line">\n 		&#123; return EOL; &#125;</span><br><span class="line">[ \t]	&#123; /**whitespace**/ &#125;</span><br><span class="line">.		&#123; printf(&quot;Mystery character %c\n&quot;, *yytext); &#125;</span><br><span class="line"></span><br><span class="line">%%</span><br></pre></td></tr></table></figure>
+
+<p>bison代码：创建calculator.y并编写代码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">%&#123;</span><br><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">%&#125;</span><br><span class="line"></span><br><span class="line">/* declare tokens */ </span><br><span class="line">%token NUMBER</span><br><span class="line">%token ADD SUB MUL DIV ABS </span><br><span class="line">%token EOL</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">%%</span><br><span class="line">calclist:</span><br><span class="line">		| calclist exp EOL &#123; printf(&quot;= %d\n&quot;, $2); &#125; </span><br><span class="line"></span><br><span class="line"></span><br><span class="line">exp: factor</span><br><span class="line">	| exp ADD factor &#123; $$ = $1 + $3; &#125; </span><br><span class="line">	| exp SUB factor &#123; $$ = $1 - $3; &#125; ;</span><br><span class="line"></span><br><span class="line">factor: term</span><br><span class="line">	| factor MUL term &#123; $$ = $1 * $3; &#125; </span><br><span class="line">	| factor DIV term &#123; $$ = $1 / $3; &#125; ;</span><br><span class="line"></span><br><span class="line">term: NUMBER</span><br><span class="line">	| ABS term &#123; $$ = $2 &gt;= 0? $2 : - $2; &#125; ;</span><br><span class="line"></span><br><span class="line">%%</span><br><span class="line"></span><br><span class="line">int main(int argc, char **argv)</span><br><span class="line">&#123;</span><br><span class="line">	yyparse();</span><br><span class="line">	return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">yyerror(char *s)</span><br><span class="line">&#123;</span><br><span class="line">	fprintf(stderr, &quot;error: %s\n&quot;, s);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h4 id="声明部分和C代码部分"><a href="#声明部分和C代码部分" class="headerlink" title="声明部分和C代码部分"></a>声明部分和C代码部分</h4><p>被%{和%}包围的部分，里面的内容会被完整地复制到lex.yy.c 的开头，通常会用来放置include、define的信息。</p>
+<p>除此之外一般还要进行token设置。<br>token用于标记语法解析中用到的基本语素，教程里称之为“记号”。<br>用枚举来定义，而且为了避免冲突一般枚举的值从258开始。<br>语法是：<br>%token 记号，例如</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">%token NUMBER</span><br><span class="line">%token ADD SUB MUL DIV ABS </span><br><span class="line">%token EOL</span><br></pre></td></tr></table></figure>
+
+<p>这里一般是当flex成功匹配到一个模式的时候，会return一个token，然后在bison的规则中查找应该进行的动作。</p>
+<h4 id="规则部分"><a href="#规则部分" class="headerlink" title="规则部分"></a>规则部分</h4><p>规则部分遵循DNF范式的定义，每一个bison语法分析器在分析其输入时都会构造一棵语法分析树。<br>在有些应用里，它把整棵树作为一个数据结构创建在内存中以便于后续使用。<br>在其他应用里，语法分析树只是隐式地包含在语法分析器进行的一系列操作中。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">%%</span><br><span class="line">calclist:</span><br><span class="line">		| calclist exp EOL &#123; printf(&quot;= %d\n&quot;, $2); &#125; ;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">exp: factor</span><br><span class="line">	| exp ADD factor &#123; $$ = $1 + $3; &#125; </span><br><span class="line">	| exp SUB factor &#123; $$ = $1 - $3; &#125; ;</span><br><span class="line"></span><br><span class="line">factor: term</span><br><span class="line">	| factor MUL term &#123; $$ = $1 * $3; &#125; </span><br><span class="line">	| factor DIV term &#123; $$ = $1 / $3; &#125; ;</span><br><span class="line"></span><br><span class="line">term: NUMBER</span><br><span class="line">	| ABS term &#123; $$ = $2 &gt;= 0? $2 : - $2; &#125; ;</span><br><span class="line"></span><br><span class="line">%%</span><br></pre></td></tr></table></figure>
+
+<h4 id="第三部分是用户自定义代码"><a href="#第三部分是用户自定义代码" class="headerlink" title="第三部分是用户自定义代码"></a>第三部分是用户自定义代码</h4><p>以上可以使用如下命令生成编译结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">bison -d calculator.y</span><br><span class="line">flex calculator.l</span><br><span class="line">cc -o calculator calculator.tab.c lex.yy.c -ll</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>利用flex &amp; bison 除了可以进行语言的词法和文法分析，还可以接续几乎所有的结构化文本。</p>
+<p>文章中提到的代码，我放到了github上：<a href="https://github.com/zhangdongxuan/Flex-Bison%E3%80%82">https://github.com/zhangdongxuan/Flex-Bison。</a></p>
+]]></content>
+      <tags>
+        <tag>编译原理</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>NSAutoreleasePool分析</title>
+    <url>/2017/09/26/NSAutoreleasePool%E5%88%86%E6%9E%90/</url>
+    <content><![CDATA[<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p><code>NSAutoreleasePool</code>是用来做引用计数管理的，当一个对象收到<code>autorelease</code>消息的时候，这个对象就会被放到<code>NSAutoreleasePool</code>中。当<code>NSAutoreleasePool</code>被销毁的时候，<code>NSAutoreleasePool</code>向它包含的每一个对象发送<code>release</code>消息，也就是说调用<code>autorelease</code>并不会立马销毁对象，这样就延长了这个对象的生命周期。</p>
+<h2 id="用法"><a href="#用法" class="headerlink" title="用法"></a>用法</h2><p><code>autorelease pool</code>的用法如下：</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line"><span class="comment">// Code that creates autoreleased objects.</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>等同于</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="built_in">NSAutoreleasePool</span> *pool = [[<span class="built_in">NSAutoreleasePool</span> alloc] init];</span><br><span class="line"></span><br><span class="line"><span class="comment">// Code that creates autoreleased objects.</span></span><br><span class="line">[pool drain];</span><br></pre></td></tr></table></figure>
+<p>Cocoa建议在autorelease pool中执行我们的代码，否则造成一个autorelease的对象无法释放导致内存泄露。AppKit和UIKit会在每次event runloop进行的开始创建autorelease pool，在runloop结束的时候会释放autorelease pool，所以我们一般不需要自己创建一个autorelease pool。</p>
+<p>但是还是需要自己创建autorelease pool的场景有如下三种：</p>
+<ul>
+<li>不是基于UI Framework的程序，例如命令行程序。</li>
+<li>创建了其他线程，而且要创建子该线程启动之前，否则会造成内存泄露。</li>
+<li>在循环中创建了很多临时对象，特别是比较占内存的object，这种情况使用runloop会大大减少内存占用。典型的例子是读取大量图像的同时对图像进行压缩，图像文件读入到NSData对象，并从中生成UIImage对象，改变该UIImage的尺寸之后生成新的UIImage对象，这种情况下会成成大量的autorelease的对象，这个时候内存会暴涨。<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(...)&#123;</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">* read image data</span></span><br><span class="line"><span class="comment">* compress image </span></span><br><span class="line"><span class="comment">* get new image</span></span><br><span class="line"><span class="comment">* 在循环中产生了大量的autorelease对象，会导致内存不足</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+由于大量的autorelease对象没有得到释放，在for循环中内存会暴涨，特别是在内存受限的场景例如Share Extension（内存限制在100M）,在这种情况下就很有必要在合适的地方创建自己的autoreleasepool。<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(...)&#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@autoreleasepool</span>&#123;</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">* read image data</span></span><br><span class="line"><span class="comment">* compress image </span></span><br><span class="line"><span class="comment">* get new image</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+这种方式会极大的减少内存的占用，因为每次循环都会释放autoreleasepool的block中产生的临时对象。</li>
+</ul>
+<h2 id="autoreleasepool的本质"><a href="#autoreleasepool的本质" class="headerlink" title="@autoreleasepool的本质"></a>@autoreleasepool的本质</h2><p>代码</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>用clang -rewrite-objc main.m进行转换，得到如下：</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* @autoreleasepool */</span> </span><br><span class="line">&#123; __AtAutoreleasePool __autoreleasepool; </span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中__AtAutoreleasePool的定义如下:</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">struct</span> __AtAutoreleasePool &#123;</span><br><span class="line">__AtAutoreleasePool() &#123;atautoreleasepoolobj = objc_autoreleasePoolPush();&#125;</span><br><span class="line">~__AtAutoreleasePool() &#123;objc_autoreleasePoolPop(atautoreleasepoolobj);&#125;</span><br><span class="line"><span class="type">void</span> * atautoreleasepoolobj;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>__AtAutoreleasePool在创建时会执行objc_autoreleasePoolPush，在被销毁的时候会执行objc_autoreleasePoolPop(atautoreleasepoolobj)<br>很明显@autoreleasepool{}被转换成了</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">&#123; __AtAutoreleasePool __autoreleasepool; </span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>也就是说在该代码块开始执行的时候会创建结构体__autoreleasepool也就是执行:</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> *atautoreleasepoolobj = objc_autoreleasePoolPush();</span><br></pre></td></tr></table></figure>
+<p>在改代码块结束执行结束的时候会销毁结构体__autoreleasepool，也就是执行</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">objc_autoreleasePoolPop(atautoreleasepoolobj);</span><br></pre></td></tr></table></figure>
+<p>所以@autoreleasepool{}也就相当于：</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> *atautoreleasepoolobj = objc_autoreleasePoolPush();</span><br><span class="line"><span class="comment">/*..代码..*/</span></span><br><span class="line">objc_autoreleasePoolPop(atautoreleasepoolobj)</span><br></pre></td></tr></table></figure>
+<p>在NSObject的源码中可以看到如下定义：</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> * objc_autoreleasePoolPush(<span class="type">void</span>)</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">return</span> AutoreleasePoolPage::push();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> objc_autoreleasePoolPop(<span class="type">void</span> *ctxt)</span><br><span class="line">&#123;</span><br><span class="line">AutoreleasePoolPage::pop(ctxt);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> AutoreleasePoolPage</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">void</span> *push()&#123;</span><br><span class="line"><span class="comment">//相当于生成或持有NSAutoreleasePool类对象</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">void</span> *push()&#123;</span><br><span class="line"><span class="comment">//相当于废弃NSAutoreleasePool类对象</span></span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="AutoreleasePoolPage的结构"><a href="#AutoreleasePoolPage的结构" class="headerlink" title="AutoreleasePoolPage的结构"></a>AutoreleasePoolPage的结构</h2><p><img src="http://7xu9x8.com1.z0.glb.clouddn.com/nsautoreleasepool.png"></p>
+<blockquote>
+<ul>
+<li>AutoreleasePool是由若干AutoreleasePoolPage以双向链表的形式组合而成的结构（parent、child）。</li>
+<li>thread 指向当前页所在线程。</li>
+<li>AutoreleasePoolPage每个对象会开辟4096字节内存（也就是虚拟内存一页的大小），除了上面的实例变量所占空间，剩下的空间全部用来储存autorelease对象的地址。</li>
+<li>AutoreleasePoolPage用栈结构来存储block中的临时对象地址，next指向了下一个将要加入到栈顶的内存地址。当栈满之后会开辟新的page来继续添加。</li>
+</ul>
+</blockquote>
+<h3 id="代码分析"><a href="#代码分析" class="headerlink" title="代码分析"></a>代码分析</h3><h4 id="哨兵（POOL-BOUNDARY）"><a href="#哨兵（POOL-BOUNDARY）" class="headerlink" title="哨兵（POOL_BOUNDARY）"></a>哨兵（POOL_BOUNDARY）</h4><p>每当AutoreleasePoolPage::push()调用的时候向stack中添加一个哨兵对象(POOL_BOUNDARY)，并将该哨兵对象返回。</p>
+<h4 id="AutoreleasePoolPage-push"><a href="#AutoreleasePoolPage-push" class="headerlink" title="AutoreleasePoolPage::push"></a>AutoreleasePoolPage::push</h4><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">void</span> *push() &#123;</span><br><span class="line"><span class="type">id</span> *dest;</span><br><span class="line"><span class="keyword">if</span> (DebugPoolAllocation) &#123;</span><br><span class="line"><span class="comment">// Each autorelease pool starts on a new pool page.</span></span><br><span class="line">dest = autoreleaseNewPage(POOL_BOUNDARY);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">dest = autoreleaseFast(POOL_BOUNDARY);</span><br><span class="line">&#125;</span><br><span class="line">assert(dest == EMPTY_POOL_PLACEHOLDER || *dest == POOL_BOUNDARY);</span><br><span class="line"><span class="keyword">return</span> dest;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当AutoreleasePoolPage::pop(ctxt);调用的时候会将比ctxt（哨兵对象，也就是__AtAutoreleasePool中保存的atautoreleasepoolobj）后面加入的对象释放（When the pool is popped, every object hotter than the sentinel is released）。</p>
+<h4 id="AutoreleasePoolPage-autoreleaseFast"><a href="#AutoreleasePoolPage-autoreleaseFast" class="headerlink" title="AutoreleasePoolPage::autoreleaseFast"></a>AutoreleasePoolPage::autoreleaseFast</h4><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">id</span> *autoreleaseFast(<span class="type">id</span> obj)</span><br><span class="line">&#123;</span><br><span class="line">AutoreleasePoolPage *page = hotPage();</span><br><span class="line"><span class="keyword">if</span> (page &amp;&amp; !page-&gt;full()) &#123;</span><br><span class="line"><span class="comment">//page存在且没满，将哨兵加入栈</span></span><br><span class="line"><span class="keyword">return</span> page-&gt;add(obj);</span><br><span class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> (page) &#123;</span><br><span class="line"><span class="comment">//page 满了，创建新的page，并将哨兵加入栈</span></span><br><span class="line"><span class="keyword">return</span> autoreleaseFullPage(obj, page);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line"><span class="comment">//没有page，创建page，并将哨兵加入栈</span></span><br><span class="line"><span class="keyword">return</span> autoreleaseNoPage(obj);</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h4 id="NSObject-autorelease"><a href="#NSObject-autorelease" class="headerlink" title="NSObject::autorelease"></a>NSObject::autorelease</h4><p>然后我们知道在ARC下，我们生成的对象会自动调用autorelease。autorelease在NSObject.mm中的定义为</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="type">id</span>)autorelease &#123;</span><br><span class="line"><span class="keyword">return</span> ((<span class="type">id</span>)<span class="keyword">self</span>)-&gt;rootAutorelease();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">id</span> objc_object::rootAutorelease2()</span><br><span class="line">&#123;</span><br><span class="line">assert(!isTaggedPointer());</span><br><span class="line"><span class="keyword">return</span> AutoreleasePoolPage::autorelease((<span class="type">id</span>)<span class="variable language_">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>AutoreleasePoolPage中autorelease的定义如下：</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">id</span> autorelease(<span class="type">id</span> obj)</span><br><span class="line">&#123;</span><br><span class="line">assert(obj);</span><br><span class="line">assert(!obj-&gt;isTaggedPointer());</span><br><span class="line"><span class="type">id</span> *dest __unused = autoreleaseFast(obj);</span><br><span class="line">assert(!dest  ||  dest == EMPTY_POOL_PLACEHOLDER  ||  *dest == obj);</span><br><span class="line"><span class="keyword">return</span> obj;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以知道@autoreleasepool{}中创建的对象都会被加入到AutoreleasePoolPage的栈中，AutoreleasePoolPage的栈中只有两种对象一种是POOL_BOUNDARY，一种是在@autoreleasepool{}创建的临时对象。</p>
+<h4 id="AutoreleasePoolPage-pop"><a href="#AutoreleasePoolPage-pop" class="headerlink" title="AutoreleasePoolPage::pop"></a>AutoreleasePoolPage::pop</h4><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="type">void</span> pop(<span class="type">void</span> *token) </span><br><span class="line">&#123;</span><br><span class="line">AutoreleasePoolPage *page;</span><br><span class="line"><span class="type">id</span> *stop;</span><br><span class="line"></span><br><span class="line">page = pageForPointer(token);</span><br><span class="line">stop = (<span class="type">id</span> *)token;</span><br><span class="line"></span><br><span class="line">page-&gt;releaseUntil(stop);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (page-&gt;child) &#123;</span><br><span class="line"><span class="keyword">if</span> (page-&gt;lessThanHalfFull()) &#123;</span><br><span class="line">page-&gt;child-&gt;kill();</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (page-&gt;child-&gt;child) &#123;</span><br><span class="line">page-&gt;child-&gt;child-&gt;kill();</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>由上文可以当autoreleasepool的block结束时会先调用</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">objc_autoreleasePoolPop(atautoreleasepoolobj)</span><br></pre></td></tr></table></figure>
+<p>这里的atautoreleasepoolobj对象就是哨兵对象POOL_BOUNDARY,当然这里也可以理解为任何对象。</p>
+<blockquote>
+<p>1、pop会根据传入的对象拿到其所在的page。<br>2、然后调用releaseUntil释放token以及比其晚入栈的对象。<br>3、然后会将空的page给销毁掉。</p>
+</blockquote>
+<h3 id="TLS-Thread-Local-Storage"><a href="#TLS-Thread-Local-Storage" class="headerlink" title="TLS(Thread Local Storage)"></a>TLS(Thread Local Storage)</h3><p>比较有趣的是page是用tls来进行存储的，hotPage使用tls_get_direct来获取当前页，tls中将一块内存作为某个线程专有的存储，以key-value的形式进行读写的，这里和Java中的ThreadLocal是一样的道理。</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> AutoreleasePoolPage *hotPage() </span><br><span class="line">&#123;</span><br><span class="line">AutoreleasePoolPage *result = (AutoreleasePoolPage *)</span><br><span class="line">tls_get_direct(key);</span><br><span class="line"><span class="keyword">if</span> (result) result-&gt;fastcheck();</span><br><span class="line"><span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>参考：<br><a href="https://developer.apple.com/documentation/foundation/nsautoreleasepool#//apple_ref/occ/cl/NSAutoreleasePool">https://developer.apple.com/documentation/foundation/nsautoreleasepool#//apple_ref/occ/cl/NSAutoreleasePool</a><br><a href="http://www.jianshu.com/p/32265cbb2a26">http://www.jianshu.com/p/32265cbb2a26</a><br><a href="https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/mmAutoreleasePools.html">https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/mmAutoreleasePools.html</a><br><a href="http://blog.sunnyxx.com/2014/10/15/behind-autorelease/">http://blog.sunnyxx.com/2014/10/15/behind-autorelease/</a></p>
+]]></content>
+      <tags>
+        <tag>iOS</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>NSObject对象占用多少内存</title>
+    <url>/2021/04/09/NSObject%E5%AF%B9%E8%B1%A1%E5%8D%A0%E7%94%A8%E5%A4%9A%E5%B0%91%E5%86%85%E5%AD%98/</url>
+    <content><![CDATA[<h3 id="NSObject的本质"><a href="#NSObject的本质" class="headerlink" title="NSObject的本质"></a>NSObject的本质</h3><figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&lt;Foundation/Foundation.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSObject</span> *obj = [[<span class="built_in">NSObject</span> alloc] init];</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;Hello, World!&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>以上一段代码使用如下一段命令进行rewrite后，会被改为c++代码，生成main.cpp</p>
+<blockquote>
+<p>xcrun  -sdk  iphoneos  clang  -arch  arm64  -rewrite-objc main.m</p>
+</blockquote>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="comment">/* @autoreleasepool */</span> &#123; __AtAutoreleasePool __autoreleasepool; </span><br><span class="line">        <span class="built_in">NSObject</span> *obj = ((<span class="built_in">NSObject</span> *(*)(<span class="type">id</span>, SEL))(<span class="type">void</span> *)objc_msgSend)((<span class="type">id</span>)((<span class="built_in">NSObject</span> *(*)(<span class="type">id</span>, SEL))(<span class="type">void</span> *)objc_msgSend)((<span class="type">id</span>)objc_getClass(<span class="string">&quot;NSObject&quot;</span>), sel_registerName(<span class="string">&quot;alloc&quot;</span>)), sel_registerName(<span class="string">&quot;init&quot;</span>));</span><br><span class="line">        <span class="built_in">NSLog</span>((<span class="built_in">NSString</span> *)&amp;__NSConstantStringImpl__var_folders_s0_4wsgyhps0fv7r90xwgjm4lwr0000gn_T_main_96c2d6_mi_0);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>NSObject 的结构为</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> objc_class *Class;</span><br><span class="line"><span class="keyword">struct</span> objc_object &#123;</span><br><span class="line">    Class _Nonnull isa __attribute__((deprecated));</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> objc_object <span class="built_in">NSObject</span>;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到NSObject是由结构体objc_object来定义的，objc_object里面只有一个Class类型的isa属性，指向该类的类信息；Class是由结构体 objc_class来定义。由此可以知道oc编写的代码都会被翻译为C++代码。</p>
+<h3 id="NSObject的内存占用"><a href="#NSObject的内存占用" class="headerlink" title="NSObject的内存占用"></a>NSObject的内存占用</h3><p><code>class_getInstanceSize</code>是一个runtime提供的API，用于获取类实例对象所占用的内存大小，源码如下：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">size_t class_getInstanceSize(Class cls)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (!cls) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">return</span> cls-&gt;alignedInstanceSize();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Class&#x27;s ivar size rounded up to a pointer-size boundary.</span></span><br><span class="line">uint32_t alignedInstanceSize() <span class="keyword">const</span> &#123;</span><br><span class="line">   <span class="keyword">return</span> word_align(unalignedInstanceSize());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>根据源码的意思来看， <code>class_getInstanceSize</code> 就是获取实例对象中成员变量内存大小。</p>
+<p>下面我们使用一个case来说明一个对象占用内存的大小：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&lt;Foundation/Foundation.h&gt;</span></span></span><br><span class="line"><span class="meta">#import <span class="string">&lt;objc/runtime.h&gt;</span></span></span><br><span class="line"><span class="meta">#import <span class="string">&lt;malloc/malloc.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSObject</span> *obj = [[<span class="built_in">NSObject</span> alloc] init];</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获得NSObject实例对象的成员变量所占用的大小</span></span><br><span class="line">        size_t class_size = class_getInstanceSize(<span class="built_in">NSObject</span>.class);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获得ptr指针所指向内存的大小</span></span><br><span class="line">        <span class="type">void</span> *ptr = (__bridge <span class="type">void</span> *)obj;</span><br><span class="line">        size_t ptrmalloc_size = malloc_size(ptr);</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;class_size:%zu ptrmalloc_size:%zu&quot;</span>, class_size, ptrmalloc_size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>运行结果为</p>
+<blockquote>
+<p>class_size:8 ptrmalloc_size:16</p>
+</blockquote>
+<p>运行结果说明nsobject类对象的大小正好是isa指针的大小为8个字节，使用view memory可以查看ptr指向的内存，占用16个字节。<br>这是因为在objc的alloc内存申请的流程中有这样一段代码，限制一个NSObect对象的大小至少要占用16个字节。</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">size_t instanceSize(size_t extraBytes) <span class="keyword">const</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (fastpath(cache.hasFastInstanceSize(extraBytes))) &#123;</span><br><span class="line">        <span class="keyword">return</span> cache.fastInstanceSize(extraBytes);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    size_t size = alignedInstanceSize() + extraBytes;</span><br><span class="line">    <span class="comment">// CF requires all objects be at least 16 bytes.</span></span><br><span class="line">    <span class="keyword">if</span> (size &lt; <span class="number">16</span>) size = <span class="number">16</span>;</span><br><span class="line">    <span class="keyword">return</span> size;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p><strong>所以我们知道NSObject中只有一个isa指针，所以NSObject类对象占用8个字节，NSObject在内存中占用16个字节。</strong></p>
+<h3 id="自定义类的内存占用"><a href="#自定义类的内存占用" class="headerlink" title="自定义类的内存占用"></a>自定义类的内存占用</h3><p>定义Test类，并进行如下初始化，那么obj在内存中是怎样布局的呢？</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Test</span> : <span class="title">NSObject</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_1;</span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_2;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Test</span></span></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        </span><br><span class="line">        Test *obj = [[Test alloc] init];</span><br><span class="line">        obj.property_1 = <span class="number">1</span>;</span><br><span class="line">        obj.property_2 = <span class="number">2</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获得NSObject实例对象的成员变量所占用的大小</span></span><br><span class="line">        size_t class_size = class_getInstanceSize(Test.class);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获得ptr指针所指向内存的大小</span></span><br><span class="line">        <span class="type">void</span> *ptr = (__bridge <span class="type">void</span> *)obj;</span><br><span class="line">        size_t ptrmalloc_size = malloc_size(ptr);</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;class_size:%zu ptrmalloc_size:%zu&quot;</span>, class_size, ptrmalloc_size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>运行的结果如下</p>
+<blockquote>
+<p>class_size:16 ptrmalloc_size:16</p>
+</blockquote>
+<p>使用view memory查看ptr指向的内存，如下图<br><img src="/images/ios/1.png"><br>其中红框是对象属性property_1和property_2 的值，分别是1和2，int类型各占4个字节。</p>
+<p>如果Test的定义如下</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Test</span> : <span class="title">NSObject</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_1;</span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_2;</span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_3;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<p>初始化obj并赋值</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">Test *obj = [[Test alloc] init];</span><br><span class="line">obj.property_1 = <span class="number">1</span>;</span><br><span class="line">obj.property_2 = <span class="number">2</span>;</span><br><span class="line">obj.property_3 = <span class="number">3</span>;</span><br></pre></td></tr></table></figure>
+<p>运行结果为</p>
+<blockquote>
+<p>class_size:24 ptrmalloc_size:32</p>
+</blockquote>
+<p>则在内存中的布局如下，可以看到property_1、property_2和property_3 的值分别为1、2、3<br><img src="/images/ios/2.png"><br>首先Test的类对象的大小为24，但是为何不是 8(isa指针) + 三个属性占用的12个字节 &#x3D; 20 个字节？<br>这是因为表示Class的struct objc_class是一个结构体，结构体大小结果要为成员中最大字节的整数倍，所以Test类指向的objc_class变量大小为24。</p>
+<p>对象在内存中占用了32个字节，这是因为malloc要满足 16 字节对齐原则 ( 可以在 libmaclloc 源码查找到 ) , 因此实际总占用内存为24. 而实际开辟则满足对齐标准开辟为 32.<br><img src="/images/ios/3.png"></p>
+<p>参考<br><a href="https://juejin.cn/post/6844903939985391629">https://juejin.cn/post/6844903939985391629</a><br><a href="https://zhuanlan.zhihu.com/p/98432137">https://zhuanlan.zhihu.com/p/98432137</a></p>
+]]></content>
+      <tags>
+        <tag>iOS基础</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>基于Double Array Tire的AC自动机</title>
+    <url>/2021/04/27/doublearraytire/</url>
+    <content><![CDATA[<h2 id="一、背景"><a href="#一、背景" class="headerlink" title="一、背景"></a>一、背景</h2><p>AC自动机以Trie树为基础的，每一个状态都由一个<code>TrieNode</code>来表示，TireNode的定义如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">struct TrieNode &#123;</span><br><span class="line">    bool flag;</span><br><span class="line">    wstring keyword;</span><br><span class="line">    TrieNode *fail;</span><br><span class="line">    map&lt;wstring, TrieNode *&gt; next;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>测试过程中29W个关键词来构建出的Trie树有<code>762922</code>个TrieNode节点，每个节点占用内存空间20byte，则占用内存空间为</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">762922 * 20 / 1024 / 1024 = 46M</span><br></pre></td></tr></table></figure>
+<p>仅仅是TireNode节点占用的空间已经达到了46M，加上额外keyword和map指向的内存占用，会直接达到100M左右，显然在内存受限的场景中是无法接受的。</p>
+<p>因此基于双数组Tire树的AC自动机被提出，以降低AC自动机的内存占用。</p>
+<h2 id="二、双数组Tire树介绍"><a href="#二、双数组Tire树介绍" class="headerlink" title="二、双数组Tire树介绍"></a>二、双数组Tire树介绍</h2><blockquote>
+<p><font size=2>双数组Trie (Double-Array Trie)结构由日本人JUN-ICHI AOE于1989年提出的，是Trie结构的压缩形式，仅用两个线性数组来表示Trie树，该结构有效结合了数字搜索树(Digital Search Tree)检索时间高效的特点和链式表示的Trie空间结构紧凑的特点。双数组Trie的本质是一个确定有限状态自动机（DFA），每个节点代表自动机的一个状态，根据变量不同，进行状态转移，当到达结束状态或无法转移时，完成一次查询操作。在双数组所有键中包含的字符之间的联系都是通过简单的数学加法运算表示，不仅提高了检索速度，而且省去了链式结构中使用的大量指针，节省了存储空间。——《基于双数组Trie树算法的字典改进和实现》</font></p>
+</blockquote>
+<p>双数组Trie树主要的优点就是相比链式结构Trie树大大降低了内存占用，是一种空间复杂度低的Trie树，其使用两个一维数组 BASE 和 CHECK 来表示整棵树。<br><br>DAT中有几个基本的概念</p>
+<blockquote>
+<font size=2> 
+STATE : 状态，实际是BASE数组的下标；<br>
+CODE : 字符编码表；<br>
+BASE : 表示后继节点的基地址的数组；<br>
+CHECK : 表示前驱节点的地址的数组；
+</font>
+</blockquote>
+<p>BASE 和 CHECK 构建的规则如下</p>
+<blockquote>
+<font size=2> 
+BASE[s] + c = t <br>
+CHECK[t] = BASE[s]
+</font>
+</blockquote>
+<p>举个🌰 ， 如果字符<code>h</code>，加上字符<code>e</code>，可以组成前缀<code>he</code>。<br><img src="/images/algorithm/DAT1.jpg" width="200"/></p>
+<p>则有<code>BASE[h] + e = he</code>，表示<code>h</code>和<code>e</code>的状态转移关系，另外<code>CHECK[he] = h</code>确保该状态转移的正确性。</p>
+<h3 id="三、构建双数组Tire树"><a href="#三、构建双数组Tire树" class="headerlink" title="三、构建双数组Tire树"></a>三、构建双数组Tire树</h3><p>这里以模式串 { he, hers, his, she} 为例，来讲解双数组trie的构建，其对应的Trie树结构如下图所示。<br><img src="/images/algorithm/DAT2.jpg" width="300"/></p>
+<h4 id="1-构建CODE编码表"><a href="#1-构建CODE编码表" class="headerlink" title="1. 构建CODE编码表"></a>1. 构建CODE编码表</h4><img src="/images/algorithm/DAT3.jpg" width="500"/>
+
+<h4 id="2-构建BASE和CHECK状态表"><a href="#2-构建BASE和CHECK状态表" class="headerlink" title="2. 构建BASE和CHECK状态表"></a>2. 构建BASE和CHECK状态表</h4><p>假设当前状态为S，S的后继节点的字符为{A、B、C…}，BASE[S]需满足</p>
+<blockquote>
+<font size=2> 
+BASE[S] + CODE(A) = BASE[S] + CODE(B) = BASE[S] +CODE(C) = ... = 0 <br>
+CHECK[BASE[S] + CODE(A)] = CHECK[BASE[S] + CODE(B)] = CHECK[...] = 0
+</font>
+</blockquote>
+<p>确定了BASE[S]的值之后，需要将子节点位置的CHECK值设为S</p>
+<blockquote>
+<font size=2> 
+CHECK[BASE[S] + CODE(A)] = CHECK[BASE[S] + CODE(B)] = ... = S
+</font>
+</blockquote>
+<h5 id="2-1-初始化Double-Array"><a href="#2-1-初始化Double-Array" class="headerlink" title="2.1 初始化Double Array"></a>2.1 初始化Double Array</h5><p>将根节点状态置为1，check置为0，将第一层结点<code>h</code>和<code>s</code>对应位置的值初始化为1，因为没有前缀，将CHECK设为-1（也可以是1）<br><img src="/images/algorithm/DAT_1.jpg" width="600"/></p>
+<h5 id="2-2-第一层节点的字符s"><a href="#2-2-第一层节点的字符s" class="headerlink" title="2.2 第一层节点的字符s"></a>2.2 第一层节点的字符<code>s</code></h5><p>首先处理第一层节点的字符<code>s</code>，由于<code>CODE(s) = 3</code>，即确定 BASE[3]的值。<br></p>
+<p>BASE[3]的后继子节点字符为<code>h</code>，<code>CODE(h) = 1</code>，可以得出其begin值为1，即 BASE[3] &#x3D; 1。<br>同时状态转移需要满足：</p>
+<blockquote>
+<font size=2> 
+CHECK[t] = BASE[s]， 即 CHECK[2] = 3
+</font>
+</blockquote>
+<p>赋值后的 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_2.jpg" width="600"/></p>
+<h5 id="2-3-第一层节点的字符h"><a href="#2-3-第一层节点的字符h" class="headerlink" title="2.3 第一层节点的字符h"></a>2.3 第一层节点的字符<code>h</code></h5><p>第一层节点的字符<code>h</code>，由于<code>CODE(h) = 1</code>，即确定 BASE[1]的值。<br><br>BASE[1]的后继子节点字符为<code>e</code>、<code>i</code>，CODE(e) &#x3D; 2，CODE(i) &#x3D; 4 <br></p>
+<ul>
+<li>当begin &#x3D; 0的话，由于CHECK[2] !&#x3D; 0，所以不成立；<br></li>
+<li>当begin &#x3D; 1的话，由于BASE[3] !&#x3D; 0，所以不成立；<br></li>
+<li>当begin &#x3D; 2的话，<code>BASE[4] == BASE[6] == 0 &amp;&amp; CHECK[4] == CHECK[6] == 0</code>，则begin值可为2，即 BASE[1] &#x3D; 2。<br></li>
+</ul>
+<p>另外给子节点的CHECK进行赋值</p>
+<blockquote>
+<font size=2> 
+CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
+</font>
+</blockquote>
+<p>赋值后的 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_3.jpg" width="600"/></p>
+<h5 id="2-4-第二层节点的字符h"><a href="#2-4-第二层节点的字符h" class="headerlink" title="2.4 第二层节点的字符h"></a>2.4 第二层节点的字符<code>h</code></h5><p>第二层节点的字符<code>h</code>对应的状态是BASE[2]，只有一个子节点<code>e</code>，CODE(e) &#x3D; 2; <br> </p>
+<ul>
+<li>当begin &#x3D; 0，CHECK[2] !&#x3D; 0，不成立；<br></li>
+<li>当begin &#x3D; 1，BASE[3] !&#x3D; 0，不成立；<br></li>
+<li>当begin &#x3D; 2，CHECK[4] !&#x3D; 0，不成立；<br></li>
+<li>当begin &#x3D; 3，BASE[5] &#x3D;&#x3D; 0 &amp; CHECK[5] &#x3D;&#x3D; 0，成立，则BASE[2] &#x3D; 3，CHECK[5] &#x3D; 2；<br></li>
+</ul>
+<p>赋值后的 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_4.jpg" width="600"/></p>
+<h5 id="2-5-第二层节点的字符e"><a href="#2-5-第二层节点的字符e" class="headerlink" title="2.5 第二层节点的字符e"></a>2.5 第二层节点的字符<code>e</code></h5><p>第二层节点的字符<code>e</code>对应的状态是BASE[4]，只有一个子节点<code>r</code>，CODE(r) &#x3D; 5; <br> </p>
+<ul>
+<li>当begin &#x3D; 0，CHECK[2] !&#x3D; 0，不成立；<br></li>
+<li>当begin &#x3D; 1，BASE[3] !&#x3D; 0，不成立；<br></li>
+<li>当begin &#x3D; 2，BASE[7] &#x3D;&#x3D; 0 &amp; CHECK[7] &#x3D;&#x3D; 0，成立，则BASE[4] &#x3D; 2，CHECK[7] &#x3D; 4；<br></li>
+</ul>
+<p>因为<code>he</code>为关键词，则将其base状态设置为负值，赋值后的 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_5.jpg" width="600"/></p>
+<h5 id="2-6-第二层节点的字符i"><a href="#2-6-第二层节点的字符i" class="headerlink" title="2.6 第二层节点的字符i"></a>2.6 第二层节点的字符<code>i</code></h5><p>第二层节点的字符<code>e</code>对应的状态是BASE[6]，只有一个子节点<code>s</code>，CODE(s) &#x3D; 3; <br><br>根据上面的规则可得，begin &#x3D; 5，则则BASE[6] &#x3D; 5，CHECK[8] &#x3D; 6；<br><br>赋值后的 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_6.jpg" width="600"/></p>
+<h5 id="2-7-按规则初始化第三层和第四层节点"><a href="#2-7-按规则初始化第三层和第四层节点" class="headerlink" title="2.7 按规则初始化第三层和第四层节点"></a>2.7 按规则初始化第三层和第四层节点</h5><p>整个初始化的过程如下<br><img src="/images/algorithm/DAT_ALL.gif" width="800"/></p>
+<p>最终 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_10.jpg" width="600"/></p>
+<h3 id="四、构建适配数组"><a href="#四、构建适配数组" class="headerlink" title="四、构建适配数组"></a>四、构建适配数组</h3><p>AC自动机是由Tire树配合适配指针构成，Trie树由双数组表示后，适配信息也由数组的方式来表示。<br>下图中的虚线是由指针形式表示的适配信息。<br><img src="/images/algorithm/DAT_11.jpg" width="600"/></p>
+<h3 id="五、内存占用"><a href="#五、内存占用" class="headerlink" title="五、内存占用"></a>五、内存占用</h3><p>测试过程中29W个关键词来构建出的基于双数组Trie树的AC自动机，占用内存超过60M。<br><br>其中<br></p>
+<blockquote>
+<p>2110589长度的check 和 base数组(16M)<br><br>758618长度的&lt;int, int&gt; fail状态转移 map (5.7M)<br><br>29W个&lt;int, string&gt; 的状态到关键词的map(23M)<br></p>
+</blockquote>
+<img src="/images/algorithm/dat_q.jpg" width="100"/>
+内存还是很高，虽然内存还有优化的空间，但是也很难做出一个数量级的优化，那对于在内存受限的设备上，如何实现更性能高效，低内存占用的多模式匹配呢？
+
+<p><a href="https://github.com/zhangdongxuan/CodeSlice/tree/master/algorithm/Aho%E2%80%93Corasic/DoubleArrayTrieAC">点击查看源码</a></p>
+]]></content>
+      <tags>
+        <tag>算法</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>iOS实现文字复制</title>
+    <url>/2016/12/05/iOS%E5%AE%9E%E7%8E%B0%E6%96%87%E5%AD%97%E5%A4%8D%E5%88%B6/</url>
+    <content><![CDATA[<p>实现的目标是长按label，弹出复制菜单，然后复制。<br>我的做法是实现一个通用的可复制UILabel控件。下面是具体的步骤。</p>
+<h2 id="创建UILabel子类"><a href="#创建UILabel子类" class="headerlink" title="创建UILabel子类"></a>创建UILabel子类</h2><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">CopyLabel</span> : <span class="title">UILabel</span></span></span><br><span class="line"></span><br><span class="line">- (<span class="type">id</span>)initWithFrame:(<span class="built_in">CGRect</span>)frame;</span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="使UILabel可响应"><a href="#使UILabel可响应" class="headerlink" title="使UILabel可响应"></a>使UILabel可响应</h2><p>使CopyLabel可以成为第一响应者</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="type">BOOL</span>)canBecomeFirstResponder</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使CopyLabel可响应copyText命令</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="type">BOOL</span>)canPerformAction:(SEL)action withSender:(<span class="type">id</span>)sender</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">return</span> (action == <span class="keyword">@selector</span>(copyText:));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>1、 UIResponder类声明了canPerformAction:withSender:方法。响应者类可以实现这个方法，以根据当前的上下文显示或移除编辑菜单上的命令。<br>2、 在自定义的UIView子类中，需要实现canBecomeFirstResponder方法，并返回YES(默认返回FALSE)，才可使becomeFirstResponder可返回YES,才可使其成为第一响应者，即接受第一响应者状态。一个响应者只有当当前响应者可以取消第一响应者状态 (canResignFirstResponder) 并且新的响应者可以成为第一响应者时，才可以成为第一响应者。</p>
+</blockquote>
+<h2 id="添加监听"><a href="#添加监听" class="headerlink" title="添加监听"></a>添加监听</h2><h3 id="在初始化方法中添加长按手势"><a href="#在初始化方法中添加长按手势" class="headerlink" title="在初始化方法中添加长按手势"></a>在初始化方法中添加长按手势</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="built_in">UILongPressGestureRecognizer</span>* longPressGr = [[<span class="built_in">UILongPressGestureRecognizer</span> alloc] initWithTarget:<span class="keyword">self</span> action:<span class="keyword">@selector</span>(pressToCopy:)];</span><br><span class="line"><span class="comment">//设置最短长按时间</span></span><br><span class="line">longPressGr.minimumPressDuration = <span class="number">0.5</span>f;</span><br><span class="line">[<span class="keyword">self</span> addGestureRecognizer:longPressGr];</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="使UILabel可交互"><a href="#使UILabel可交互" class="headerlink" title="使UILabel可交互"></a>使UILabel可交互</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">self</span>.userInteractionEnabled = <span class="literal">YES</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="添加菜单消失的监听"><a href="#添加菜单消失的监听" class="headerlink" title="添加菜单消失的监听"></a>添加菜单消失的监听</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">[[<span class="built_in">NSNotificationCenter</span> defaultCenter] addObserver:<span class="keyword">self</span> selector:<span class="keyword">@selector</span>(menuItemHidden:)name:<span class="built_in">UIMenuControllerWillHideMenuNotification</span> object:<span class="literal">nil</span>];</span><br></pre></td></tr></table></figure>
+
+<h2 id="实现响应方法"><a href="#实现响应方法" class="headerlink" title="实现响应方法"></a>实现响应方法</h2><h3 id="长按后在文字上方弹出复制菜单"><a href="#长按后在文字上方弹出复制菜单" class="headerlink" title="长按后在文字上方弹出复制菜单"></a>长按后在文字上方弹出复制菜单</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">-(<span class="type">void</span>)pressToCopy:(<span class="built_in">UILongPressGestureRecognizer</span> *)sender&#123;</span><br><span class="line"><span class="keyword">if</span> (sender.state == <span class="built_in">UIGestureRecognizerStateBegan</span>) &#123;</span><br><span class="line">[<span class="keyword">self</span> becomeFirstResponder];</span><br><span class="line"></span><br><span class="line"><span class="built_in">UIMenuController</span> *menu = [<span class="built_in">UIMenuController</span> sharedMenuController];</span><br><span class="line"><span class="built_in">UIMenuItem</span> *<span class="keyword">copy</span> = [[<span class="built_in">UIMenuItem</span> alloc] initWithTitle:<span class="string">@&quot;复制&quot;</span> action:<span class="keyword">@selector</span>(copyText:)];</span><br><span class="line">menu.menuItems = @[<span class="keyword">copy</span>];</span><br><span class="line">[menu setTargetRect:<span class="keyword">self</span>.bounds inView:<span class="keyword">self</span>];</span><br><span class="line">[menu setMenuVisible:<span class="literal">YES</span> animated:<span class="literal">YES</span>];</span><br><span class="line"><span class="comment">//文字颜色的0.5透明度作为uilabel背景色</span></span><br><span class="line"><span class="keyword">self</span>.backgroundColor = [<span class="keyword">self</span>.textColor colorWithAlphaComponent:<span class="number">0.5</span>f];</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="当复制菜单消失后，使uilabel背景色变为透明"><a href="#当复制菜单消失后，使uilabel背景色变为透明" class="headerlink" title="当复制菜单消失后，使uilabel背景色变为透明"></a>当复制菜单消失后，使uilabel背景色变为透明</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">-(<span class="type">void</span>)menuItemHidden:(<span class="type">id</span>)sender&#123;</span><br><span class="line"><span class="keyword">self</span>.backgroundColor = [<span class="built_in">UIColor</span> clearColor];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="实现复制方法"><a href="#实现复制方法" class="headerlink" title="实现复制方法"></a>实现复制方法</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">-(<span class="type">void</span>)copyText:(<span class="type">id</span>)sender</span><br><span class="line">&#123;</span><br><span class="line"><span class="built_in">UIPasteboard</span> *pasteboard = [<span class="built_in">UIPasteboard</span> generalPasteboard];</span><br><span class="line">pasteboard.string = <span class="keyword">self</span>.label.text;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>1、 UIMenuController类可以在选定的拷贝、剪切、和粘贴对象的上下方显示一个编辑菜单。编辑菜单上的命令可以有拷贝、剪切、粘贴、选定、和全部选定。<br>2、UIPasteboard类提供了粘贴板的接口。粘贴板是用于在一个应用程序内或不同应用程序间进行数据共享的受保护区域。该类提供了读写剪贴板上数据项目的方法。</p>
+</blockquote>
+<h2 id="移除监听"><a href="#移除监听" class="headerlink" title="移除监听"></a>移除监听</h2><p>当组件释放的时候需要移除其上面的添加的所有监听</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">-(<span class="type">void</span>)dealloc&#123;</span><br><span class="line">[[<span class="built_in">NSNotificationCenter</span> defaultCenter] removeObserver:<span class="keyword">self</span>];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>iOS</category>
+      </categories>
+      <tags>
+        <tag>UI</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>iOS 图片压缩</title>
+    <url>/2017/09/05/iOS-%E5%9B%BE%E7%89%87%E5%8E%8B%E7%BC%A9/</url>
+    <content><![CDATA[<p>最近在解决Share Extension发送大图导致爆内存的问题，测试用27M的图片，用的是iPhone 7P，系统分配给Share Extension的内存应该有100M，一步步debug发现问题出在压缩的过程。</p>
+<h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><p>在缩小图片的时候用了下面的代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">UIGraphicsBeginImageContext(imgSize);</span><br><span class="line"></span><br><span class="line">[self drawInRect:CGRectMake(0, 0, imgSize.width, imgSize.height)];</span><br><span class="line">UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();</span><br><span class="line"></span><br><span class="line">UIGraphicsEndImageContext();</span><br><span class="line">return newImage;</span><br></pre></td></tr></table></figure>
+
+<p>运行到drawInRect的时候程序直接退出了，可见drawInRect是比较吃内存的。<br>于是在网上搜索关键字<code>uiimage drawinrect memory warning</code>，但是貌似都是关于memory not release的帖子，解决方法是添加autoreleasepool，<br>很显然无法解决爆内存的问题。</p>
+<h3 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h3><p>后来同事推荐使用ImageIO来解决这个问题：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">CGFloat maxPixelSize = 100;</span><br><span class="line">CGImageSourceRef sourceRef = CGImageSourceCreateWithData((__bridge CFDataRef)data, nil);</span><br><span class="line"></span><br><span class="line">CFDictionaryRef options = (__bridge CFDictionaryRef) @&#123;</span><br><span class="line">(id) kCGImageSourceCreateThumbnailWithTransform : @YES,</span><br><span class="line">(id) kCGImageSourceCreateThumbnailFromImageAlways : @YES,</span><br><span class="line">(id) kCGImageSourceThumbnailMaxPixelSize : @(maxPixelSize)</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">UIImage *result = nil;</span><br><span class="line">CGImageRef imageRef = CGImageSourceCreateThumbnailAtIndex(sourceRef, 0, options);</span><br><span class="line"></span><br><span class="line">if (imageRef) &#123;</span><br><span class="line">result = [UIImage imageWithCGImage:imageRef scale:scale orientation:orientation];</span><br><span class="line">CGImageRelease(imageRef);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">if (sourceRef) &#123;</span><br><span class="line">CFRelease(sourceRef);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">return result;</span><br></pre></td></tr></table></figure>
+
+<p>使用改代码对测试用的27M的图片进行压缩，内存在执行CGImageSourceCreateThumbnailAtIndex的时候只上升了20M。</p>
+<p>如下是对一个9.2M的图片进行压缩的内存变化图<br><img src="/images/WechatIMG386.jpeg"><br>图中1是将图片读入内存导致的内存增加，在使用ImageIO进行压缩的过程中内存没有出现明显的变化，2是使用drawInRect进行压缩，可见内存飙升到了38.8。</p>
+<p>参考：<br>[Resizing High Resolution Images on iOS Without Memory Issues][1]<br>[UIImage vs. CIImage vs. CGImage][2]<br>[1]:<a href="http://pulkitgoyal.in/resizing-high-resolution-images-on-ios-without-memory-issues/">http://pulkitgoyal.in/resizing-high-resolution-images-on-ios-without-memory-issues/</a><br>[2]:<a href="https://medium.com/@ranleung/uiimage-vs-ciimage-vs-cgimage-3db9d8b83d94">https://medium.com/@ranleung/uiimage-vs-ciimage-vs-cgimage-3db9d8b83d94</a></p>
+]]></content>
+  </entry>
+  <entry>
+    <title>iOS 观察者模式</title>
+    <url>/2016/08/06/iOS-%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/</url>
+    <content><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>差不多有半年没有写过博客了，知识沉淀的感觉让我十分怀念。最近在工作中用到的观察者模式比较多，发现客户端开发中无论是Android还是iOS都需要很多经常的利用到这种模式。这种模式会在很大程度上达到层次解耦合的作用，具体如果解耦会在下文中提到。</p>
+<h2 id="模式定义"><a href="#模式定义" class="headerlink" title="模式定义"></a>模式定义</h2><blockquote>
+<p>定义对象之间的一种一对多依赖关系，使得每当一个对象状态发生改变时，其相关依赖对象皆得到通知并被自动更新。观察者模式的别名包括发布-订阅（Publish&#x2F;Subscribe）模式、模型-视图（Model&#x2F;View）模式、源-监听器（Source&#x2F;Listener）模式或从属者（Dependents）模式。观察者模式是一种对象行为型模式。  – 刘伟老师</p>
+</blockquote>
+<h2 id="模式概述"><a href="#模式概述" class="headerlink" title="模式概述"></a>模式概述</h2><p>观察者模式是使用频率很高的模式，它定义了对象与对象之间的依赖关系，当一个对象的状态发生变化的时候自动地去通知其他对象响应此变化。发生改变的对象被称为观察目标(Subject)，被通知去响应变化的被称为观察者(Observer),可以动态的去增加和删除观察者，从而做到观察者和被观察者之家的解耦，使系统更容易拓展。</p>
+<h2 id="举个例子"><a href="#举个例子" class="headerlink" title="举个例子"></a>举个例子</h2><p>“铃响，学生上课；铃再响，学生下课”。在这个场景中铃声就是同学们的观察目标，而学生就是观察者。</p>
+<h2 id="模式类图"><a href="#模式类图" class="headerlink" title="模式类图"></a>模式类图</h2><p><img src="/images/old/Observer.png"></p>
+<ul>
+<li><strong>Subjec:</strong> 目标，即被观察者。其中会定义一个观察者集合，用来存放任意数量的观察者，并提供管理这些观察者的方法。同时定义了通知的方法notify()。这个类可以是接口，抽象类或者具体类；</li>
+<li><strong>ConcreteSubject:</strong> 具体的目标类。当其状态改变时，会向各个观察者发出通知，此类可以根据情况来决定是否对目标类进行扩展；</li>
+<li><strong>Observer:</strong> 观察者类对观察目标的改变做出响应。一般定义为接口，该接口声明了更新数据的方法update()；</li>
+<li><strong>ConcreteObserver:</strong> 具体观察者,它是真正响应变化的类，在一般情况下它维护一个指向具体目标对象的引用，它具体存储观察者的有关状态（例如下课的铃响，学生记住下课的状态），这些状态要和具体目标的状态保持一致。它实现了在Observer接口中的update（）方法。可以调用观察目标对象的addObserver()和removeObserver()将自己添加到观察者队列或者从观察者队列中删除。</li>
+<li><strong>ConcreteObserver:</strong> 具体观察者</li>
+</ul>
+<p>##注意<br><strong>在OC中没有接口这一说，并且其与接口类似的协议也是不能声明对象的！！</strong></p>
+<h2 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h2><p>下面是该模式在Objective-C中的实现。</p>
+<p><code>Observer.h</code></p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Observer</span> : <span class="title">NSObject</span></span></span><br><span class="line"></span><br><span class="line">-(<span class="type">void</span>)update;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+<p><code>Observer.m</code></p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Observer</span></span></span><br><span class="line"></span><br><span class="line">-(<span class="type">void</span>)update&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+<hr>
+<p><code>ConcreteObserver.h</code></p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&quot;Observer.h&quot;</span></span></span><br><span class="line"><span class="class"><span class="keyword">@class</span> <span class="title">Subject</span>;</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">ConcreteObserver</span> : <span class="title">Observer</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>,<span class="keyword">weak</span>)Subject *subject;</span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<p><code>ConcreteObserver.m</code></p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&quot;ConcreteObserver.h&quot;</span></span></span><br><span class="line"><span class="meta">#import <span class="string">&quot;Subject.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">ConcreteObserver</span></span>&#123;</span><br><span class="line">    <span class="built_in">CLASS_STATE</span> state;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="type">void</span>)update&#123;</span><br><span class="line">    state = [_subject state];</span><br><span class="line">    <span class="keyword">if</span>(state)&#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;学生冲进教室&quot;</span>);</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;学生冲出教室&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+<hr>
+<p><code>Subject.h</code></p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@class</span> <span class="title">Observer</span>;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="built_in">NS_ENUM</span>(<span class="built_in">NSInteger</span>, <span class="built_in">CLASS_STATE</span>) &#123;</span><br><span class="line">    <span class="built_in">CLASS_OFF</span> = <span class="number">0</span>,   <span class="comment">//下课</span></span><br><span class="line">    <span class="built_in">CLASS_ON</span>,  <span class="comment">//上课</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Subject</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>,<span class="keyword">assign</span>)SUBJECT_STATE state;</span><br><span class="line">-(<span class="type">BOOL</span>)addObserver:(Observer*)observer;</span><br><span class="line">-(<span class="type">BOOL</span>)removeObserver:(Observer*)observer;</span><br><span class="line">-(<span class="type">void</span>)notify;</span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<p><code>Subject.m</code></p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&quot;Subject.h&quot;</span></span></span><br><span class="line"><span class="meta">#import <span class="string">&quot;Observer.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Subject</span></span>&#123;</span><br><span class="line">    <span class="built_in">NSMutableArray</span> *observerArray;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="keyword">instancetype</span>)init&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">self</span> = [<span class="variable language_">super</span> init]) &#123;</span><br><span class="line">        observerArray = [[<span class="built_in">NSMutableArray</span> alloc]init];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">self</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="type">BOOL</span>)addObserver:(Observer*)observer&#123;</span><br><span class="line">    <span class="keyword">if</span> (![observerArray containsObject:observer]) &#123;</span><br><span class="line">        [observerArray addObject:observer];</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="type">BOOL</span>)removeObserver:(Observer*)observer&#123;</span><br><span class="line">    <span class="keyword">if</span> ([observerArray containsObject:observer]) &#123;</span><br><span class="line">        [observerArray removeObject:observer];</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="type">void</span>)notify&#123;</span><br><span class="line">    <span class="keyword">for</span> (Observer* observer <span class="keyword">in</span> observerArray) &#123;</span><br><span class="line">        [observer update];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="type">void</span>)setState:(<span class="built_in">CLASS_STATE</span>)state&#123;</span><br><span class="line">    _state = state;</span><br><span class="line">    <span class="keyword">if</span> (_state) &#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;上课铃响&quot;</span>);</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;下课铃响&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+<hr>
+<p>另外为了尽量匹配观察者模式的类图结构，还有一个Subject的子类ConcreteSubject，其实在这个例子中这个类并不需要存在。<br><code>ConcreteSubject.h</code></p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&quot;Subject.h&quot;</span></span></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">ConcreteSubject</span> : <span class="title">Subject</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+<p><code>ConcreteSubject.m</code></p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&quot;ConcreteSubject.h&quot;</span></span></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">ConcreteSubject</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+<hr>
+<p>最后在main函数中我们运行：</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">Subject * subject = [[Subject alloc]init];</span><br><span class="line">        </span><br><span class="line">ConcreteObserver *observer1 = [[ConcreteObserver alloc]init];</span><br><span class="line">ConcreteObserver *observer2= [[ConcreteObserver alloc]init];</span><br><span class="line">ConcreteObserver *observer3 = [[ConcreteObserver alloc]init];</span><br><span class="line">ConcreteObserver *observer4 = [[ConcreteObserver alloc]init];</span><br><span class="line"></span><br><span class="line">observer1.subject = subject;</span><br><span class="line">observer2.subject = subject;</span><br><span class="line">observer3.subject = subject;</span><br><span class="line">observer4.subject = subject;</span><br><span class="line"></span><br><span class="line">[subject addObserver:observer1];</span><br><span class="line">[subject addObserver:observer2];</span><br><span class="line">[subject addObserver:observer3];</span><br><span class="line">[subject addObserver:observer4];</span><br><span class="line"></span><br><span class="line">[subject setState:<span class="built_in">CLASS_ON</span>];</span><br><span class="line">[subject notify];</span><br><span class="line">        </span><br><span class="line">[subject setState:<span class="built_in">CLASS_OFF</span>];</span><br><span class="line">[subject notify];</span><br></pre></td></tr></table></figure>
+<p>运动结果：<br><img src="/images/old/result.png"></p>
+<hr>
+<h2 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h2><p>以上是比较复杂的观察着模式，在更新观察者的状态的时候需要获被观察者的状态。但是在很多情况下，我们并不需获取被观察者的状态，也就不需要持有被观察者的对象，这样会大大的简化模式模型。<br>比如在网络层和业务层之间，网络层下载数据之后如何通知业务层进行更新呢？如果像以上这种做法很显然观察者和被观察者之间相互依赖，层次之间的耦合度还是比较高的，所以代码应该如何组织呢？</p>
+]]></content>
+      <categories>
+        <category>非技术</category>
+      </categories>
+      <tags>
+        <tag>设计模式</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Objective-C 中对象的分类</title>
+    <url>/2021/04/09/Objective-C-%E4%B8%AD%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%86%E7%B1%BB/</url>
+    <content><![CDATA[<h3 id="一、对象的分类"><a href="#一、对象的分类" class="headerlink" title="一、对象的分类"></a>一、对象的分类</h3><h3 id="instance对象"><a href="#instance对象" class="headerlink" title="instance对象"></a>instance对象</h3><pre><code>实例对象就是通过alloc出来的对象，每次调用alloc都会产生新的instance对象；
+</code></pre>
+<p>实例对象的存储信息</p>
+<blockquote>
+<ol>
+<li>isa指针</li>
+<li>其他成员变量</li>
+</ol>
+</blockquote>
+<h3 id="class对象"><a href="#class对象" class="headerlink" title="class对象"></a>class对象</h3><pre><code>每个类的内存中有且只有一个类对象
+</code></pre>
+<p>类对象的存储信息</p>
+<blockquote>
+<ul>
+<li>isa指针</li>
+<li>superClass指针</li>
+<li>类的属性信息（@property），类的对象方法信息（method），类的协议信息（protocol），类的成员变量信息（ivar）</li>
+</ul>
+</blockquote>
+<p>类对象是由程序员定义并在运行时由编译器创建的，它没有自己的实例变量，这里需要注意的是类的成员变量和实例方法列表是属于实例对象的，但其存储于类对象当中的。</p>
+<h3 id="meta-class对象"><a href="#meta-class对象" class="headerlink" title="meta-class对象"></a>meta-class对象</h3><pre><code>每个类的内存中有且只有一个元类对象
+</code></pre>
+<p>元类的存储信息</p>
+<blockquote>
+<ul>
+<li>isa指针</li>
+<li>superClass指针</li>
+<li>类的属性信息（@property），类的对象方法信息（method），类的协议信息（protocol），类的成员变量信息（ivar）</li>
+</ul>
+</blockquote>
+<p><strong>元类和类的存储结构是一样的，但是用途不一样</strong></p>
+<h3 id="二、类及相应meta-class类的继承体系"><a href="#二、类及相应meta-class类的继承体系" class="headerlink" title="二、类及相应meta-class类的继承体系"></a>二、类及相应meta-class类的继承体系</h3><p><img src="/images/ios/4.jpeg"></p>
+<p><strong>instance的isa指向class对象（类对象），当调用对象方法时，通过instance的isa找到class对象（类对象），最后找到对象方法的实现进行调用；</strong></p>
+<p><strong>class的isa指向meta-class，当调用类方法时，通过class的isa找到meta-class，最后找到类方法的实现进行调用；</strong></p>
+<p>objective-c源码中对对象的定义是这样的</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="comment">//类的实例</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> objc_object *<span class="type">id</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Represents an instance of a class.</span></span><br><span class="line"><span class="keyword">struct</span> objc_object &#123;</span><br><span class="line">    <span class="comment">// 这里的isa指针指向当前实例的类对象</span></span><br><span class="line">    Class isa  OBJC_ISA_AVAILABILITY;</span><br><span class="line">&#125;;</span><br><span class="line">----------------------------------------------------</span><br><span class="line"></span><br><span class="line"><span class="comment">/// An opaque type that represents an Objective-C class.</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> objc_class *Class;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> objc_class &#123;</span><br><span class="line">    Class isa  OBJC_ISA_AVAILABILITY; <span class="comment">//</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> !__OBJC2__</span></span><br><span class="line">    Class super_class                                        OBJC2_UNAVAILABLE;<span class="comment">//父类</span></span><br><span class="line">    <span class="keyword">const</span> <span class="type">char</span> *name                                         OBJC2_UNAVAILABLE;<span class="comment">//类名</span></span><br><span class="line">    <span class="type">long</span> version                                             OBJC2_UNAVAILABLE;</span><br><span class="line">    <span class="type">long</span> info                                                OBJC2_UNAVAILABLE;</span><br><span class="line">    <span class="type">long</span> instance_size                                       OBJC2_UNAVAILABLE;<span class="comment">//实例大小</span></span><br><span class="line">    <span class="keyword">struct</span> objc_ivar_list *ivars                             OBJC2_UNAVAILABLE;<span class="comment">//成员变量列表</span></span><br><span class="line">    <span class="keyword">struct</span> objc_method_list **methodLists                    OBJC2_UNAVAILABLE;<span class="comment">//方法列表</span></span><br><span class="line">    <span class="keyword">struct</span> objc_cache *cache                                 OBJC2_UNAVAILABLE;<span class="comment">//方法缓存</span></span><br><span class="line">    <span class="keyword">struct</span> objc_protocol_list *protocols                     OBJC2_UNAVAILABLE;<span class="comment">//协议列表</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">&#125; OBJC2_UNAVAILABLE;</span><br><span class="line"><span class="comment">/* Use `Class` instead of `struct objc_class *` */</span></span><br><span class="line"></span><br><span class="line">这里也是有个isa 指针，其实这个isa 指向的就是  **元类**</span><br><span class="line">----------------------------------------------------</span><br></pre></td></tr></table></figure>
+
+<p>这里介绍一下元类，介绍之前先理解以下概念</p>
+<blockquote>
+<p>类对象 &#x3D;&#x3D; object_getClass(实例对象) &#x3D;&#x3D; [实例对象 class] &#x3D;&#x3D; [类对象 class]<br>object_getClass(类对象) &#x3D;&#x3D; 类对象的isa &#x3D;&#x3D; 元类<br>object_getClass(类对象) !&#x3D; [类对象 class]</p>
+</blockquote>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Test</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> p1;</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Test</span></span></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        Test *test = [[Test alloc] init];</span><br><span class="line">        </span><br><span class="line">        </span><br><span class="line">        <span class="comment">// Test的类对象</span></span><br><span class="line">        Class cls1 = test.class; <span class="comment">//获取当前的类的对象，就是isa指向的类对象</span></span><br><span class="line">        <span class="comment">// Test的类对象</span></span><br><span class="line">        Class cls2 = object_getClass(test);</span><br><span class="line">        <span class="comment">// Test的类对象</span></span><br><span class="line">        Class cls3 = Test.class;</span><br><span class="line">        <span class="comment">// 还是Test的类对象</span></span><br><span class="line">        Class cls4 = [cls1 <span class="keyword">class</span>];  <span class="comment">//类对象的isa指向的类对象本身</span></span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;cls1:%p cls2:%p cls3:%p cls4:%p&quot;</span>, cls1, cls2, cls3, cls4);</span><br><span class="line"><span class="comment">//        cls1:0x100008188 cls2:0x100008188 cls3:0x100008188 cls4:0x100008188</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// Test的Class的元类</span></span><br><span class="line">        Class cls5 = object_getClass(cls1);</span><br><span class="line">        <span class="comment">// Test的Class的元类</span></span><br><span class="line">        Class cls6 = objc_getMetaClass(object_getClassName(test));</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;cls5:%p cls6:%p&quot;</span>, cls5, cls6);</span><br><span class="line"><span class="comment">//        cls5:0x100008160 cls6:0x100008160</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">const</span> <span class="type">char</span> *cls2_name = object_getClassName(cls2);</span><br><span class="line">        <span class="keyword">const</span> <span class="type">char</span> *cls6_name = object_getClassName(cls6);</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;cls2_name:%s cls6_name:%s&quot;</span>, cls2_name, cls6_name);</span><br><span class="line"><span class="comment">//        cls2_name:Test cls6_name:NSObject</span></span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>很奇怪，为什么<code>cls6_name</code>是<code>NSObject</code>，通过<code>object_getClassName</code>的源码可以知道，这个方法获取的是isa指向的名称。</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="type">char</span> *object_getClassName(<span class="type">id</span> obj)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> class_getName(obj ? obj-&gt;getIsa() : <span class="literal">nil</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>总结一下实例对象，类对象以及元类对象之间的isa指向和继承关系的规则为:<br>规则一: 实例对象的isa指向该类，类的isa指向元类(metaClass)<br>规则二: 类的superClass指向其父类，如果该类为根类则值为nil<br>规则三: 元类的isa指向根元类，如果该元类是根元类则指向自身<br>规则四: 元类的superClass指向父元类，若根元类则指向该根类</p>
+<h3 id="三、实践"><a href="#三、实践" class="headerlink" title="三、实践"></a>三、实践</h3><h4 id="实践一"><a href="#实践一" class="headerlink" title="实践一"></a>实践一</h4><p>考虑以下代码：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Sark</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Sark</span></span></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">     <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        <span class="type">BOOL</span> res1 = [(<span class="type">id</span>)[<span class="built_in">NSObject</span> <span class="keyword">class</span>] isKindOfClass:[<span class="built_in">NSObject</span> <span class="keyword">class</span>]];</span><br><span class="line">        <span class="type">BOOL</span> res2 = [(<span class="type">id</span>)[<span class="built_in">NSObject</span> <span class="keyword">class</span>] isMemberOfClass:[<span class="built_in">NSObject</span> <span class="keyword">class</span>]];</span><br><span class="line">        <span class="type">BOOL</span> res3 = [(<span class="type">id</span>)[Sark <span class="keyword">class</span>] isKindOfClass:[Sark <span class="keyword">class</span>]];</span><br><span class="line">        <span class="type">BOOL</span> res4 = [(<span class="type">id</span>)[Sark <span class="keyword">class</span>] isMemberOfClass:[Sark <span class="keyword">class</span>]];</span><br><span class="line"></span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;%d %d %d %d&quot;</span>, res1, res2, res3, res4);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>先来分析一下源码这两个函数的对象实现</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">+ (Class)<span class="keyword">class</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">self</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (Class)<span class="keyword">class</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> object_getClass(<span class="keyword">self</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Class object_getClass(<span class="type">id</span> obj)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (obj) <span class="keyword">return</span> obj-&gt;getIsa();</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">return</span> Nil;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">inline</span> Class </span><br><span class="line">objc_object::getIsa() </span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (isTaggedPointer()) &#123;</span><br><span class="line">        uintptr_t slot = ((uintptr_t)<span class="variable language_">this</span> &gt;&gt; TAG_SLOT_SHIFT) &amp; TAG_SLOT_MASK;</span><br><span class="line">        <span class="keyword">return</span> objc_tag_classes[slot];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> ISA();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">inline</span> Class </span><br><span class="line">objc_object::ISA() </span><br><span class="line">&#123;</span><br><span class="line">    assert(!isTaggedPointer()); </span><br><span class="line">    <span class="keyword">return</span> (Class)(isa.bits &amp; ISA_MASK);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="type">BOOL</span>)isKindOfClass:(Class)cls &#123;</span><br><span class="line">    <span class="keyword">for</span> (Class tcls = object_getClass((<span class="type">id</span>)<span class="keyword">self</span>); tcls; tcls = tcls-&gt;superclass) &#123;</span><br><span class="line">        <span class="keyword">if</span> (tcls == cls) <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">BOOL</span>)isKindOfClass:(Class)cls &#123;</span><br><span class="line">    <span class="keyword">for</span> (Class tcls = [<span class="keyword">self</span> <span class="keyword">class</span>]; tcls; tcls = tcls-&gt;superclass) &#123;</span><br><span class="line">        <span class="keyword">if</span> (tcls == cls) <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="type">BOOL</span>)isMemberOfClass:(Class)cls &#123;</span><br><span class="line">    <span class="keyword">return</span> object_getClass((<span class="type">id</span>)<span class="keyword">self</span>) == cls;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">BOOL</span>)isMemberOfClass:(Class)cls &#123;</span><br><span class="line">    <span class="keyword">return</span> [<span class="keyword">self</span> <span class="keyword">class</span>] == cls;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>首先题目中NSObject 和 Sark分别调用了class方法。</p>
+<p><code>+ (BOOL)isKindOfClass:(Class)cls</code>方法内部，会先去获得<code>object_getClass</code>的类，而<code>object_getClass</code>的源码实现是去调用当前类的<code>obj-&gt;getIsa()</code>，最后在ISA()方法中获得<code>meta class</code>的指针。</p>
+<p>接着在<code>isKindOfClass</code>中有一个循环，先判断<code>class</code>是否等于<code>meta class</code>，不等就继续循环判断是否等于<code>super class</code>，不等再继续取<code>super class</code>，如此循环下去。</p>
+<p><code>[NSObject class]</code>执行完之后调用<code>isKindOfClass</code>，第一次判断先判断<code>NSObject</code> 和 <code>NSObject</code>的<code>meta class</code>是否相等，之前讲到<code>meta class</code>的时候放了一张很详细的图，从图上我们也可以看出，<code>NSObject</code>的<code>meta class</code>与本身不等。接着第二次循环判断NSObject与<code>meta class</code>的<code>superclass</code>是否相等。还是从那张图上面我们可以看到：<code>Root class(meta)</code> 的<code>superclass</code> 就是 <code>Root class(class)</code>，也就是<code>NSObject</code>本身。所以第二次循环相等，于是第一行res1输出应该为YES。</p>
+<p>同理，<code>[Sark class]</code>执行完之后调用<code>isKindOfClass</code>，第一次for循环，<code>Sark</code>的<code>Meta Class</code>与<code>[Sark class]</code>不等，第二次for循环，<code>Sark Meta Class</code>的<code>super class</code> 指向的是 <code>NSObject Meta Class</code>， 和 <code>Sark Class</code>不相等。第三次for循环，<code>NSObject Meta Class</code>的<code>super class</code>指向的是<code>NSObject Class</code>，和 <code>Sark Class </code>不相等。第四次循环，<code>NSObject Class</code> 的<code>super class</code> 指向 nil， 和 <code>Sark Class</code>不相等。第四次循环之后，退出循环，所以第三行的res3输出为NO。</p>
+<p>如果把这里的Sark改成它的实例对象，<code>[sark isKindOfClass:[Sark class]</code>，那么此时就应该输出YES了。因为在<code>isKindOfClass</code>函数中，判断<code>sark</code>的<code>isa</code>指向是否是自己的类<code>Sark</code>，第一次for循环就能输出YES了。</p>
+<p><code>isMemberOfClass</code>的源码实现是拿到自己的isa指针和自己比较，是否相等。<br>第二行isa 指向<code>NSObject</code>的 <code>Meta Class</code>，所以和<code> NSObject Class</code>不相等。第四行，isa指向Sark的<code>Meta Class</code>，和<code>Sark Class</code>也不等，所以第二行res2和第四行res4都输出NO。</p>
+<h4 id="实践二"><a href="#实践二" class="headerlink" title="实践二"></a>实践二</h4><p>考虑以下代码是否可以正常运行</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Sark</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">copy</span>) <span class="built_in">NSString</span> *name;</span><br><span class="line">- (<span class="type">void</span>)speak;</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Sark</span></span></span><br><span class="line">- (<span class="type">void</span>)speak &#123;</span><br><span class="line">   <span class="built_in">NSLog</span>(<span class="string">@&quot;my name is aaa&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        <span class="type">id</span> cls = [Sark <span class="keyword">class</span>];</span><br><span class="line">        <span class="type">void</span> *obj = &amp;cls;</span><br><span class="line">        <span class="type">id</span> obj_new = (__bridge <span class="type">id</span>)obj;</span><br><span class="line">        [obj_new speak];</span><br><span class="line">        </span><br><span class="line">        size_t cls_size = class_getInstanceSize(Sark.class);</span><br><span class="line">        size_t obj_size = malloc_size(obj);</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;cls_size:%zu, obj_size:%zu&quot;</span>, cls_size, obj_size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>答案是可以的，因为obj是指向类对象Sark的指针，将obj转为iOS对象obj_new，因为iOS对象的前8个字节是isa指针，指向类对象Sark，这里obj_new就相当于在内存中只占用8个字节的栈对象，所以是可以进行方法调用的，但是由于是栈对象，所以obj_size的值是0；</p>
+<p>所以输出的结果如下</p>
+<blockquote>
+<p>2021-04-12 00:06:13.596537+0800 ClassTest[6501:1363097] my name is aaa<br>2021-04-12 00:06:13.596620+0800 ClassTest[6501:1363097] cls_size:16, obj_size:0</p>
+</blockquote>
+<p>参考<br><a href="https://halfrost.com/objc_runtime_isa_class/">https://halfrost.com/objc_runtime_isa_class/</a></p>
+]]></content>
+      <tags>
+        <tag>iOS基础</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>模式匹配之KMP算法详解</title>
+    <url>/2021/04/17/kmp/</url>
+    <content><![CDATA[<img src="/images/algorithm/1.png" width="700"/>
+
+<p>模式匹配分为单模式匹配和多模式匹配两种类型。</p>
+<p>单模式匹配就是给定一串文本，查找单个子串是否在文本中；<br>多模式匹配就是给定一串文本，查找多个子串是否在文本中；</p>
+<p>本文只介绍单模式匹配。</p>
+<h2 id="算法复杂度"><a href="#算法复杂度" class="headerlink" title="算法复杂度"></a>算法复杂度</h2><p>假设给定的文本的长度为n，给定的子串的长度为m，判断子串是否在文本中。</p>
+<p>暴力算法</p>
+<blockquote>
+<p>算法复杂度为 $O(n - m + 1) * m$</p>
+</blockquote>
+<p>KMP</p>
+<blockquote>
+<p>算法复杂度为 $O(n + m)$</p>
+</blockquote>
+<h2 id="KMP算法"><a href="#KMP算法" class="headerlink" title="KMP算法"></a>KMP算法</h2><p>Knuth-Morris-Pratt算法（简称KMP）是最常用字符串匹配算法之一。<br>它以三个发明者命名，起头的那个K就是著名科学家Donald Knuth。</p>
+<p>KMP的核心就是构建失配信息，构建失配信息的核心就是查找 <strong>前缀和后缀最长共有元素</strong>这里后面会进行介绍。</p>
+<p>这里以文本“BBC ABCDAB ABCDABCDABDE”，子串“ABCDABD”的匹配过程为例来进行说明，<br><img src="/images/algorithm/kmp1.png" width="400"/>首先第一步B和A不匹配，直接后移一位；</p>
+<p><img src="/images/algorithm/kmp2.png" width="400"/>第二步发现B和A也不匹配，再后移，直到匹配到第4位的A；</p>
+<p><img src="/images/algorithm/kmp3.png" width="400"/>从第4位开始，ABCDAB都是和子串部分相匹配。</p>
+<p><img src="/images/algorithm/kmp4.png" width="400"/>这个时候“D”字符无法继续匹配，按照一般的做法，我们会将子串后移一位，从下图的位置继续匹配。</p>
+<p><img src="/images/algorithm/kmp5.png" width="400"/>但是KMP并不是这么做的，KMP会直接向后移动4位,然后将文本的“ ”和子串的“C”进行匹配，这样直接减少了很多不必要的匹配操作；<br><img src="/images/algorithm/kmp6.png" width="400"/></p>
+<h2 id="失配信息表"><a href="#失配信息表" class="headerlink" title="失配信息表"></a>失配信息表</h2><p>失配信息表是在匹配过程中出现失配情况的跳转依据，其核心思想就是<br> <strong>查找当前模式子串的前缀和后缀最长共有元素</strong></p>
+<p>首先，要了解两个概念：“前缀”和“后缀”。<br>“前缀”指除了最后一个字符以外，一个字符串的全部头部组合；<br>“后缀”指除了第一个字符以外，一个字符串的全部尾部组合。</p>
+<p>ABCDABD 的失配信息表如下</p>
+<table>
+<thead>
+<tr>
+<th align="center">失配字符</th>
+<th align="center">A</th>
+<th align="center">B</th>
+<th align="center">C</th>
+<th align="center">D</th>
+<th align="center">A</th>
+<th align="center">B</th>
+<th align="center">D</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">部分匹配值</td>
+<td align="center">0</td>
+<td align="center">0</td>
+<td align="center">0</td>
+<td align="center">0</td>
+<td align="center">1</td>
+<td align="center">2</td>
+<td align="center">0</td>
+</tr>
+</tbody></table>
+<p>其构造的方式就是<code>按照查找当前已经匹配部分的前缀和后缀最长共有元素</code>,</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">- <span class="string">&quot;A&quot;</span>的前缀和后缀都为空集，共有元素的长度为<span class="number">0</span>；</span><br><span class="line">- <span class="string">&quot;AB&quot;</span>的前缀为[A]，后缀为[B]，共有元素的长度为<span class="number">0</span>；</span><br><span class="line">- <span class="string">&quot;ABC&quot;</span>的前缀为[A, AB]，后缀为[BC, C]，共有元素的长度<span class="number">0</span>；</span><br><span class="line">- <span class="string">&quot;ABCD&quot;</span>的前缀为[A, AB, ABC]，后缀为[BCD, CD, D]，共有元素的长度为<span class="number">0</span>；</span><br><span class="line">- <span class="string">&quot;ABCDA&quot;</span>的前缀为[A, AB, ABC, ABCD]，后缀为[BCDA, CDA, DA, A]，共有元素为<span class="string">&quot;A&quot;</span>，长度为<span class="number">1</span>；</span><br><span class="line">- <span class="string">&quot;ABCDAB&quot;</span>的前缀为[A, AB, ABC, ABCD, ABCDA]，后缀为[BCDAB, CDAB, DAB, AB, B]，共有元素为<span class="string">&quot;AB&quot;</span>，长度为<span class="number">2</span>；</span><br><span class="line">- <span class="string">&quot;ABCDABD&quot;</span>的前缀为[A, AB, ABC, ABCD, ABCDA, ABCDAB]，后缀为[BCDABD, CDABD, DABD, ABD, BD, D]，共有元素的长度为<span class="number">0</span>。</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="失配跳转"><a href="#失配跳转" class="headerlink" title="失配跳转"></a>失配跳转</h2><img src="/images/algorithm/kmp4.png" width="400"/>
+在上面匹配过程中，在出现“D”字符失配的时候，直接往后移动了4位，移动规则如下
+
+
+<blockquote>
+<p> 后移位数 &#x3D; 已匹配的字符数 - 对应的部分匹配值</p>
+</blockquote>
+<p>即 后移位数 &#x3D; 6(ABCDAB) - 2 &#x3D; 4，进行跳转以后，使用”C”和当前文本位置的“ ”继续进行比较，这就是KMP算法匹配的跳转过程。<br><img src="/images/algorithm/kmp6.png" width="400"/></p>
+<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">init_next</span><span class="params">(string pattern, <span class="type">int</span> next[])</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> len = pattern.<span class="built_in">length</span>();</span><br><span class="line">    next[<span class="number">0</span>] = <span class="number">0</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">1</span>,k = <span class="number">0</span>; i &lt; len; i++) &#123;</span><br><span class="line">        <span class="keyword">while</span>(k &gt; <span class="number">0</span> &amp;&amp; pattern[k] != pattern[i]) &#123;</span><br><span class="line">            k = next[k - <span class="number">1</span>];</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span>(pattern[k] == pattern[i]) &#123;</span><br><span class="line">            k ++;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        next[i] = k;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">search</span><span class="params">(string content, string pattern)</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> next[pattern.<span class="built_in">length</span>()];</span><br><span class="line">    <span class="built_in">init_next</span>(pattern, next);</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> i = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (i &lt;= content.<span class="built_in">length</span>() - pattern.<span class="built_in">length</span>()) &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="type">int</span> j = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span> (; j &lt; pattern.<span class="built_in">length</span>(); j ++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (pattern[j] == content[i + j]) &#123;</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            <span class="type">int</span> jump = j - next[j - <span class="number">1</span>];</span><br><span class="line">            i += <span class="built_in">MAX</span>(jump, <span class="number">1</span>);;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> (j == pattern.<span class="built_in">length</span>()) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">const</span> <span class="type">char</span> * argv[])</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="type">bool</span> exist = <span class="built_in">search</span>(<span class="string">&quot;ABCDABCDABDE&quot;</span>, <span class="string">&quot;ABCDABD&quot;</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;kmp search exist:%u\n&quot;</span>, exist);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><a href="https://github.com/zhangdongxuan/CodeSlice/tree/master/algorithm/KMP/KMP">点击查看源码</a></p>
+<p>参考<br><a href="http://www.ruanyifeng.com/blog/2013/05/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm.html">http://www.ruanyifeng.com/blog/2013/05/Knuth–Morris–Pratt_algorithm.html</a></p>
+]]></content>
+      <tags>
+        <tag>算法</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Objective-C 中的load和initialize</title>
+    <url>/2021/04/11/oc_load_initialize/</url>
+    <content><![CDATA[<h3 id="load调用时机"><a href="#load调用时机" class="headerlink" title="load调用时机"></a>load调用时机</h3><blockquote>
+<p>在这个文件被程序装载时调用。</p>
+</blockquote>
+<p>当我们启动程序时，参与了编译的类、分类都会被加载进内存，load方法就是在这个类被加载的时候调用的，这个过程与这个类是否被使用是无关的，只要是在Compile Sources中出现的文件总是会被装载。<br><code>load</code>是在main之前进行调用。</p>
+<h3 id="load调用顺序"><a href="#load调用顺序" class="headerlink" title="load调用顺序"></a>load调用顺序</h3><p>一个程序中如果所有的类、分类都实现了load方法，那么所有的load方法都会被调用。它们的执行顺序遵循以下规则：</p>
+<p>先执行所有类的<code>load</code>方法，再执行所有分类的<code>load</code>方法。<br>执行类的<code>load</code>方法时，是按照参与编译的顺序，先编译的类先执行，但是如果某个类是继承自另一个类，那么会先执行父类的<code>load</code>方法个再执行自己的<code>load</code>方法。<br>执行分类的<code>load</code>方法时，是按照分类参与编译的顺序，先编译的分类先执行。</p>
+<p>编译顺序是按照项目中<code>Build Phases --&gt; Compile Sources</code>文件排序来进行的，最上面的就最先编译。</p>
+<h3 id="initialize调用时机"><a href="#initialize调用时机" class="headerlink" title="initialize调用时机"></a>initialize调用时机</h3><p><code>initialize</code>方法是在类或它的子类收到第一条消息时被调用的，这里的消息就是指实例方法或类方法的调用，所以所有类的<code>initialize</code>调用是在执行<code>main</code>函数之后调用的。而且一个类只会调用一次<code>initialize</code>方法。如果一个类在程序运行过程中一直没有被使用过，那这个类的<code>initialize</code>方法也就不会被调用，这一点和<code>load</code>方法是不一样的。</p>
+<p>使用initialize要比使用load安全(因为在调用initialize时所有类已经被加载进内存了)，但我们还是要尽量少用initialize这个方法个，尤其要谨慎在分类中实现initialize方法，因为如果在分类中实现了，本类实现的initialize方法将不会被调用。实际开发中initialize方法一般用于初始化全局变量或静态变量。</p>
+<h3 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h3><p><code>load</code>方法通常用来进行<code>Method Swizzle</code>，<code>initialize</code>方法一般用于初始化全局变量或静态变量，<code>load</code>和<code>initialize</code>方法内部使用了锁，因此它们是线程安全的。实现时要尽可能保持简单，避免阻塞线程，不要再使用锁。</p>
+<p>参考<br><a href="https://juejin.cn/post/6844904040703197191">https://juejin.cn/post/6844904040703197191</a></p>
+]]></content>
+      <tags>
+        <tag>iOS基础</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>iOS视频播放常用类</title>
+    <url>/2017/02/07/iOS%E8%A7%86%E9%A2%91%E6%92%AD%E6%94%BE%E5%B8%B8%E7%94%A8%E7%B1%BB/</url>
+    <content><![CDATA[<p>之前做过一些iOS视频边下边播的一些东西，现在抽时间整理一下关于视频播放的一些东西。</p>
+<h2 id="AVAsset"><a href="#AVAsset" class="headerlink" title="AVAsset"></a>AVAsset</h2><p>AVAsset是所有媒体资源的承载类，他定义了媒体资源的呈现形式，对媒体资源的读取、播放、处理都是在AVAsset上进行，其包含了资源的duration、preferredRate(默认音速)、preferredVolume(默认音量)、createTime等属性。<br>AVAsset是一个抽象类，我们一般使用其子类AVURLAsset和AVComposition。一般使用AVURLAsset对资源文件进行读取，使用AVComposition对资源进行编辑。</p>
+<h3 id="懒加载属性"><a href="#懒加载属性" class="headerlink" title="懒加载属性"></a>懒加载属性</h3><p>对类似于视频这类资源，我们从AVAsset中获取tracks、duration等属性会比较耗时，如果在创建对象的时候就去加载这些属性可能会阻塞线程，所以这类属性使用了懒加载的方式，在第一次访问这类属性的时候可以使用AVFoundation提的了AVAsynchronousKeyValueLoading协议来异步加载属性。</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="built_in">AVAsset</span> *asset = [<span class="built_in">AVAsset</span> assetWithURL:[<span class="built_in">NSURL</span> fileURLWithPath:<span class="string">@&quot;xxx.mp4&quot;</span>]];</span><br><span class="line"><span class="built_in">NSString</span> *tracksKey = <span class="string">@&quot;tracks&quot;</span>;</span><br><span class="line"><span class="built_in">NSString</span> *durationKey = <span class="string">@&quot;duration&quot;</span>;</span><br><span class="line"></span><br><span class="line">__<span class="keyword">weak</span> <span class="built_in">AVAsset</span> *weakAsset = asset;</span><br><span class="line">[asset loadValuesAsynchronouslyForKeys:@[tracksKey, durationKey] completionHandler:^&#123;</span><br><span class="line">    <span class="built_in">dispatch_async</span>(dispatch_get_main_queue(), ^&#123;</span><br><span class="line">    <span class="built_in">NSError</span> *error;</span><br><span class="line">    <span class="built_in">AVKeyValueStatus</span> status = [asset statusOfValueForKey:tracksKey error:&amp;error];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (status == <span class="built_in">AVKeyValueStatusLoaded</span>) &#123;</span><br><span class="line">        <span class="built_in">NSArray</span> *audioTracks = [weakAsset tracksWithMediaType:<span class="built_in">AVMediaTypeAudio</span>];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">AVKeyValueStatus</span> durationStatus = [weakAsset statusOfValueForKey:durationKey error:&amp;error];</span><br><span class="line">    <span class="keyword">if</span> (durationStatus == <span class="built_in">AVKeyValueStatusLoaded</span>) &#123;</span><br><span class="line">        Float64 duration = <span class="built_in">CMTimeGetSeconds</span>(weakAsset.duration);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;];</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="AVAssetTrack"><a href="#AVAssetTrack" class="headerlink" title="AVAssetTrack"></a>AVAssetTrack</h3><p>媒体资源会有多种组成部分，一般的视频至少有两个轨道，一个播放声音一个播放画面。AVAssetTrack中包括duration、rage、volume、trackId等属性。</p>
+<p>可以用以下方法获取AVAssetTrack实例：</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="keyword">nullable</span> <span class="built_in">AVAssetTrack</span> *)trackWithTrackID:(<span class="built_in">CMPersistentTrackID</span>)trackID;</span><br><span class="line">- (<span class="built_in">NSArray</span>&lt;<span class="built_in">AVAssetTrack</span> *&gt; *)tracksWithMediaType:(<span class="built_in">NSString</span> *)mediaType;</span><br><span class="line">- (<span class="built_in">NSArray</span>&lt;<span class="built_in">AVAssetTrack</span> *&gt; *)tracksWithMediaCharacteristic:(<span class="built_in">NSString</span> *)mediaCharacteristic;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="AVPlayer"><a href="#AVPlayer" class="headerlink" title="AVPlayer"></a>AVPlayer</h2><p>AVPlayer是iOS提供的一个强大的播放组件，其支持播放本地、分步下载或通过HLS协议得到的流媒体。其不能直接显示画面，需要创建一个播放器层AVPlayerLayer用于显示视频画面。</p>
+<h2 id="AVPlayerLayer"><a href="#AVPlayerLayer" class="headerlink" title="AVPlayerLayer"></a>AVPlayerLayer</h2><p>AVPlayerLayer构建于Core Animation之上,是AV Foundation为数不多的可见组件.</p>
+<p>AVPlayerLayer扩展了Core Animation的CALayer类,并通过框架在屏幕上显示视频内容,这一图层并不提供任何可交互的控件.创建AVPlayerLayer需要一个AVPlayer实例指针,这就将图层和播放器绑定在一起,保证了二者间的时间同步.AVPlayerLayer可以和其他CALayer一样,添加到UIView或NSView的layer上.</p>
+<p>AVPlayerLayer中可自定义的属性只有video gravity,用来设置视频的拉伸或缩放程度.</p>
+<h2 id="AVPlayerItem"><a href="#AVPlayerItem" class="headerlink" title="AVPlayerItem"></a>AVPlayerItem</h2><p>一个媒体资源管理对象，是一个载体,承载AVAsset，然后通过AVPlayer进行播放，管理并保存着AVPlayer播放视频时的状态。<br>我们的目的是使用AVPlayer来播放AVAsset，AVAsset中只有时长，创建时间等静态信息，AVPlayerItem则有获取当前播放时间以及调节播放进度的方法。</p>
+<h3 id="动态对象"><a href="#动态对象" class="headerlink" title="动态对象"></a>动态对象</h3><p>AVPlayerItem是一个动态对象，除了可以被我们改变的属性之外，许多read-only属性在准备播放和播放过程中被其相关联的AVPlayer所改变。可以使用KVO去监听这些变化，一个非常重要的属性是<a href="https://developer.apple.com/reference/avfoundation/avplayeritem/1389493-status?language=objc">status</a>，这个属性指示了什么时候可以播放。当我们刚创建出AVPlayerItem对象的时候这个属性的值是AVPlayerItemStatusUnknown表示媒体资源还没有被加载。关联AVPlayer对象之后会立马将AVPlayerItem对象对应的资源排队，毕竟开始为播放做准备。当status的值变为AVPlayerItemStatusReadyToPlay的时候表示我们可以准备播放。</p>
+<p>如下代码指示了如何创建并注册监听：</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="type">void</span>)prepareToPlay &#123;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">NSURL</span> *url = &lt;#Asset URL#&gt;</span><br><span class="line">    <span class="comment">// Create asset to be played</span></span><br><span class="line">    asset = [<span class="built_in">AVAsset</span> assetWithURL:url];</span><br><span class="line">    <span class="built_in">NSArray</span> *assetKeys = @[<span class="string">@&quot;playable&quot;</span>, <span class="string">@&quot;hasProtectedContent&quot;</span>];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Create a new AVPlayerItem with the asset and an</span></span><br><span class="line">    <span class="comment">// array of asset keys to be automatically loaded</span></span><br><span class="line">    playerItem = [<span class="built_in">AVPlayerItem</span> playerItemWithAsset:asset automaticallyLoadedAssetKeys:assetKeys];</span><br><span class="line"></span><br><span class="line">    <span class="built_in">NSKeyValueObservingOptions</span> options = <span class="built_in">NSKeyValueObservingOptionOld</span> | <span class="built_in">NSKeyValueObservingOptionNew</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Register as an observer of the player item&#x27;s status property</span></span><br><span class="line">    [playerItem addObserver:<span class="keyword">self</span></span><br><span class="line">        forKeyPath:<span class="string">@&quot;status&quot;</span></span><br><span class="line">        options:options</span><br><span class="line">        context:&amp;PlayerItemContext];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Associate the player item with the player</span></span><br><span class="line">    player = [<span class="built_in">AVPlayer</span> playerWithPlayerItem:playerItem];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后当status发生变化时，我们需要实现如下如下方法以获得通知。</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="type">void</span>)observeValueForKeyPath:(<span class="built_in">NSString</span> *)keyPath ofObject:(<span class="type">id</span>)object change:(<span class="built_in">NSDictionary</span>&lt;<span class="built_in">NSString</span> *,<span class="type">id</span>&gt; *)change context:(<span class="type">void</span> *)context &#123;</span><br><span class="line">    <span class="comment">// Only handle observations for the PlayerItemContext</span></span><br><span class="line">    <span class="keyword">if</span> (context != &amp;PlayerItemContext) &#123;</span><br><span class="line">        [<span class="variable language_">super</span> observeValueForKeyPath:keyPath ofObject:object change:change context:context];</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ([keyPath isEqualToString:<span class="string">@&quot;status&quot;</span>]) &#123;</span><br><span class="line">        <span class="built_in">AVPlayerItemStatus</span> status = <span class="built_in">AVPlayerItemStatusUnknown</span>;</span><br><span class="line">        <span class="comment">// Get the status change from the change dictionary</span></span><br><span class="line">        <span class="built_in">NSNumber</span> *statusNumber = change[<span class="built_in">NSKeyValueChangeNewKey</span>];</span><br><span class="line">        <span class="keyword">if</span> ([statusNumber isKindOfClass:[<span class="built_in">NSNumber</span> <span class="keyword">class</span>]]) &#123;</span><br><span class="line">            status = statusNumber.integerValue;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// Switch over the status</span></span><br><span class="line">        <span class="keyword">switch</span> (status) &#123;</span><br><span class="line">            <span class="keyword">case</span> <span class="built_in">AVPlayerItemStatusReadyToPlay</span>:</span><br><span class="line">                <span class="comment">// Ready to Play</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> <span class="built_in">AVPlayerItemStatusFailed</span>:</span><br><span class="line">                <span class="comment">// Failed. Examine AVPlayerItem.error</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> <span class="built_in">AVPlayerItemStatusUnknown</span>:</span><br><span class="line">                <span class="comment">// Not ready</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+]]></content>
+      <categories>
+        <category>iOS</category>
+      </categories>
+      <tags>
+        <tag>AVFoundation</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>大屏 iPhone 的适配[转]</title>
+    <url>/2017/09/10/%E5%A4%A7%E5%B1%8F-iPhone-%E7%9A%84%E9%80%82%E9%85%8D-%E8%BD%AC/</url>
+    <content><![CDATA[<p>自从苹果出了大屏 iPhone 后，iOS 开发也要做适配了，想必 Android 程序员正在偷着乐呢 , 这里大概总结下这几天了解到的大屏适配的注意事项。</p>
+<h3 id="启用高分辨率模式"><a href="#启用高分辨率模式" class="headerlink" title="启用高分辨率模式"></a>启用高分辨率模式</h3><p>从 Xcode6 GM 版本开始，模拟器新增了 iPhone6 和 iPhone6 Plus 两种，如果旧的工程直接跑到这两个模拟器中时，默认是”兼容模式”，即系统会简单的把内容等比例放大，显示效果有些模糊但尚可接受。此时 App 内部获取到的设备分辨率和 iPhone5 是一样的：320*568 point。</p>
+<p>启用高分辨率模式有2个方法(目前我能找到的)：</p>
+<p>1.添加大屏的 LaunchImage:<br>在 Images.xcassets 里，新建或更改 LaunchImage 组，添加对应高分辨率的图片。对此，这里有一篇更详细的图文介绍：<a href="http://matthewpalmer.net/blog/2014/09/10/iphone-6-plus-launch-image-adaptive-mode/">How to Add a Launch Image for the iPhone 6</a>。如果想要快速测试一下新的效果，<a href="https://blog.ibireme.com/wp-content/uploads/2014/09/iPhone6LaunchBlanks.zip">这里</a>有3张示例图片下载。</p>
+<p>2.添加 Launch Screen File<br>Launch Screen 是 Xcode6 和 iOS8 新加的功能，它用一个 xib 文件来作为启动画面。App 在旧版 iOS 启动时，该属性会被自动忽略，不会造成异常。<br>首先，点击 New File -&gt;iOS User Interface -&gt;Launch Screen，然后在工程设置项里启用它：<br><img src="https://blog.ibireme.com/wp-content/uploads/2014/09/LaunchFile.png"><br>上面两处设置，只要启用任意一个即可让 App 进入高分辨率模式；但如果两处都没有设置，则 App 会回退到兼容模式。鉴于现在不少 App 还需要兼容 iOS5，而第一种方法在 iOS5 上据说可能有<a href="http://stackoverflow.com/questions/19220082/support-of-ios-5-0-icons-with-xcode-5">bug</a>，所以这里推荐用第二种方法。</p>
+<p>资源的显示<br>一图胜千言，首先这里是一个完整的图表：  <a href="http://www.paintcodeapp.com/news/ultimate-guide-to-iphone-resolutions">http://www.paintcodeapp.com/news/ultimate-guide-to-iphone-resolutions</a>。</p>
+<p>简单的说：iPhone4、iPhone5、iPhone6 这几个设备的 ppi 都是相同的，默认图片优先是 @2x。iPhone6 Plus 的像素密度更高，默认图片优先是 @3x。</p>
+<p>另外，iPhone6 Plus 有一点和其他设备不同：在 App 内部获得的屏幕分辨率是 1242<em>2208，但设备实际分辨率是 1920</em>1080，这时系统会把整体的显示内容做一个缩放，downscale 到1&#x2F;1.15。这个特性在 OSX 上也有出现过：<br><img src="https://blog.ibireme.com/wp-content/uploads/2014/09/DownScale.png"></p>
+<BR>
+
+<p>下面列举一些可能有用的数据：<br><img src="/images/SIZE.jpg"></p>
+<p>note:转自:<a href="https://blog.ibireme.com/2014/09/16/adapted_to_iphone6/#more-41560">大屏 iPhone 的适配</a> From ibireme</p>
+]]></content>
+  </entry>
+  <entry>
+    <title>诗歌</title>
+    <url>/2016/07/17/song/</url>
+    <content><![CDATA[<p>我愿意成为她的守护天使<br>爱她所爱<br>思她所思<br>为她承担伤痛<br>度过苦难<br>无论贫寒或富贵<br>无论卑贱或高贵<br>无论身处乱世<br>还是神所不顾<br>我愿为她拔剑而战<br>为她收起翅膀<br>不离不弃<br>直至永远</p>
+]]></content>
+  </entry>
+  <entry>
+    <title>浅谈Trie树</title>
+    <url>/2021/04/17/%E6%B5%85%E8%B0%88Trie%E6%A0%91/</url>
+    <content><![CDATA[<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>在计算机科学中，trie，又称前缀树或字典树，是一种有序树，用于保存关联数组，其中的键通常是字符串。与二叉查找树不同，键不是直接保存在节点中，而是由节点在树中的位置决定。一个节点的所有子孙都有相同的前缀，也就是这个节点对应的字符串，而根节点对应空字符串。一般情况下，不是所有的节点都有对应的值，只有叶子节点和部分内部节点所对应的键才有相关的值。</p>
+<p><img src="/images/algorithm/trie.gif"></p>
+<h2 id="基本性质"><a href="#基本性质" class="headerlink" title="基本性质"></a>基本性质</h2><p>1、根节点不包含字符，除根节点意外每个节点只包含一个字符。<br>2、从根节点到某一个节点，路径上经过的字符连接起来，为该节点对应的字符串。<br>3、每个节点的所有子节点包含的字符串不相同。</p>
+<h2 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h2><p>可以最大限度地减少无谓的字符串比较，故可以用于词频统计和大量字符串排序。<br>跟哈希表比较：　　　　<br>    1、最坏情况时间复杂度比hash表好<br>    2、没有冲突，除非一个key对应多个值（除key外的其他信息）<br>    3、自带排序功能（类似Radix Sort），中序遍历trie可以得到排序。</p>
+<h2 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h2><p>1、虽然不同单词共享前缀，但其实trie是一个以空间换时间的算法。其每一个字符都可能包含至多字符集大小数目的指针（不包含卫星数据）。</p>
+<blockquote>
+<p>每个结点的子树的根节点的组织方式有几种。</p>
+</blockquote>
+<ul>
+<li>如果默认包含所有字符集，则查找速度快但浪费空间（特别是靠近树底部叶子）。</li>
+<li>如果用链接法(如左儿子右兄弟)，则节省空间但查找需顺序（部分）遍历链表。</li>
+<li>alphabet reduction: 减少字符宽度以减少字母集个数。</li>
+<li>对字符集使用bitmap，再配合链接法。</li>
+</ul>
+<p>2、如果数据存储在外部存储器等较慢位置，Trie会较hash速度慢（hash访问O(1)次外存，Trie访问O(树高)）。<br>3、长的浮点数等会让链变得很长。可用bitwise trie改进。</p>
+<h2 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h2><h4 id="一、字符串检索"><a href="#一、字符串检索" class="headerlink" title="一、字符串检索"></a>一、字符串检索</h4><p>事先将已知的一些字符串（字典）的有关信息保存到trie树里，查找另外一些未知字符串是否出现过或者出现频率。<br>举例：<br>1、给出N 个单词组成的熟词表，以及一篇全用小写英文书写的文章，请你按最早出现的顺序写出所有不在熟词表中的生词。<br>2、给出一个词典，其中的单词为不良单词。单词均为小写字母。再给出一段文本，文本的每一行也由小写字母构成。判断文本中是否含有任何不良单词。例如，若rob是不良单词，那么文本problem含有不良单词。<br>3、1000万字符串，其中有些是重复的，需要把重复的全部去掉，保留没有重复的字符串。</p>
+<h4 id="二、文本预测、自动完成，see-also，拼写检查"><a href="#二、文本预测、自动完成，see-also，拼写检查" class="headerlink" title="二、文本预测、自动完成，see also，拼写检查"></a>二、文本预测、自动完成，see also，拼写检查</h4><h4 id="三、词频统计"><a href="#三、词频统计" class="headerlink" title="三、词频统计"></a>三、词频统计</h4><p>1、有一个1G大小的一个文件，里面每一行是一个词，词的大小不超过16字节，内存限制大小是1M。返回频数最高的100个词。</p>
+<p>2、一个文本文件，大约有一万行，每行一个词，要求统计出其中最频繁出现的前10个词，请给出思想，给出时间复杂度分析。</p>
+<p>3、寻找热门查询：搜索引擎会通过日志文件把用户每次检索使用的所有检索串都记录下来，每个查询串的长度为1-255字节。假设目前有一千万个记录，这些查询串的重复度比较高，虽然总数是1千万，但是如果去除重复，不超过3百万个。一个查询串的重复度越高，说明查询它的用户越多，也就越热门。<br>请你统计最热门的10个查询串，要求使用的内存不能超过1G。<br>(1) 请描述你解决这个问题的思路；<br>(2) 请给出主要的处理流程，算法，以及算法的复杂度。</p>
+<blockquote>
+<p>若无内存限制：Trie + “k-大&#x2F;小根堆”（k为要找到的数目）。<br>否则，先hash分段再对每一个段用hash（另一个hash函数）统计词频，再要么利用归并排序的某些特性（如partial_sort），要么利用某使用外存的方法。</p>
+</blockquote>
+<blockquote>
+<p>参考<br>“海量数据处理之归并、堆排、前K方法的应用：一道面试题” <a href="http://www.dataguru.cn/thread-485388-1-1.html%E3%80%82">http://www.dataguru.cn/thread-485388-1-1.html。</a><br>“算法面试题之统计词频前k大” <a href="http://blog.csdn.net/u011077606/article/details/42640867">http://blog.csdn.net/u011077606/article/details/42640867</a><br>算法导论笔记——第九章 中位数和顺序统计量 </p>
+</blockquote>
+<h4 id="四、排序"><a href="#四、排序" class="headerlink" title="四、排序"></a>四、排序</h4><p>Trie树是一棵多叉树，只要先序遍历整棵树，输出相应的字符串便是按字典序排序的结果。<br>比如给你N 个互不相同的仅由一个单词构成的英文名，让你将它们按字典序从小到大排序输出。</p>
+<h4 id="五、字符串最长公共前缀"><a href="#五、字符串最长公共前缀" class="headerlink" title="五、字符串最长公共前缀"></a>五、字符串最长公共前缀</h4><p>Trie树利用多个字符串的公共前缀来节省存储空间，当我们把大量字符串存储到一棵trie树上时，我们可以快速得到某些字符串的公共前缀。<br>举例：<br>给出N 个小写英文字母串，以及Q 个询问，即询问某两个串的最长公共前缀的长度是多少？<br>解决方案：首先对所有的串建立其对应的字母树。此时发现，对于两个串的最长公共前缀的长度即它们所在结点的公共祖先个数，于是，问题就转化为了离线（Offline）的最近公共祖先（Least Common Ancestor，简称LCA）问题。<br>而最近公共祖先问题同样是一个经典问题，可以用下面几种方法：</p>
+<ol>
+<li>利用并查集（Disjoint Set），可以采用采用经典的Tarjan 算法；</li>
+<li>求出字母树的欧拉序列（Euler Sequence ）后，就可以转为经典的最小值查询（Range Minimum Query，简称RMQ）问题了；</li>
+</ol>
+<h4 id="六、字符串搜索的前缀匹配"><a href="#六、字符串搜索的前缀匹配" class="headerlink" title="六、字符串搜索的前缀匹配"></a>六、字符串搜索的前缀匹配</h4><p>trie树常用于搜索提示。如当输入一个网址，可以自动搜索出可能的选择。当没有完全匹配的搜索结果，可以返回前缀最相似的可能。<br>Trie树检索的时间复杂度可以做到n，n是要检索单词的长度，<br>如果使用暴力检索，需要指数级O(n2)的时间复杂度。</p>
+<h4 id="七、作为其他数据结构和算法的辅助结构"><a href="#七、作为其他数据结构和算法的辅助结构" class="headerlink" title="七、作为其他数据结构和算法的辅助结构"></a>七、作为其他数据结构和算法的辅助结构</h4><p>如后缀树，AC自动机等，后缀树可以用于全文搜索</p>
+<p>摘录于 <a href="https://www.cnblogs.com/justinh/p/7716421.html">https://www.cnblogs.com/justinh/p/7716421.html</a></p>
+]]></content>
+      <tags>
+        <tag>数据结构</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>音频基本概念</title>
+    <url>/2018/09/08/%E9%9F%B3%E9%A2%91%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/</url>
+    <content><![CDATA[<p>在优化语音输入、语音播放需求，需要整理一下音频的基本概念。</p>
+<h3 id="声音的原理"><a href="#声音的原理" class="headerlink" title="声音的原理"></a>声音的原理</h3><p>声音是振动产生的声波，通过介质（空气或固体、液体）传播并能被人或动物听觉器官所感知的波动现象。当物体振动时，同时伴随声音的产生。当振动体不再振动时，声音也随之停止。所以从生活的观察中可以归纳出：声音是由物体的振动所引起。</p>
+<p>声音的频率一般会以赫兹表示，记为Hz，指每秒周期性震动的次数。</p>
+<ul>
+<li><p>频率</p>
+<blockquote>
+<p>音调越高，频率越大；音调越低，频率越小。（弦乐器中，越细的弦振动的频率越高，音调越高）</p>
+</blockquote>
+</li>
+<li><p>波长</p>
+<blockquote>
+<p>音调越高，波长越短；音调越低，波长越长。（频率高波长短）</p>
+</blockquote>
+</li>
+<li><p>振幅</p>
+<blockquote>
+<p>音量（响度）越大，振幅越大；音量越小，振幅越小。</p>
+</blockquote>
+</li>
+</ul>
+<p>人耳可以感知到的声音，其频率范围为20 Hz至20,000 Hz，在标准状况下的空气中，上述音波对应的波长从17 m至17 mm之间。</p>
+<h2 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h2><h3 id="PCM"><a href="#PCM" class="headerlink" title="PCM"></a>PCM</h3><p>PCM是脉冲编码调制，简单的说就是在录制音频是对连续音频信号抽样，以0和1的数字形式记录，所以PCM不是连续音频；</p>
+<h3 id="Sample"><a href="#Sample" class="headerlink" title="Sample"></a>Sample</h3><blockquote>
+<p>In signal processing, sampling is the reduction of a continuous-time signal to a discrete-time signal.</p>
+<p>译文： 在信号处理中，采样就是将连续时间的信号减少成离散时间的信号。</p>
+</blockquote>
+<p><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Signal_Sampling.png/300px-Signal_Sampling.png" width="300"/><br/><br/></p>
+<p>数码音频系统是通过将声波波形转换成一连串的二进制数据来再现原始声音，和我们的视频一样，视频其实就是用图片不断的采样组合而成。</p>
+<h3 id="Sample-Rate"><a href="#Sample-Rate" class="headerlink" title="Sample Rate"></a>Sample Rate</h3><blockquote>
+<p>Sample Rate is the number of samples of audio carried per second. </p>
+<p>译文： 采样率就是每秒中对音频采样的次数。</p>
+</blockquote>
+<p>采样率表示音频信号每秒的数字快照数。该速率决定了音频文件的频率范围。采样率越高，数字波形的形状越接近原始模拟波形。低采样率会限制可录制的频率范围，这可导致录音表现原始声音的效果不佳。<br><img src="/images/audio/sample.png" width="400"></p>
+<h3 id="Channel"><a href="#Channel" class="headerlink" title="Channel"></a>Channel</h3><blockquote>
+<p>即声道数（1-8个）,声道的个数可以理解为有多少个采样点采样，采样点越多表示越多的表达方式。</p>
+</blockquote>
+<p>单声道在声音处理过程中只有单数据流，而立体声则需要左、右声道的两个数据流。显然，立体声的效果要好，但相应的数据量要比单声道的数据量加倍。</p>
+<h3 id="Audio-bit-depth"><a href="#Audio-bit-depth" class="headerlink" title="Audio bit depth"></a>Audio bit depth</h3><blockquote>
+<p>In digital audio using pulse-code modulation (PCM), bit depth is the number of bits of information in each sample, and it directly corresponds to the resolution of each sample.</p>
+<p>译文 : 在使用脉冲编码调制（PCM）的数字音频中，bit depth是每个Sample(采样)点占用的位数，并且它直接对应于每个采样的分辨率。</p>
+</blockquote>
+<p>Audio bit depth一般为16位，即采样时用16位来表示一个音频采样点.</p>
+<h3 id="Bit-Rate"><a href="#Bit-Rate" class="headerlink" title="Bit Rate"></a>Bit Rate</h3><blockquote>
+<p>比特率是指每秒传送的比特(bit)数。单位为 bps(Bit Per Second)，比特率越高，传送数据速度越快。声音中的比特率是指将模拟声音信号转换成数字声音信号后，单位时间内的二进制数据量，是间接衡量音频质量的一个指标。</p>
+</blockquote>
+<p><code>Bit Rate(bps) = Sample Rate × Audio bit depth × Channel</code><br>即<br><code>比特率(bps) = 采样频率 × 采样位数 × 声道数</code></p>
+<h3 id="Frame"><a href="#Frame" class="headerlink" title="Frame"></a>Frame</h3><blockquote>
+<p>A frame is a collection of time-coincident samples. For instance, a linear PCM stereo sound file has two samples per frame, one for the left channel and one for the right channel.</p>
+</blockquote>
+<blockquote>
+<p>译文 ： frame 是离散采样的集合，例如，一个linear PCM stereo sound 文件有中每个frame中有两个采样，分别来自左声道和右声道。</p>
+</blockquote>
+<p>frame是最小单位时间点包含的一个或多个声音采样，最小单位时间点取决于声音采样设备，是一个时间点多个采样的集合。</p>
+<h3 id="Packet"><a href="#Packet" class="headerlink" title="Packet"></a>Packet</h3><blockquote>
+<p>A packet is a collection of one or more contiguous frames. A packet defines the smallest meaningful set of frames for a given audio data format, and is the smallest data unit for which time can be measured. In linear PCM audio, a packet holds a single frame. In compressed formats, it typically holds more; in some formats, the number of frames per packet varies.</p>
+<p>译文： Packet是一个或者多个连续frame的集合。对于一个给定的音频数据格式，Packet定义了定义了最小有意义的frame集合，并且是最小的可测量时间单位。</p>
+</blockquote>
+<p>下图展示了Packet、Frame和Sample的关系。<br><img src="/images/audio/Audio.png" width="700"><br><strong>在未压缩的音频中，一个Packet只有一个frame;</strong><br><strong>在压缩的音频中，一个Packet是不可在分割的压缩数据块，例如在一个AAC格式的Packet中就包含了1024个采样帧；</strong></p>
+<h2 id="iOS录音基本单位"><a href="#iOS录音基本单位" class="headerlink" title="iOS录音基本单位"></a>iOS录音基本单位</h2><p>在微信项目中有大量场景使用到CoreAudio，基本概念先围绕基本的数据类型介绍<br>AudioStreamBasicDescription是在使用AudioQueue进行语音录音时要传给AudioQueueNewInput方法的结构体。<br>该结构体封装了一个音频流所有的基本描述信息，该数据结构对描述一个不同声道相同且恒定bitrate的音频格式是足够的，所以在微信中我们一般使用这个结构来描述。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">struct AudioStreamBasicDescription</span><br><span class="line">&#123;</span><br><span class="line">    Float64 mSampleRate;</span><br><span class="line">    AudioFormatID mFormatID;</span><br><span class="line">    AudioFormatFlags mFormatFlags;</span><br><span class="line">    UInt32 mBytesPerPacket;</span><br><span class="line">    UInt32 mFramesPerPacket;</span><br><span class="line">    UInt32 mBytesPerFrame;</span><br><span class="line">    UInt32 mChannelsPerFrame;</span><br><span class="line">    UInt32 mBitsPerChannel;</span><br><span class="line">    UInt32 mReserved;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>我对其中定义的数据进行了如下注释。</p>
+<ul>
+<li><p>mFormatID   </p>
+<blockquote>
+<p>一般用kAudioFormatLinearPCM，Linear-PCM是PCM的一种，具备比普通CD音频中的PCM数码流更高的位深和采样率，音质好很多。</p>
+</blockquote>
+</li>
+<li><p>mSampleRate  </p>
+<blockquote>
+<p>The number of sample frames per second of the data in the stream.</p>
+</blockquote>
+</li>
+<li><p>mChannelsPerFrame</p>
+<blockquote>
+<p>The number of channels in each frame of data.</p>
+</blockquote>
+</li>
+<li><p>mBytesPerFrame</p>
+<blockquote>
+<p>The number of bytes in a single sample frame of data. </p>
+</blockquote>
+</li>
+<li><p>mFramesPerPacket</p>
+<blockquote>
+<p>The number of sample frames in each packet of data. </p>
+</blockquote>
+</li>
+<li><p>mBytesPerPacket</p>
+<blockquote>
+<p>The number of bytes in a packet of data.</p>
+</blockquote>
+</li>
+</ul>
+<p>结合日常录音开发中其中使用的设置。</p>
+<table>
+<thead>
+<tr>
+<th align="center">Property</th>
+<th align="center">Definition</th>
+<th align="center">Example</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">mSampleRate</td>
+<td align="center">采样率</td>
+<td align="center">16000</td>
+</tr>
+<tr>
+<td align="center">mFormatID</td>
+<td align="center">格式</td>
+<td align="center">kAudioFormatLinearPCM</td>
+</tr>
+<tr>
+<td align="center">mFormatFlags</td>
+<td align="center">标签格式</td>
+<td align="center">kLinearPCMFormatFlagIsSignedInteger kLinearPCMFormatFlagIsPacked</td>
+</tr>
+<tr>
+<td align="center">mBitsPerChannel</td>
+<td align="center">语音每采样点占用位数</td>
+<td align="center">[8&#x2F;16&#x2F;24&#x2F;32]</td>
+</tr>
+<tr>
+<td align="center">mChannelsPerFrame</td>
+<td align="center">声道数</td>
+<td align="center">1:单声道；2:立体声</td>
+</tr>
+<tr>
+<td align="center">mBytesPerFrame</td>
+<td align="center">每帧的byte数</td>
+<td align="center">mBitsPerChannel * mChannelsPerFrame &#x2F; 8</td>
+</tr>
+<tr>
+<td align="center">mFramesPerPacket</td>
+<td align="center">每个Packet的帧数量</td>
+<td align="center">1</td>
+</tr>
+<tr>
+<td align="center">mBytesPerPacket</td>
+<td align="center">每个Packet的Bytes数量</td>
+<td align="center">mBytesPerFrame * mFramesPerPacket</td>
+</tr>
+</tbody></table>
+]]></content>
+      <tags>
+        <tag>音视频</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>视频播放基本原理</title>
+    <url>/2018/09/01/%E8%A7%86%E9%A2%91%E6%92%AD%E6%94%BE%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86/</url>
+    <content><![CDATA[<h2 id="基本定义"><a href="#基本定义" class="headerlink" title="基本定义"></a>基本定义</h2><h3 id="视频"><a href="#视频" class="headerlink" title="视频"></a>视频</h3><p>视频（Video）泛指将一系列静态影像以电信号的方式加以捕捉、纪录、处理、储存、传送与重现的各种技术。连续的图像变化每秒超过24帧（frame）画面以上时，根据视觉暂留原理，人眼无法辨别单幅的静态画面；看上去是平滑连续的视觉效果，这样连续的画面叫做视频。</p>
+<h3 id="帧率"><a href="#帧率" class="headerlink" title="帧率"></a>帧率</h3><p>指的是视频格式每秒钟播放的静态画面数量。典型的画面更新率由早期的每秒6或8张（frame per second，简称fps）至现今的每秒120张不等。</p>
+<h3 id="编解码"><a href="#编解码" class="headerlink" title="编解码"></a>编解码</h3><p>我们知道，其实视频就是一帧一帧的图片。计算一下，一部25帧每秒，90分钟，分辨率为1024*768，24位真彩色的视频，没有经过压缩，大小为</p>
+<blockquote>
+<p>1Byte（字节） &#x3D; 8bit（位）<br>一帧大小 &#x3D; 1024 * 768 * 24 &#x3D; 18874368（bit） &#x3D; 2359296（Byte）<br>总帧数 &#x3D; 90 * 60 * 25 &#x3D; 135000<br>总大小 &#x3D; 一帧大小 * 总帧数 &#x3D; 2359296 * 135000 &#x3D; 318504960000（Byte）&#x3D; 303750（MB）≈ 296（GB）</p>
+</blockquote>
+<p>从上面的计算可以看出，我们储存一部90分钟没压缩的电影需要296GB的，2部电影便可占满我们电脑整个硬盘。所以我们需要对视频进行压缩，这种视频压缩技术就是我们所说的编码。解码就是将编码的视频解压缩处理。</p>
+<h3 id="封装格式"><a href="#封装格式" class="headerlink" title="封装格式"></a>封装格式</h3><p>封装格式指的是压缩过的视频数据和音频数据打包成一个文件的规范。我们常见的mp4，flv，avi，rmvb，mkv等，都是代表视频的封装格式。</p>
+<h2 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h2><p><img src="http://static.zybuluo.com/1191641113/1n5nf79vn33jmdaj9m9lmr1c/image_1ckk2uqn81ap718uihe019ch8vc9.png"><br>播放视频的基本流程是：解封装 → 解码 → 视音频同步。</p>
+<h3 id="解封装"><a href="#解封装" class="headerlink" title="解封装"></a>解封装</h3><p>就是将输入的封装格式的数据，分离成为音频流压缩编码数据和视频流压缩编码数据。封装格式种类很多，例如MP4，MKV，RMVB，TS，FLV，AVI等等，它的作用就是将已经压缩编码的视频数据和音频数据按照一定的格式放到一起。例如，FLV格式的数据，经过解封装操作后，输出H.264编码的视频码流和AAC编码的音频码流。</p>
+<h3 id="解码"><a href="#解码" class="headerlink" title="解码"></a>解码</h3><p>就是将视频&#x2F;音频压缩编码数据，解码成为非压缩的视频&#x2F;音频原始数据。音频的压缩编码标准包含AAC，MP3，AC-3等等，视频的压缩编码标准则包含H.264，MPEG2，VC-1等等。解码是整个系统中最重要也是最复杂的一个环节。通过解码，压缩编码的视频数据输出成为非压缩的颜色数据，例如YUV420P，RGB等等；压缩编码的音频数据输出成为非压缩的音频抽样数据，例如PCM数据。</p>
+<h3 id="视音频同步"><a href="#视音频同步" class="headerlink" title="视音频同步"></a>视音频同步</h3><p>就是根据解封装模块处理过程中获取到的参数信息，同步解码出来的视频和音频数据，并将视频音频数据送至系统的显卡和声卡播放出来。</p>
+<p>视音频同步的实现方式其实有三种，分别是：</p>
+<ul>
+<li>以音频为主时间轴作为同步源;</li>
+<li>以视频为主时间轴作为同步源;</li>
+<li>以外部时钟为主时间轴作为同步源;</li>
+</ul>
+<p>参考：<br><a href="https://blog.csdn.net/johanman/article/details/79598370">https://blog.csdn.net/johanman/article/details/79598370</a></p>
+]]></content>
+      <tags>
+        <tag>音视频</tag>
+      </tags>
+  </entry>
+</search>
