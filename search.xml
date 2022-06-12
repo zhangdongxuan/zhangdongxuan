@@ -287,28 +287,6 @@
       </tags>
   </entry>
   <entry>
-    <title>MacOS 编译C++</title>
-    <url>/2016/10/31/MacOS-%E7%BC%96%E8%AF%91C/</url>
-    <content><![CDATA[<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><p>指用编译器(compiler)将源代码(source code)生成二进制目标文件(object file)，在Windows下也就是 .obj 文件，UNIX下是 .o 文件。编译时，编译器需要的是语法的正确，函数与变量的声明的正确，编译器只检测程序语法，和函数、变量是否被声明，函数并不需要被定义。<br>mac os 下编译C++的文件：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ -c test.cpp    </span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>-c 是compile的意思<br>生成二进制文件 test.o。</p>
-<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><p>找到所要用到函数所在的目标文件，并把它们链接在一起合成为可执行文件(executable file)。链接时，要确保编译器能找到所有被用到了的函数所在的目标文件。<br>mac os 下编译C++的文件：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o -o output </span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>生成可执行文件output。这里可以将多个文件同时</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o test2.o -o output</span><br></pre></td></tr></table></figure>
-<h2 id="结合"><a href="#结合" class="headerlink" title="结合"></a>结合</h2><p>编译和链接两个过程可以结合起来：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp test2.cpp -o output</span><br></pre></td></tr></table></figure>
-<p>一步生成可执行文件output。中间会先编译生成目标文件，然后链接生成可执行文件。</p>
-<p>另外如果只有一个C++文件，可以一步到位，生成执行文件a.out</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp</span><br></pre></td></tr></table></figure>]]></content>
-      <categories>
-        <category>备忘</category>
-      </categories>
-      <tags>
-        <tag>C++</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>NSAutoreleasePool分析</title>
     <url>/2017/09/26/NSAutoreleasePool%E5%88%86%E6%9E%90/</url>
     <content><![CDATA[<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p><code>NSAutoreleasePool</code>是用来做引用计数管理的，当一个对象收到<code>autorelease</code>消息的时候，这个对象就会被放到<code>NSAutoreleasePool</code>中。当<code>NSAutoreleasePool</code>被销毁的时候，<code>NSAutoreleasePool</code>向它包含的每一个对象发送<code>release</code>消息，也就是说调用<code>autorelease</code>并不会立马销毁对象，这样就延长了这个对象的生命周期。</p>
@@ -440,80 +418,25 @@
       </tags>
   </entry>
   <entry>
-    <title>Objective-C 中对象的分类</title>
-    <url>/2021/04/09/Objective-C-%E4%B8%AD%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%86%E7%B1%BB/</url>
-    <content><![CDATA[<h3 id="一、对象的分类"><a href="#一、对象的分类" class="headerlink" title="一、对象的分类"></a>一、对象的分类</h3><h3 id="instance对象"><a href="#instance对象" class="headerlink" title="instance对象"></a>instance对象</h3><pre><code>实例对象就是通过alloc出来的对象，每次调用alloc都会产生新的instance对象；
-</code></pre>
-<p>实例对象的存储信息</p>
-<blockquote>
-<ol>
-<li>isa指针</li>
-<li>其他成员变量</li>
-</ol>
-</blockquote>
-<h3 id="class对象"><a href="#class对象" class="headerlink" title="class对象"></a>class对象</h3><pre><code>每个类的内存中有且只有一个类对象
-</code></pre>
-<p>类对象的存储信息</p>
-<blockquote>
-<ul>
-<li>isa指针</li>
-<li>superClass指针</li>
-<li>类的属性信息（@property），类的对象方法信息（method），类的协议信息（protocol），类的成员变量信息（ivar）</li>
-</ul>
-</blockquote>
-<p>类对象是由程序员定义并在运行时由编译器创建的，它没有自己的实例变量，这里需要注意的是类的成员变量和实例方法列表是属于实例对象的，但其存储于类对象当中的。</p>
-<h3 id="meta-class对象"><a href="#meta-class对象" class="headerlink" title="meta-class对象"></a>meta-class对象</h3><pre><code>每个类的内存中有且只有一个元类对象
-</code></pre>
-<p>元类的存储信息</p>
-<blockquote>
-<ul>
-<li>isa指针</li>
-<li>superClass指针</li>
-<li>类的属性信息（@property），类的对象方法信息（method），类的协议信息（protocol），类的成员变量信息（ivar）</li>
-</ul>
-</blockquote>
-<p><strong>元类和类的存储结构是一样的，但是用途不一样</strong></p>
-<h3 id="二、类及相应meta-class类的继承体系"><a href="#二、类及相应meta-class类的继承体系" class="headerlink" title="二、类及相应meta-class类的继承体系"></a>二、类及相应meta-class类的继承体系</h3><p><img src="/images/ios/4.jpeg"></p>
-<p><strong>instance的isa指向class对象（类对象），当调用对象方法时，通过instance的isa找到class对象（类对象），最后找到对象方法的实现进行调用；</strong></p>
-<p><strong>class的isa指向meta-class，当调用类方法时，通过class的isa找到meta-class，最后找到类方法的实现进行调用；</strong></p>
-<p>objective-c源码中对对象的定义是这样的</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="comment">//类的实例</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> objc_object *<span class="type">id</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Represents an instance of a class.</span></span><br><span class="line"><span class="keyword">struct</span> objc_object &#123;</span><br><span class="line">    <span class="comment">// 这里的isa指针指向当前实例的类对象</span></span><br><span class="line">    Class isa  OBJC_ISA_AVAILABILITY;</span><br><span class="line">&#125;;</span><br><span class="line">----------------------------------------------------</span><br><span class="line"></span><br><span class="line"><span class="comment">/// An opaque type that represents an Objective-C class.</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> objc_class *Class;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> objc_class &#123;</span><br><span class="line">    Class isa  OBJC_ISA_AVAILABILITY; <span class="comment">//</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> !__OBJC2__</span></span><br><span class="line">    Class super_class                                        OBJC2_UNAVAILABLE;<span class="comment">//父类</span></span><br><span class="line">    <span class="keyword">const</span> <span class="type">char</span> *name                                         OBJC2_UNAVAILABLE;<span class="comment">//类名</span></span><br><span class="line">    <span class="type">long</span> version                                             OBJC2_UNAVAILABLE;</span><br><span class="line">    <span class="type">long</span> info                                                OBJC2_UNAVAILABLE;</span><br><span class="line">    <span class="type">long</span> instance_size                                       OBJC2_UNAVAILABLE;<span class="comment">//实例大小</span></span><br><span class="line">    <span class="keyword">struct</span> objc_ivar_list *ivars                             OBJC2_UNAVAILABLE;<span class="comment">//成员变量列表</span></span><br><span class="line">    <span class="keyword">struct</span> objc_method_list **methodLists                    OBJC2_UNAVAILABLE;<span class="comment">//方法列表</span></span><br><span class="line">    <span class="keyword">struct</span> objc_cache *cache                                 OBJC2_UNAVAILABLE;<span class="comment">//方法缓存</span></span><br><span class="line">    <span class="keyword">struct</span> objc_protocol_list *protocols                     OBJC2_UNAVAILABLE;<span class="comment">//协议列表</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">&#125; OBJC2_UNAVAILABLE;</span><br><span class="line"><span class="comment">/* Use `Class` instead of `struct objc_class *` */</span></span><br><span class="line"></span><br><span class="line">这里也是有个isa 指针，其实这个isa 指向的就是  **元类**</span><br><span class="line">----------------------------------------------------</span><br></pre></td></tr></table></figure>
-
-<p>这里介绍一下元类，介绍之前先理解以下概念</p>
-<blockquote>
-<p>类对象 &#x3D;&#x3D; object_getClass(实例对象) &#x3D;&#x3D; [实例对象 class] &#x3D;&#x3D; [类对象 class]<br>object_getClass(类对象) &#x3D;&#x3D; 类对象的isa &#x3D;&#x3D; 元类<br>object_getClass(类对象) !&#x3D; [类对象 class]</p>
-</blockquote>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Test</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> p1;</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Test</span></span></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        Test *test = [[Test alloc] init];</span><br><span class="line">        </span><br><span class="line">        </span><br><span class="line">        <span class="comment">// Test的类对象</span></span><br><span class="line">        Class cls1 = test.class; <span class="comment">//获取当前的类的对象，就是isa指向的类对象</span></span><br><span class="line">        <span class="comment">// Test的类对象</span></span><br><span class="line">        Class cls2 = object_getClass(test);</span><br><span class="line">        <span class="comment">// Test的类对象</span></span><br><span class="line">        Class cls3 = Test.class;</span><br><span class="line">        <span class="comment">// 还是Test的类对象</span></span><br><span class="line">        Class cls4 = [cls1 <span class="keyword">class</span>];  <span class="comment">//类对象的isa指向的类对象本身</span></span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;cls1:%p cls2:%p cls3:%p cls4:%p&quot;</span>, cls1, cls2, cls3, cls4);</span><br><span class="line"><span class="comment">//        cls1:0x100008188 cls2:0x100008188 cls3:0x100008188 cls4:0x100008188</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// Test的Class的元类</span></span><br><span class="line">        Class cls5 = object_getClass(cls1);</span><br><span class="line">        <span class="comment">// Test的Class的元类</span></span><br><span class="line">        Class cls6 = objc_getMetaClass(object_getClassName(test));</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;cls5:%p cls6:%p&quot;</span>, cls5, cls6);</span><br><span class="line"><span class="comment">//        cls5:0x100008160 cls6:0x100008160</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">const</span> <span class="type">char</span> *cls2_name = object_getClassName(cls2);</span><br><span class="line">        <span class="keyword">const</span> <span class="type">char</span> *cls6_name = object_getClassName(cls6);</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;cls2_name:%s cls6_name:%s&quot;</span>, cls2_name, cls6_name);</span><br><span class="line"><span class="comment">//        cls2_name:Test cls6_name:NSObject</span></span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<p>很奇怪，为什么<code>cls6_name</code>是<code>NSObject</code>，通过<code>object_getClassName</code>的源码可以知道，这个方法获取的是isa指向的名称。</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="type">char</span> *object_getClassName(<span class="type">id</span> obj)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> class_getName(obj ? obj-&gt;getIsa() : <span class="literal">nil</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<p>总结一下实例对象，类对象以及元类对象之间的isa指向和继承关系的规则为:<br>规则一: 实例对象的isa指向该类，类的isa指向元类(metaClass)<br>规则二: 类的superClass指向其父类，如果该类为根类则值为nil<br>规则三: 元类的isa指向根元类，如果该元类是根元类则指向自身<br>规则四: 元类的superClass指向父元类，若根元类则指向该根类</p>
-<h3 id="三、实践"><a href="#三、实践" class="headerlink" title="三、实践"></a>三、实践</h3><h4 id="实践一"><a href="#实践一" class="headerlink" title="实践一"></a>实践一</h4><p>考虑以下代码：</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Sark</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Sark</span></span></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">     <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        <span class="type">BOOL</span> res1 = [(<span class="type">id</span>)[<span class="built_in">NSObject</span> <span class="keyword">class</span>] isKindOfClass:[<span class="built_in">NSObject</span> <span class="keyword">class</span>]];</span><br><span class="line">        <span class="type">BOOL</span> res2 = [(<span class="type">id</span>)[<span class="built_in">NSObject</span> <span class="keyword">class</span>] isMemberOfClass:[<span class="built_in">NSObject</span> <span class="keyword">class</span>]];</span><br><span class="line">        <span class="type">BOOL</span> res3 = [(<span class="type">id</span>)[Sark <span class="keyword">class</span>] isKindOfClass:[Sark <span class="keyword">class</span>]];</span><br><span class="line">        <span class="type">BOOL</span> res4 = [(<span class="type">id</span>)[Sark <span class="keyword">class</span>] isMemberOfClass:[Sark <span class="keyword">class</span>]];</span><br><span class="line"></span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;%d %d %d %d&quot;</span>, res1, res2, res3, res4);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<p>先来分析一下源码这两个函数的对象实现</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">+ (Class)<span class="keyword">class</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">self</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (Class)<span class="keyword">class</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> object_getClass(<span class="keyword">self</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Class object_getClass(<span class="type">id</span> obj)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (obj) <span class="keyword">return</span> obj-&gt;getIsa();</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">return</span> Nil;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">inline</span> Class </span><br><span class="line">objc_object::getIsa() </span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (isTaggedPointer()) &#123;</span><br><span class="line">        uintptr_t slot = ((uintptr_t)<span class="variable language_">this</span> &gt;&gt; TAG_SLOT_SHIFT) &amp; TAG_SLOT_MASK;</span><br><span class="line">        <span class="keyword">return</span> objc_tag_classes[slot];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> ISA();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">inline</span> Class </span><br><span class="line">objc_object::ISA() </span><br><span class="line">&#123;</span><br><span class="line">    assert(!isTaggedPointer()); </span><br><span class="line">    <span class="keyword">return</span> (Class)(isa.bits &amp; ISA_MASK);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="type">BOOL</span>)isKindOfClass:(Class)cls &#123;</span><br><span class="line">    <span class="keyword">for</span> (Class tcls = object_getClass((<span class="type">id</span>)<span class="keyword">self</span>); tcls; tcls = tcls-&gt;superclass) &#123;</span><br><span class="line">        <span class="keyword">if</span> (tcls == cls) <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">BOOL</span>)isKindOfClass:(Class)cls &#123;</span><br><span class="line">    <span class="keyword">for</span> (Class tcls = [<span class="keyword">self</span> <span class="keyword">class</span>]; tcls; tcls = tcls-&gt;superclass) &#123;</span><br><span class="line">        <span class="keyword">if</span> (tcls == cls) <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="type">BOOL</span>)isMemberOfClass:(Class)cls &#123;</span><br><span class="line">    <span class="keyword">return</span> object_getClass((<span class="type">id</span>)<span class="keyword">self</span>) == cls;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">BOOL</span>)isMemberOfClass:(Class)cls &#123;</span><br><span class="line">    <span class="keyword">return</span> [<span class="keyword">self</span> <span class="keyword">class</span>] == cls;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<p>首先题目中NSObject 和 Sark分别调用了class方法。</p>
-<p><code>+ (BOOL)isKindOfClass:(Class)cls</code>方法内部，会先去获得<code>object_getClass</code>的类，而<code>object_getClass</code>的源码实现是去调用当前类的<code>obj-&gt;getIsa()</code>，最后在ISA()方法中获得<code>meta class</code>的指针。</p>
-<p>接着在<code>isKindOfClass</code>中有一个循环，先判断<code>class</code>是否等于<code>meta class</code>，不等就继续循环判断是否等于<code>super class</code>，不等再继续取<code>super class</code>，如此循环下去。</p>
-<p><code>[NSObject class]</code>执行完之后调用<code>isKindOfClass</code>，第一次判断先判断<code>NSObject</code> 和 <code>NSObject</code>的<code>meta class</code>是否相等，之前讲到<code>meta class</code>的时候放了一张很详细的图，从图上我们也可以看出，<code>NSObject</code>的<code>meta class</code>与本身不等。接着第二次循环判断NSObject与<code>meta class</code>的<code>superclass</code>是否相等。还是从那张图上面我们可以看到：<code>Root class(meta)</code> 的<code>superclass</code> 就是 <code>Root class(class)</code>，也就是<code>NSObject</code>本身。所以第二次循环相等，于是第一行res1输出应该为YES。</p>
-<p>同理，<code>[Sark class]</code>执行完之后调用<code>isKindOfClass</code>，第一次for循环，<code>Sark</code>的<code>Meta Class</code>与<code>[Sark class]</code>不等，第二次for循环，<code>Sark Meta Class</code>的<code>super class</code> 指向的是 <code>NSObject Meta Class</code>， 和 <code>Sark Class</code>不相等。第三次for循环，<code>NSObject Meta Class</code>的<code>super class</code>指向的是<code>NSObject Class</code>，和 <code>Sark Class </code>不相等。第四次循环，<code>NSObject Class</code> 的<code>super class</code> 指向 nil， 和 <code>Sark Class</code>不相等。第四次循环之后，退出循环，所以第三行的res3输出为NO。</p>
-<p>如果把这里的Sark改成它的实例对象，<code>[sark isKindOfClass:[Sark class]</code>，那么此时就应该输出YES了。因为在<code>isKindOfClass</code>函数中，判断<code>sark</code>的<code>isa</code>指向是否是自己的类<code>Sark</code>，第一次for循环就能输出YES了。</p>
-<p><code>isMemberOfClass</code>的源码实现是拿到自己的isa指针和自己比较，是否相等。<br>第二行isa 指向<code>NSObject</code>的 <code>Meta Class</code>，所以和<code> NSObject Class</code>不相等。第四行，isa指向Sark的<code>Meta Class</code>，和<code>Sark Class</code>也不等，所以第二行res2和第四行res4都输出NO。</p>
-<h4 id="实践二"><a href="#实践二" class="headerlink" title="实践二"></a>实践二</h4><p>考虑以下代码是否可以正常运行</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Sark</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">copy</span>) <span class="built_in">NSString</span> *name;</span><br><span class="line">- (<span class="type">void</span>)speak;</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Sark</span></span></span><br><span class="line">- (<span class="type">void</span>)speak &#123;</span><br><span class="line">   <span class="built_in">NSLog</span>(<span class="string">@&quot;my name is aaa&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        <span class="type">id</span> cls = [Sark <span class="keyword">class</span>];</span><br><span class="line">        <span class="type">void</span> *obj = &amp;cls;</span><br><span class="line">        <span class="type">id</span> obj_new = (__bridge <span class="type">id</span>)obj;</span><br><span class="line">        [obj_new speak];</span><br><span class="line">        </span><br><span class="line">        size_t cls_size = class_getInstanceSize(Sark.class);</span><br><span class="line">        size_t obj_size = malloc_size(obj);</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;cls_size:%zu, obj_size:%zu&quot;</span>, cls_size, obj_size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<p>答案是可以的，因为obj是指向类对象Sark的指针，将obj转为iOS对象obj_new，因为iOS对象的前8个字节是isa指针，指向类对象Sark，这里obj_new就相当于在内存中只占用8个字节的栈对象，所以是可以进行方法调用的，但是由于是栈对象，所以obj_size的值是0；</p>
-<p>所以输出的结果如下</p>
-<blockquote>
-<p>2021-04-12 00:06:13.596537+0800 ClassTest[6501:1363097] my name is aaa<br>2021-04-12 00:06:13.596620+0800 ClassTest[6501:1363097] cls_size:16, obj_size:0</p>
-</blockquote>
-<p>参考<br><a href="https://halfrost.com/objc_runtime_isa_class/">https://halfrost.com/objc_runtime_isa_class/</a></p>
-]]></content>
+    <title>MacOS 编译C++</title>
+    <url>/2016/10/31/MacOS-%E7%BC%96%E8%AF%91C/</url>
+    <content><![CDATA[<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><p>指用编译器(compiler)将源代码(source code)生成二进制目标文件(object file)，在Windows下也就是 .obj 文件，UNIX下是 .o 文件。编译时，编译器需要的是语法的正确，函数与变量的声明的正确，编译器只检测程序语法，和函数、变量是否被声明，函数并不需要被定义。<br>mac os 下编译C++的文件：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ -c test.cpp    </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>-c 是compile的意思<br>生成二进制文件 test.o。</p>
+<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><p>找到所要用到函数所在的目标文件，并把它们链接在一起合成为可执行文件(executable file)。链接时，要确保编译器能找到所有被用到了的函数所在的目标文件。<br>mac os 下编译C++的文件：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o -o output </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>生成可执行文件output。这里可以将多个文件同时</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o test2.o -o output</span><br></pre></td></tr></table></figure>
+<h2 id="结合"><a href="#结合" class="headerlink" title="结合"></a>结合</h2><p>编译和链接两个过程可以结合起来：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp test2.cpp -o output</span><br></pre></td></tr></table></figure>
+<p>一步生成可执行文件output。中间会先编译生成目标文件，然后链接生成可执行文件。</p>
+<p>另外如果只有一个C++文件，可以一步到位，生成执行文件a.out</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>备忘</category>
+      </categories>
       <tags>
-        <tag>iOS基础</tag>
+        <tag>C++</tag>
       </tags>
   </entry>
   <entry>
@@ -666,6 +589,83 @@ CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
 ]]></content>
       <tags>
         <tag>算法</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Objective-C 中对象的分类</title>
+    <url>/2021/04/09/Objective-C-%E4%B8%AD%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%86%E7%B1%BB/</url>
+    <content><![CDATA[<h3 id="一、对象的分类"><a href="#一、对象的分类" class="headerlink" title="一、对象的分类"></a>一、对象的分类</h3><h3 id="instance对象"><a href="#instance对象" class="headerlink" title="instance对象"></a>instance对象</h3><pre><code>实例对象就是通过alloc出来的对象，每次调用alloc都会产生新的instance对象；
+</code></pre>
+<p>实例对象的存储信息</p>
+<blockquote>
+<ol>
+<li>isa指针</li>
+<li>其他成员变量</li>
+</ol>
+</blockquote>
+<h3 id="class对象"><a href="#class对象" class="headerlink" title="class对象"></a>class对象</h3><pre><code>每个类的内存中有且只有一个类对象
+</code></pre>
+<p>类对象的存储信息</p>
+<blockquote>
+<ul>
+<li>isa指针</li>
+<li>superClass指针</li>
+<li>类的属性信息（@property），类的对象方法信息（method），类的协议信息（protocol），类的成员变量信息（ivar）</li>
+</ul>
+</blockquote>
+<p>类对象是由程序员定义并在运行时由编译器创建的，它没有自己的实例变量，这里需要注意的是类的成员变量和实例方法列表是属于实例对象的，但其存储于类对象当中的。</p>
+<h3 id="meta-class对象"><a href="#meta-class对象" class="headerlink" title="meta-class对象"></a>meta-class对象</h3><pre><code>每个类的内存中有且只有一个元类对象
+</code></pre>
+<p>元类的存储信息</p>
+<blockquote>
+<ul>
+<li>isa指针</li>
+<li>superClass指针</li>
+<li>类的属性信息（@property），类的对象方法信息（method），类的协议信息（protocol），类的成员变量信息（ivar）</li>
+</ul>
+</blockquote>
+<p><strong>元类和类的存储结构是一样的，但是用途不一样</strong></p>
+<h3 id="二、类及相应meta-class类的继承体系"><a href="#二、类及相应meta-class类的继承体系" class="headerlink" title="二、类及相应meta-class类的继承体系"></a>二、类及相应meta-class类的继承体系</h3><p><img src="/images/ios/4.jpeg"></p>
+<p><strong>instance的isa指向class对象（类对象），当调用对象方法时，通过instance的isa找到class对象（类对象），最后找到对象方法的实现进行调用；</strong></p>
+<p><strong>class的isa指向meta-class，当调用类方法时，通过class的isa找到meta-class，最后找到类方法的实现进行调用；</strong></p>
+<p>objective-c源码中对对象的定义是这样的</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="comment">//类的实例</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> objc_object *<span class="type">id</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Represents an instance of a class.</span></span><br><span class="line"><span class="keyword">struct</span> objc_object &#123;</span><br><span class="line">    <span class="comment">// 这里的isa指针指向当前实例的类对象</span></span><br><span class="line">    Class isa  OBJC_ISA_AVAILABILITY;</span><br><span class="line">&#125;;</span><br><span class="line">----------------------------------------------------</span><br><span class="line"></span><br><span class="line"><span class="comment">/// An opaque type that represents an Objective-C class.</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> objc_class *Class;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> objc_class &#123;</span><br><span class="line">    Class isa  OBJC_ISA_AVAILABILITY; <span class="comment">//</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> !__OBJC2__</span></span><br><span class="line">    Class super_class                                        OBJC2_UNAVAILABLE;<span class="comment">//父类</span></span><br><span class="line">    <span class="keyword">const</span> <span class="type">char</span> *name                                         OBJC2_UNAVAILABLE;<span class="comment">//类名</span></span><br><span class="line">    <span class="type">long</span> version                                             OBJC2_UNAVAILABLE;</span><br><span class="line">    <span class="type">long</span> info                                                OBJC2_UNAVAILABLE;</span><br><span class="line">    <span class="type">long</span> instance_size                                       OBJC2_UNAVAILABLE;<span class="comment">//实例大小</span></span><br><span class="line">    <span class="keyword">struct</span> objc_ivar_list *ivars                             OBJC2_UNAVAILABLE;<span class="comment">//成员变量列表</span></span><br><span class="line">    <span class="keyword">struct</span> objc_method_list **methodLists                    OBJC2_UNAVAILABLE;<span class="comment">//方法列表</span></span><br><span class="line">    <span class="keyword">struct</span> objc_cache *cache                                 OBJC2_UNAVAILABLE;<span class="comment">//方法缓存</span></span><br><span class="line">    <span class="keyword">struct</span> objc_protocol_list *protocols                     OBJC2_UNAVAILABLE;<span class="comment">//协议列表</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">&#125; OBJC2_UNAVAILABLE;</span><br><span class="line"><span class="comment">/* Use `Class` instead of `struct objc_class *` */</span></span><br><span class="line"></span><br><span class="line">这里也是有个isa 指针，其实这个isa 指向的就是  **元类**</span><br><span class="line">----------------------------------------------------</span><br></pre></td></tr></table></figure>
+
+<p>这里介绍一下元类，介绍之前先理解以下概念</p>
+<blockquote>
+<p>类对象 &#x3D;&#x3D; object_getClass(实例对象) &#x3D;&#x3D; [实例对象 class] &#x3D;&#x3D; [类对象 class]<br>object_getClass(类对象) &#x3D;&#x3D; 类对象的isa &#x3D;&#x3D; 元类<br>object_getClass(类对象) !&#x3D; [类对象 class]</p>
+</blockquote>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Test</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> p1;</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Test</span></span></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        Test *test = [[Test alloc] init];</span><br><span class="line">        </span><br><span class="line">        </span><br><span class="line">        <span class="comment">// Test的类对象</span></span><br><span class="line">        Class cls1 = test.class; <span class="comment">//获取当前的类的对象，就是isa指向的类对象</span></span><br><span class="line">        <span class="comment">// Test的类对象</span></span><br><span class="line">        Class cls2 = object_getClass(test);</span><br><span class="line">        <span class="comment">// Test的类对象</span></span><br><span class="line">        Class cls3 = Test.class;</span><br><span class="line">        <span class="comment">// 还是Test的类对象</span></span><br><span class="line">        Class cls4 = [cls1 <span class="keyword">class</span>];  <span class="comment">//类对象的isa指向的类对象本身</span></span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;cls1:%p cls2:%p cls3:%p cls4:%p&quot;</span>, cls1, cls2, cls3, cls4);</span><br><span class="line"><span class="comment">//        cls1:0x100008188 cls2:0x100008188 cls3:0x100008188 cls4:0x100008188</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// Test的Class的元类</span></span><br><span class="line">        Class cls5 = object_getClass(cls1);</span><br><span class="line">        <span class="comment">// Test的Class的元类</span></span><br><span class="line">        Class cls6 = objc_getMetaClass(object_getClassName(test));</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;cls5:%p cls6:%p&quot;</span>, cls5, cls6);</span><br><span class="line"><span class="comment">//        cls5:0x100008160 cls6:0x100008160</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">const</span> <span class="type">char</span> *cls2_name = object_getClassName(cls2);</span><br><span class="line">        <span class="keyword">const</span> <span class="type">char</span> *cls6_name = object_getClassName(cls6);</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;cls2_name:%s cls6_name:%s&quot;</span>, cls2_name, cls6_name);</span><br><span class="line"><span class="comment">//        cls2_name:Test cls6_name:NSObject</span></span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>很奇怪，为什么<code>cls6_name</code>是<code>NSObject</code>，通过<code>object_getClassName</code>的源码可以知道，这个方法获取的是isa指向的名称。</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="type">char</span> *object_getClassName(<span class="type">id</span> obj)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> class_getName(obj ? obj-&gt;getIsa() : <span class="literal">nil</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>总结一下实例对象，类对象以及元类对象之间的isa指向和继承关系的规则为:<br>规则一: 实例对象的isa指向该类，类的isa指向元类(metaClass)<br>规则二: 类的superClass指向其父类，如果该类为根类则值为nil<br>规则三: 元类的isa指向根元类，如果该元类是根元类则指向自身<br>规则四: 元类的superClass指向父元类，若根元类则指向该根类</p>
+<h3 id="三、实践"><a href="#三、实践" class="headerlink" title="三、实践"></a>三、实践</h3><h4 id="实践一"><a href="#实践一" class="headerlink" title="实践一"></a>实践一</h4><p>考虑以下代码：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Sark</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Sark</span></span></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">     <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        <span class="type">BOOL</span> res1 = [(<span class="type">id</span>)[<span class="built_in">NSObject</span> <span class="keyword">class</span>] isKindOfClass:[<span class="built_in">NSObject</span> <span class="keyword">class</span>]];</span><br><span class="line">        <span class="type">BOOL</span> res2 = [(<span class="type">id</span>)[<span class="built_in">NSObject</span> <span class="keyword">class</span>] isMemberOfClass:[<span class="built_in">NSObject</span> <span class="keyword">class</span>]];</span><br><span class="line">        <span class="type">BOOL</span> res3 = [(<span class="type">id</span>)[Sark <span class="keyword">class</span>] isKindOfClass:[Sark <span class="keyword">class</span>]];</span><br><span class="line">        <span class="type">BOOL</span> res4 = [(<span class="type">id</span>)[Sark <span class="keyword">class</span>] isMemberOfClass:[Sark <span class="keyword">class</span>]];</span><br><span class="line"></span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;%d %d %d %d&quot;</span>, res1, res2, res3, res4);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>先来分析一下源码这两个函数的对象实现</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">+ (Class)<span class="keyword">class</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">self</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (Class)<span class="keyword">class</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> object_getClass(<span class="keyword">self</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Class object_getClass(<span class="type">id</span> obj)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (obj) <span class="keyword">return</span> obj-&gt;getIsa();</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">return</span> Nil;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">inline</span> Class </span><br><span class="line">objc_object::getIsa() </span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (isTaggedPointer()) &#123;</span><br><span class="line">        uintptr_t slot = ((uintptr_t)<span class="variable language_">this</span> &gt;&gt; TAG_SLOT_SHIFT) &amp; TAG_SLOT_MASK;</span><br><span class="line">        <span class="keyword">return</span> objc_tag_classes[slot];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> ISA();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">inline</span> Class </span><br><span class="line">objc_object::ISA() </span><br><span class="line">&#123;</span><br><span class="line">    assert(!isTaggedPointer()); </span><br><span class="line">    <span class="keyword">return</span> (Class)(isa.bits &amp; ISA_MASK);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="type">BOOL</span>)isKindOfClass:(Class)cls &#123;</span><br><span class="line">    <span class="keyword">for</span> (Class tcls = object_getClass((<span class="type">id</span>)<span class="keyword">self</span>); tcls; tcls = tcls-&gt;superclass) &#123;</span><br><span class="line">        <span class="keyword">if</span> (tcls == cls) <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">BOOL</span>)isKindOfClass:(Class)cls &#123;</span><br><span class="line">    <span class="keyword">for</span> (Class tcls = [<span class="keyword">self</span> <span class="keyword">class</span>]; tcls; tcls = tcls-&gt;superclass) &#123;</span><br><span class="line">        <span class="keyword">if</span> (tcls == cls) <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">+ (<span class="type">BOOL</span>)isMemberOfClass:(Class)cls &#123;</span><br><span class="line">    <span class="keyword">return</span> object_getClass((<span class="type">id</span>)<span class="keyword">self</span>) == cls;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">BOOL</span>)isMemberOfClass:(Class)cls &#123;</span><br><span class="line">    <span class="keyword">return</span> [<span class="keyword">self</span> <span class="keyword">class</span>] == cls;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>首先题目中NSObject 和 Sark分别调用了class方法。</p>
+<p><code>+ (BOOL)isKindOfClass:(Class)cls</code>方法内部，会先去获得<code>object_getClass</code>的类，而<code>object_getClass</code>的源码实现是去调用当前类的<code>obj-&gt;getIsa()</code>，最后在ISA()方法中获得<code>meta class</code>的指针。</p>
+<p>接着在<code>isKindOfClass</code>中有一个循环，先判断<code>class</code>是否等于<code>meta class</code>，不等就继续循环判断是否等于<code>super class</code>，不等再继续取<code>super class</code>，如此循环下去。</p>
+<p><code>[NSObject class]</code>执行完之后调用<code>isKindOfClass</code>，第一次判断先判断<code>NSObject</code> 和 <code>NSObject</code>的<code>meta class</code>是否相等，之前讲到<code>meta class</code>的时候放了一张很详细的图，从图上我们也可以看出，<code>NSObject</code>的<code>meta class</code>与本身不等。接着第二次循环判断NSObject与<code>meta class</code>的<code>superclass</code>是否相等。还是从那张图上面我们可以看到：<code>Root class(meta)</code> 的<code>superclass</code> 就是 <code>Root class(class)</code>，也就是<code>NSObject</code>本身。所以第二次循环相等，于是第一行res1输出应该为YES。</p>
+<p>同理，<code>[Sark class]</code>执行完之后调用<code>isKindOfClass</code>，第一次for循环，<code>Sark</code>的<code>Meta Class</code>与<code>[Sark class]</code>不等，第二次for循环，<code>Sark Meta Class</code>的<code>super class</code> 指向的是 <code>NSObject Meta Class</code>， 和 <code>Sark Class</code>不相等。第三次for循环，<code>NSObject Meta Class</code>的<code>super class</code>指向的是<code>NSObject Class</code>，和 <code>Sark Class </code>不相等。第四次循环，<code>NSObject Class</code> 的<code>super class</code> 指向 nil， 和 <code>Sark Class</code>不相等。第四次循环之后，退出循环，所以第三行的res3输出为NO。</p>
+<p>如果把这里的Sark改成它的实例对象，<code>[sark isKindOfClass:[Sark class]</code>，那么此时就应该输出YES了。因为在<code>isKindOfClass</code>函数中，判断<code>sark</code>的<code>isa</code>指向是否是自己的类<code>Sark</code>，第一次for循环就能输出YES了。</p>
+<p><code>isMemberOfClass</code>的源码实现是拿到自己的isa指针和自己比较，是否相等。<br>第二行isa 指向<code>NSObject</code>的 <code>Meta Class</code>，所以和<code> NSObject Class</code>不相等。第四行，isa指向Sark的<code>Meta Class</code>，和<code>Sark Class</code>也不等，所以第二行res2和第四行res4都输出NO。</p>
+<h4 id="实践二"><a href="#实践二" class="headerlink" title="实践二"></a>实践二</h4><p>考虑以下代码是否可以正常运行</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Sark</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@property</span> (<span class="keyword">nonatomic</span>, <span class="keyword">copy</span>) <span class="built_in">NSString</span> *name;</span><br><span class="line">- (<span class="type">void</span>)speak;</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Sark</span></span></span><br><span class="line">- (<span class="type">void</span>)speak &#123;</span><br><span class="line">   <span class="built_in">NSLog</span>(<span class="string">@&quot;my name is aaa&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        <span class="type">id</span> cls = [Sark <span class="keyword">class</span>];</span><br><span class="line">        <span class="type">void</span> *obj = &amp;cls;</span><br><span class="line">        <span class="type">id</span> obj_new = (__bridge <span class="type">id</span>)obj;</span><br><span class="line">        [obj_new speak];</span><br><span class="line">        </span><br><span class="line">        size_t cls_size = class_getInstanceSize(Sark.class);</span><br><span class="line">        size_t obj_size = malloc_size(obj);</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;cls_size:%zu, obj_size:%zu&quot;</span>, cls_size, obj_size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>答案是可以的，因为obj是指向类对象Sark的指针，将obj转为iOS对象obj_new，因为iOS对象的前8个字节是isa指针，指向类对象Sark，这里obj_new就相当于在内存中只占用8个字节的栈对象，所以是可以进行方法调用的，但是由于是栈对象，所以obj_size的值是0；</p>
+<p>所以输出的结果如下</p>
+<blockquote>
+<p>2021-04-12 00:06:13.596537+0800 ClassTest[6501:1363097] my name is aaa<br>2021-04-12 00:06:13.596620+0800 ClassTest[6501:1363097] cls_size:16, obj_size:0</p>
+</blockquote>
+<p>参考<br><a href="https://halfrost.com/objc_runtime_isa_class/">https://halfrost.com/objc_runtime_isa_class/</a></p>
+]]></content>
+      <tags>
+        <tag>iOS基础</tag>
       </tags>
   </entry>
   <entry>
@@ -927,33 +927,6 @@ CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
 ]]></content>
   </entry>
   <entry>
-    <title>视频播放基本原理</title>
-    <url>/2018/09/01/%E8%A7%86%E9%A2%91%E6%92%AD%E6%94%BE%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86/</url>
-    <content><![CDATA[<h2 id="基本定义"><a href="#基本定义" class="headerlink" title="基本定义"></a>基本定义</h2><h3 id="视频"><a href="#视频" class="headerlink" title="视频"></a>视频</h3><p>视频（Video）泛指将一系列静态影像以电信号的方式加以捕捉、纪录、处理、储存、传送与重现的各种技术。连续的图像变化每秒超过24帧（frame）画面以上时，根据视觉暂留原理，人眼无法辨别单幅的静态画面；看上去是平滑连续的视觉效果，这样连续的画面叫做视频。</p>
-<h3 id="帧率"><a href="#帧率" class="headerlink" title="帧率"></a>帧率</h3><p>指的是视频格式每秒钟播放的静态画面数量。典型的画面更新率由早期的每秒6或8张（frame per second，简称fps）至现今的每秒120张不等。</p>
-<h3 id="编解码"><a href="#编解码" class="headerlink" title="编解码"></a>编解码</h3><p>我们知道，其实视频就是一帧一帧的图片。计算一下，一部25帧每秒，90分钟，分辨率为1024*768，24位真彩色的视频，没有经过压缩，大小为</p>
-<blockquote>
-<p>1Byte（字节） &#x3D; 8bit（位）<br>一帧大小 &#x3D; 1024 * 768 * 24 &#x3D; 18874368（bit） &#x3D; 2359296（Byte）<br>总帧数 &#x3D; 90 * 60 * 25 &#x3D; 135000<br>总大小 &#x3D; 一帧大小 * 总帧数 &#x3D; 2359296 * 135000 &#x3D; 318504960000（Byte）&#x3D; 303750（MB）≈ 296（GB）</p>
-</blockquote>
-<p>从上面的计算可以看出，我们储存一部90分钟没压缩的电影需要296GB的，2部电影便可占满我们电脑整个硬盘。所以我们需要对视频进行压缩，这种视频压缩技术就是我们所说的编码。解码就是将编码的视频解压缩处理。</p>
-<h3 id="封装格式"><a href="#封装格式" class="headerlink" title="封装格式"></a>封装格式</h3><p>封装格式指的是压缩过的视频数据和音频数据打包成一个文件的规范。我们常见的mp4，flv，avi，rmvb，mkv等，都是代表视频的封装格式。</p>
-<h2 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h2><p><img src="http://static.zybuluo.com/1191641113/1n5nf79vn33jmdaj9m9lmr1c/image_1ckk2uqn81ap718uihe019ch8vc9.png"><br>播放视频的基本流程是：解封装 → 解码 → 视音频同步。</p>
-<h3 id="解封装"><a href="#解封装" class="headerlink" title="解封装"></a>解封装</h3><p>就是将输入的封装格式的数据，分离成为音频流压缩编码数据和视频流压缩编码数据。封装格式种类很多，例如MP4，MKV，RMVB，TS，FLV，AVI等等，它的作用就是将已经压缩编码的视频数据和音频数据按照一定的格式放到一起。例如，FLV格式的数据，经过解封装操作后，输出H.264编码的视频码流和AAC编码的音频码流。</p>
-<h3 id="解码"><a href="#解码" class="headerlink" title="解码"></a>解码</h3><p>就是将视频&#x2F;音频压缩编码数据，解码成为非压缩的视频&#x2F;音频原始数据。音频的压缩编码标准包含AAC，MP3，AC-3等等，视频的压缩编码标准则包含H.264，MPEG2，VC-1等等。解码是整个系统中最重要也是最复杂的一个环节。通过解码，压缩编码的视频数据输出成为非压缩的颜色数据，例如YUV420P，RGB等等；压缩编码的音频数据输出成为非压缩的音频抽样数据，例如PCM数据。</p>
-<h3 id="视音频同步"><a href="#视音频同步" class="headerlink" title="视音频同步"></a>视音频同步</h3><p>就是根据解封装模块处理过程中获取到的参数信息，同步解码出来的视频和音频数据，并将视频音频数据送至系统的显卡和声卡播放出来。</p>
-<p>视音频同步的实现方式其实有三种，分别是：</p>
-<ul>
-<li>以音频为主时间轴作为同步源;</li>
-<li>以视频为主时间轴作为同步源;</li>
-<li>以外部时钟为主时间轴作为同步源;</li>
-</ul>
-<p>参考：<br><a href="https://blog.csdn.net/johanman/article/details/79598370">https://blog.csdn.net/johanman/article/details/79598370</a></p>
-]]></content>
-      <tags>
-        <tag>音视频</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>浅谈Trie树</title>
     <url>/2021/04/17/%E6%B5%85%E8%B0%88Trie%E6%A0%91/</url>
     <content><![CDATA[<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>在计算机科学中，trie，又称前缀树或字典树，是一种有序树，用于保存关联数组，其中的键通常是字符串。与二叉查找树不同，键不是直接保存在节点中，而是由节点在树中的位置决定。一个节点的所有子孙都有相同的前缀，也就是这个节点对应的字符串，而根节点对应空字符串。一般情况下，不是所有的节点都有对应的值，只有叶子节点和部分内部节点所对应的键才有相关的值。</p>
@@ -993,6 +966,33 @@ CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
 ]]></content>
       <tags>
         <tag>数据结构</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>视频播放基本原理</title>
+    <url>/2018/09/01/%E8%A7%86%E9%A2%91%E6%92%AD%E6%94%BE%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86/</url>
+    <content><![CDATA[<h2 id="基本定义"><a href="#基本定义" class="headerlink" title="基本定义"></a>基本定义</h2><h3 id="视频"><a href="#视频" class="headerlink" title="视频"></a>视频</h3><p>视频（Video）泛指将一系列静态影像以电信号的方式加以捕捉、纪录、处理、储存、传送与重现的各种技术。连续的图像变化每秒超过24帧（frame）画面以上时，根据视觉暂留原理，人眼无法辨别单幅的静态画面；看上去是平滑连续的视觉效果，这样连续的画面叫做视频。</p>
+<h3 id="帧率"><a href="#帧率" class="headerlink" title="帧率"></a>帧率</h3><p>指的是视频格式每秒钟播放的静态画面数量。典型的画面更新率由早期的每秒6或8张（frame per second，简称fps）至现今的每秒120张不等。</p>
+<h3 id="编解码"><a href="#编解码" class="headerlink" title="编解码"></a>编解码</h3><p>我们知道，其实视频就是一帧一帧的图片。计算一下，一部25帧每秒，90分钟，分辨率为1024*768，24位真彩色的视频，没有经过压缩，大小为</p>
+<blockquote>
+<p>1Byte（字节） &#x3D; 8bit（位）<br>一帧大小 &#x3D; 1024 * 768 * 24 &#x3D; 18874368（bit） &#x3D; 2359296（Byte）<br>总帧数 &#x3D; 90 * 60 * 25 &#x3D; 135000<br>总大小 &#x3D; 一帧大小 * 总帧数 &#x3D; 2359296 * 135000 &#x3D; 318504960000（Byte）&#x3D; 303750（MB）≈ 296（GB）</p>
+</blockquote>
+<p>从上面的计算可以看出，我们储存一部90分钟没压缩的电影需要296GB的，2部电影便可占满我们电脑整个硬盘。所以我们需要对视频进行压缩，这种视频压缩技术就是我们所说的编码。解码就是将编码的视频解压缩处理。</p>
+<h3 id="封装格式"><a href="#封装格式" class="headerlink" title="封装格式"></a>封装格式</h3><p>封装格式指的是压缩过的视频数据和音频数据打包成一个文件的规范。我们常见的mp4，flv，avi，rmvb，mkv等，都是代表视频的封装格式。</p>
+<h2 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h2><p><img src="http://static.zybuluo.com/1191641113/1n5nf79vn33jmdaj9m9lmr1c/image_1ckk2uqn81ap718uihe019ch8vc9.png"><br>播放视频的基本流程是：解封装 → 解码 → 视音频同步。</p>
+<h3 id="解封装"><a href="#解封装" class="headerlink" title="解封装"></a>解封装</h3><p>就是将输入的封装格式的数据，分离成为音频流压缩编码数据和视频流压缩编码数据。封装格式种类很多，例如MP4，MKV，RMVB，TS，FLV，AVI等等，它的作用就是将已经压缩编码的视频数据和音频数据按照一定的格式放到一起。例如，FLV格式的数据，经过解封装操作后，输出H.264编码的视频码流和AAC编码的音频码流。</p>
+<h3 id="解码"><a href="#解码" class="headerlink" title="解码"></a>解码</h3><p>就是将视频&#x2F;音频压缩编码数据，解码成为非压缩的视频&#x2F;音频原始数据。音频的压缩编码标准包含AAC，MP3，AC-3等等，视频的压缩编码标准则包含H.264，MPEG2，VC-1等等。解码是整个系统中最重要也是最复杂的一个环节。通过解码，压缩编码的视频数据输出成为非压缩的颜色数据，例如YUV420P，RGB等等；压缩编码的音频数据输出成为非压缩的音频抽样数据，例如PCM数据。</p>
+<h3 id="视音频同步"><a href="#视音频同步" class="headerlink" title="视音频同步"></a>视音频同步</h3><p>就是根据解封装模块处理过程中获取到的参数信息，同步解码出来的视频和音频数据，并将视频音频数据送至系统的显卡和声卡播放出来。</p>
+<p>视音频同步的实现方式其实有三种，分别是：</p>
+<ul>
+<li>以音频为主时间轴作为同步源;</li>
+<li>以视频为主时间轴作为同步源;</li>
+<li>以外部时钟为主时间轴作为同步源;</li>
+</ul>
+<p>参考：<br><a href="https://blog.csdn.net/johanman/article/details/79598370">https://blog.csdn.net/johanman/article/details/79598370</a></p>
+]]></content>
+      <tags>
+        <tag>音视频</tag>
       </tags>
   </entry>
   <entry>
