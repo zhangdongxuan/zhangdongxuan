@@ -220,28 +220,6 @@
       </tags>
   </entry>
   <entry>
-    <title>MacOS 编译C++</title>
-    <url>/2016/10/31/MacOS-%E7%BC%96%E8%AF%91C/</url>
-    <content><![CDATA[<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><p>指用编译器(compiler)将源代码(source code)生成二进制目标文件(object file)，在Windows下也就是 .obj 文件，UNIX下是 .o 文件。编译时，编译器需要的是语法的正确，函数与变量的声明的正确，编译器只检测程序语法，和函数、变量是否被声明，函数并不需要被定义。<br>mac os 下编译C++的文件：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ -c test.cpp    </span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>-c 是compile的意思<br>生成二进制文件 test.o。</p>
-<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><p>找到所要用到函数所在的目标文件，并把它们链接在一起合成为可执行文件(executable file)。链接时，要确保编译器能找到所有被用到了的函数所在的目标文件。<br>mac os 下编译C++的文件：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o -o output </span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>生成可执行文件output。这里可以将多个文件同时</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o test2.o -o output</span><br></pre></td></tr></table></figure>
-<h2 id="结合"><a href="#结合" class="headerlink" title="结合"></a>结合</h2><p>编译和链接两个过程可以结合起来：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp test2.cpp -o output</span><br></pre></td></tr></table></figure>
-<p>一步生成可执行文件output。中间会先编译生成目标文件，然后链接生成可执行文件。</p>
-<p>另外如果只有一个C++文件，可以一步到位，生成执行文件a.out</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp</span><br></pre></td></tr></table></figure>]]></content>
-      <categories>
-        <category>备忘</category>
-      </categories>
-      <tags>
-        <tag>C++</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Flex &amp; Bison</title>
     <url>/2018/09/09/Flex-Bison/</url>
     <content><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><h3 id="Flex"><a href="#Flex" class="headerlink" title="Flex"></a>Flex</h3><p>Flex是一个词法分析工具，词法分析可以称为lexical analysis，或称scanning； </p>
@@ -306,6 +284,28 @@
 ]]></content>
       <tags>
         <tag>编译原理</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>MacOS 编译C++</title>
+    <url>/2016/10/31/MacOS-%E7%BC%96%E8%AF%91C/</url>
+    <content><![CDATA[<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><p>指用编译器(compiler)将源代码(source code)生成二进制目标文件(object file)，在Windows下也就是 .obj 文件，UNIX下是 .o 文件。编译时，编译器需要的是语法的正确，函数与变量的声明的正确，编译器只检测程序语法，和函数、变量是否被声明，函数并不需要被定义。<br>mac os 下编译C++的文件：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ -c test.cpp    </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>-c 是compile的意思<br>生成二进制文件 test.o。</p>
+<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><p>找到所要用到函数所在的目标文件，并把它们链接在一起合成为可执行文件(executable file)。链接时，要确保编译器能找到所有被用到了的函数所在的目标文件。<br>mac os 下编译C++的文件：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o -o output </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>生成可执行文件output。这里可以将多个文件同时</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o test2.o -o output</span><br></pre></td></tr></table></figure>
+<h2 id="结合"><a href="#结合" class="headerlink" title="结合"></a>结合</h2><p>编译和链接两个过程可以结合起来：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp test2.cpp -o output</span><br></pre></td></tr></table></figure>
+<p>一步生成可执行文件output。中间会先编译生成目标文件，然后链接生成可执行文件。</p>
+<p>另外如果只有一个C++文件，可以一步到位，生成执行文件a.out</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>备忘</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
       </tags>
   </entry>
   <entry>
@@ -910,21 +910,31 @@ CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
 ]]></content>
   </entry>
   <entry>
-    <title>大屏 iPhone 的适配[转]</title>
-    <url>/2017/09/10/%E5%A4%A7%E5%B1%8F-iPhone-%E7%9A%84%E9%80%82%E9%85%8D-%E8%BD%AC/</url>
-    <content><![CDATA[<p>自从苹果出了大屏 iPhone 后，iOS 开发也要做适配了，想必 Android 程序员正在偷着乐呢 , 这里大概总结下这几天了解到的大屏适配的注意事项。</p>
-<h3 id="启用高分辨率模式"><a href="#启用高分辨率模式" class="headerlink" title="启用高分辨率模式"></a>启用高分辨率模式</h3><p>从 Xcode6 GM 版本开始，模拟器新增了 iPhone6 和 iPhone6 Plus 两种，如果旧的工程直接跑到这两个模拟器中时，默认是”兼容模式”，即系统会简单的把内容等比例放大，显示效果有些模糊但尚可接受。此时 App 内部获取到的设备分辨率和 iPhone5 是一样的：320*568 point。</p>
-<p>启用高分辨率模式有2个方法(目前我能找到的)：</p>
-<p>1.添加大屏的 LaunchImage:<br>在 Images.xcassets 里，新建或更改 LaunchImage 组，添加对应高分辨率的图片。对此，这里有一篇更详细的图文介绍：<a href="http://matthewpalmer.net/blog/2014/09/10/iphone-6-plus-launch-image-adaptive-mode/">How to Add a Launch Image for the iPhone 6</a>。如果想要快速测试一下新的效果，<a href="https://blog.ibireme.com/wp-content/uploads/2014/09/iPhone6LaunchBlanks.zip">这里</a>有3张示例图片下载。</p>
-<p>2.添加 Launch Screen File<br>Launch Screen 是 Xcode6 和 iOS8 新加的功能，它用一个 xib 文件来作为启动画面。App 在旧版 iOS 启动时，该属性会被自动忽略，不会造成异常。<br>首先，点击 New File -&gt;iOS User Interface -&gt;Launch Screen，然后在工程设置项里启用它：<br><img src="https://blog.ibireme.com/wp-content/uploads/2014/09/LaunchFile.png"><br>上面两处设置，只要启用任意一个即可让 App 进入高分辨率模式；但如果两处都没有设置，则 App 会回退到兼容模式。鉴于现在不少 App 还需要兼容 iOS5，而第一种方法在 iOS5 上据说可能有<a href="http://stackoverflow.com/questions/19220082/support-of-ios-5-0-icons-with-xcode-5">bug</a>，所以这里推荐用第二种方法。</p>
-<p>资源的显示<br>一图胜千言，首先这里是一个完整的图表：  <a href="http://www.paintcodeapp.com/news/ultimate-guide-to-iphone-resolutions">http://www.paintcodeapp.com/news/ultimate-guide-to-iphone-resolutions</a>。</p>
-<p>简单的说：iPhone4、iPhone5、iPhone6 这几个设备的 ppi 都是相同的，默认图片优先是 @2x。iPhone6 Plus 的像素密度更高，默认图片优先是 @3x。</p>
-<p>另外，iPhone6 Plus 有一点和其他设备不同：在 App 内部获得的屏幕分辨率是 1242<em>2208，但设备实际分辨率是 1920</em>1080，这时系统会把整体的显示内容做一个缩放，downscale 到1&#x2F;1.15。这个特性在 OSX 上也有出现过：<br><img src="https://blog.ibireme.com/wp-content/uploads/2014/09/DownScale.png"></p>
-<BR>
-
-<p>下面列举一些可能有用的数据：<br><img src="/images/SIZE.jpg"></p>
-<p>note:转自:<a href="https://blog.ibireme.com/2014/09/16/adapted_to_iphone6/#more-41560">大屏 iPhone 的适配</a> From ibireme</p>
+    <title>视频播放基本原理</title>
+    <url>/2018/09/01/%E8%A7%86%E9%A2%91%E6%92%AD%E6%94%BE%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86/</url>
+    <content><![CDATA[<h2 id="基本定义"><a href="#基本定义" class="headerlink" title="基本定义"></a>基本定义</h2><h3 id="视频"><a href="#视频" class="headerlink" title="视频"></a>视频</h3><p>视频（Video）泛指将一系列静态影像以电信号的方式加以捕捉、纪录、处理、储存、传送与重现的各种技术。连续的图像变化每秒超过24帧（frame）画面以上时，根据视觉暂留原理，人眼无法辨别单幅的静态画面；看上去是平滑连续的视觉效果，这样连续的画面叫做视频。</p>
+<h3 id="帧率"><a href="#帧率" class="headerlink" title="帧率"></a>帧率</h3><p>指的是视频格式每秒钟播放的静态画面数量。典型的画面更新率由早期的每秒6或8张（frame per second，简称fps）至现今的每秒120张不等。</p>
+<h3 id="编解码"><a href="#编解码" class="headerlink" title="编解码"></a>编解码</h3><p>我们知道，其实视频就是一帧一帧的图片。计算一下，一部25帧每秒，90分钟，分辨率为1024*768，24位真彩色的视频，没有经过压缩，大小为</p>
+<blockquote>
+<p>1Byte（字节） &#x3D; 8bit（位）<br>一帧大小 &#x3D; 1024 * 768 * 24 &#x3D; 18874368（bit） &#x3D; 2359296（Byte）<br>总帧数 &#x3D; 90 * 60 * 25 &#x3D; 135000<br>总大小 &#x3D; 一帧大小 * 总帧数 &#x3D; 2359296 * 135000 &#x3D; 318504960000（Byte）&#x3D; 303750（MB）≈ 296（GB）</p>
+</blockquote>
+<p>从上面的计算可以看出，我们储存一部90分钟没压缩的电影需要296GB的，2部电影便可占满我们电脑整个硬盘。所以我们需要对视频进行压缩，这种视频压缩技术就是我们所说的编码。解码就是将编码的视频解压缩处理。</p>
+<h3 id="封装格式"><a href="#封装格式" class="headerlink" title="封装格式"></a>封装格式</h3><p>封装格式指的是压缩过的视频数据和音频数据打包成一个文件的规范。我们常见的mp4，flv，avi，rmvb，mkv等，都是代表视频的封装格式。</p>
+<h2 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h2><p><img src="http://static.zybuluo.com/1191641113/1n5nf79vn33jmdaj9m9lmr1c/image_1ckk2uqn81ap718uihe019ch8vc9.png"><br>播放视频的基本流程是：解封装 → 解码 → 视音频同步。</p>
+<h3 id="解封装"><a href="#解封装" class="headerlink" title="解封装"></a>解封装</h3><p>就是将输入的封装格式的数据，分离成为音频流压缩编码数据和视频流压缩编码数据。封装格式种类很多，例如MP4，MKV，RMVB，TS，FLV，AVI等等，它的作用就是将已经压缩编码的视频数据和音频数据按照一定的格式放到一起。例如，FLV格式的数据，经过解封装操作后，输出H.264编码的视频码流和AAC编码的音频码流。</p>
+<h3 id="解码"><a href="#解码" class="headerlink" title="解码"></a>解码</h3><p>就是将视频&#x2F;音频压缩编码数据，解码成为非压缩的视频&#x2F;音频原始数据。音频的压缩编码标准包含AAC，MP3，AC-3等等，视频的压缩编码标准则包含H.264，MPEG2，VC-1等等。解码是整个系统中最重要也是最复杂的一个环节。通过解码，压缩编码的视频数据输出成为非压缩的颜色数据，例如YUV420P，RGB等等；压缩编码的音频数据输出成为非压缩的音频抽样数据，例如PCM数据。</p>
+<h3 id="视音频同步"><a href="#视音频同步" class="headerlink" title="视音频同步"></a>视音频同步</h3><p>就是根据解封装模块处理过程中获取到的参数信息，同步解码出来的视频和音频数据，并将视频音频数据送至系统的显卡和声卡播放出来。</p>
+<p>视音频同步的实现方式其实有三种，分别是：</p>
+<ul>
+<li>以音频为主时间轴作为同步源;</li>
+<li>以视频为主时间轴作为同步源;</li>
+<li>以外部时钟为主时间轴作为同步源;</li>
+</ul>
+<p>参考：<br><a href="https://blog.csdn.net/johanman/article/details/79598370">https://blog.csdn.net/johanman/article/details/79598370</a></p>
 ]]></content>
+      <tags>
+        <tag>音视频</tag>
+      </tags>
   </entry>
   <entry>
     <title>浅谈Trie树</title>
@@ -969,31 +979,21 @@ CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
       </tags>
   </entry>
   <entry>
-    <title>视频播放基本原理</title>
-    <url>/2018/09/01/%E8%A7%86%E9%A2%91%E6%92%AD%E6%94%BE%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86/</url>
-    <content><![CDATA[<h2 id="基本定义"><a href="#基本定义" class="headerlink" title="基本定义"></a>基本定义</h2><h3 id="视频"><a href="#视频" class="headerlink" title="视频"></a>视频</h3><p>视频（Video）泛指将一系列静态影像以电信号的方式加以捕捉、纪录、处理、储存、传送与重现的各种技术。连续的图像变化每秒超过24帧（frame）画面以上时，根据视觉暂留原理，人眼无法辨别单幅的静态画面；看上去是平滑连续的视觉效果，这样连续的画面叫做视频。</p>
-<h3 id="帧率"><a href="#帧率" class="headerlink" title="帧率"></a>帧率</h3><p>指的是视频格式每秒钟播放的静态画面数量。典型的画面更新率由早期的每秒6或8张（frame per second，简称fps）至现今的每秒120张不等。</p>
-<h3 id="编解码"><a href="#编解码" class="headerlink" title="编解码"></a>编解码</h3><p>我们知道，其实视频就是一帧一帧的图片。计算一下，一部25帧每秒，90分钟，分辨率为1024*768，24位真彩色的视频，没有经过压缩，大小为</p>
-<blockquote>
-<p>1Byte（字节） &#x3D; 8bit（位）<br>一帧大小 &#x3D; 1024 * 768 * 24 &#x3D; 18874368（bit） &#x3D; 2359296（Byte）<br>总帧数 &#x3D; 90 * 60 * 25 &#x3D; 135000<br>总大小 &#x3D; 一帧大小 * 总帧数 &#x3D; 2359296 * 135000 &#x3D; 318504960000（Byte）&#x3D; 303750（MB）≈ 296（GB）</p>
-</blockquote>
-<p>从上面的计算可以看出，我们储存一部90分钟没压缩的电影需要296GB的，2部电影便可占满我们电脑整个硬盘。所以我们需要对视频进行压缩，这种视频压缩技术就是我们所说的编码。解码就是将编码的视频解压缩处理。</p>
-<h3 id="封装格式"><a href="#封装格式" class="headerlink" title="封装格式"></a>封装格式</h3><p>封装格式指的是压缩过的视频数据和音频数据打包成一个文件的规范。我们常见的mp4，flv，avi，rmvb，mkv等，都是代表视频的封装格式。</p>
-<h2 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h2><p><img src="http://static.zybuluo.com/1191641113/1n5nf79vn33jmdaj9m9lmr1c/image_1ckk2uqn81ap718uihe019ch8vc9.png"><br>播放视频的基本流程是：解封装 → 解码 → 视音频同步。</p>
-<h3 id="解封装"><a href="#解封装" class="headerlink" title="解封装"></a>解封装</h3><p>就是将输入的封装格式的数据，分离成为音频流压缩编码数据和视频流压缩编码数据。封装格式种类很多，例如MP4，MKV，RMVB，TS，FLV，AVI等等，它的作用就是将已经压缩编码的视频数据和音频数据按照一定的格式放到一起。例如，FLV格式的数据，经过解封装操作后，输出H.264编码的视频码流和AAC编码的音频码流。</p>
-<h3 id="解码"><a href="#解码" class="headerlink" title="解码"></a>解码</h3><p>就是将视频&#x2F;音频压缩编码数据，解码成为非压缩的视频&#x2F;音频原始数据。音频的压缩编码标准包含AAC，MP3，AC-3等等，视频的压缩编码标准则包含H.264，MPEG2，VC-1等等。解码是整个系统中最重要也是最复杂的一个环节。通过解码，压缩编码的视频数据输出成为非压缩的颜色数据，例如YUV420P，RGB等等；压缩编码的音频数据输出成为非压缩的音频抽样数据，例如PCM数据。</p>
-<h3 id="视音频同步"><a href="#视音频同步" class="headerlink" title="视音频同步"></a>视音频同步</h3><p>就是根据解封装模块处理过程中获取到的参数信息，同步解码出来的视频和音频数据，并将视频音频数据送至系统的显卡和声卡播放出来。</p>
-<p>视音频同步的实现方式其实有三种，分别是：</p>
-<ul>
-<li>以音频为主时间轴作为同步源;</li>
-<li>以视频为主时间轴作为同步源;</li>
-<li>以外部时钟为主时间轴作为同步源;</li>
-</ul>
-<p>参考：<br><a href="https://blog.csdn.net/johanman/article/details/79598370">https://blog.csdn.net/johanman/article/details/79598370</a></p>
+    <title>大屏 iPhone 的适配[转]</title>
+    <url>/2017/09/10/%E5%A4%A7%E5%B1%8F-iPhone-%E7%9A%84%E9%80%82%E9%85%8D-%E8%BD%AC/</url>
+    <content><![CDATA[<p>自从苹果出了大屏 iPhone 后，iOS 开发也要做适配了，想必 Android 程序员正在偷着乐呢 , 这里大概总结下这几天了解到的大屏适配的注意事项。</p>
+<h3 id="启用高分辨率模式"><a href="#启用高分辨率模式" class="headerlink" title="启用高分辨率模式"></a>启用高分辨率模式</h3><p>从 Xcode6 GM 版本开始，模拟器新增了 iPhone6 和 iPhone6 Plus 两种，如果旧的工程直接跑到这两个模拟器中时，默认是”兼容模式”，即系统会简单的把内容等比例放大，显示效果有些模糊但尚可接受。此时 App 内部获取到的设备分辨率和 iPhone5 是一样的：320*568 point。</p>
+<p>启用高分辨率模式有2个方法(目前我能找到的)：</p>
+<p>1.添加大屏的 LaunchImage:<br>在 Images.xcassets 里，新建或更改 LaunchImage 组，添加对应高分辨率的图片。对此，这里有一篇更详细的图文介绍：<a href="http://matthewpalmer.net/blog/2014/09/10/iphone-6-plus-launch-image-adaptive-mode/">How to Add a Launch Image for the iPhone 6</a>。如果想要快速测试一下新的效果，<a href="https://blog.ibireme.com/wp-content/uploads/2014/09/iPhone6LaunchBlanks.zip">这里</a>有3张示例图片下载。</p>
+<p>2.添加 Launch Screen File<br>Launch Screen 是 Xcode6 和 iOS8 新加的功能，它用一个 xib 文件来作为启动画面。App 在旧版 iOS 启动时，该属性会被自动忽略，不会造成异常。<br>首先，点击 New File -&gt;iOS User Interface -&gt;Launch Screen，然后在工程设置项里启用它：<br><img src="https://blog.ibireme.com/wp-content/uploads/2014/09/LaunchFile.png"><br>上面两处设置，只要启用任意一个即可让 App 进入高分辨率模式；但如果两处都没有设置，则 App 会回退到兼容模式。鉴于现在不少 App 还需要兼容 iOS5，而第一种方法在 iOS5 上据说可能有<a href="http://stackoverflow.com/questions/19220082/support-of-ios-5-0-icons-with-xcode-5">bug</a>，所以这里推荐用第二种方法。</p>
+<p>资源的显示<br>一图胜千言，首先这里是一个完整的图表：  <a href="http://www.paintcodeapp.com/news/ultimate-guide-to-iphone-resolutions">http://www.paintcodeapp.com/news/ultimate-guide-to-iphone-resolutions</a>。</p>
+<p>简单的说：iPhone4、iPhone5、iPhone6 这几个设备的 ppi 都是相同的，默认图片优先是 @2x。iPhone6 Plus 的像素密度更高，默认图片优先是 @3x。</p>
+<p>另外，iPhone6 Plus 有一点和其他设备不同：在 App 内部获得的屏幕分辨率是 1242<em>2208，但设备实际分辨率是 1920</em>1080，这时系统会把整体的显示内容做一个缩放，downscale 到1&#x2F;1.15。这个特性在 OSX 上也有出现过：<br><img src="https://blog.ibireme.com/wp-content/uploads/2014/09/DownScale.png"></p>
+<BR>
+
+<p>下面列举一些可能有用的数据：<br><img src="/images/SIZE.jpg"></p>
+<p>note:转自:<a href="https://blog.ibireme.com/2014/09/16/adapted_to_iphone6/#more-41560">大屏 iPhone 的适配</a> From ibireme</p>
 ]]></content>
-      <tags>
-        <tag>音视频</tag>
-      </tags>
   </entry>
   <entry>
     <title>音频基本概念</title>
