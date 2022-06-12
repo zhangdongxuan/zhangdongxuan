@@ -12,12 +12,17 @@
 
 <link rel="stylesheet" href="/css/main.css">
 
-
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Architects Daughter:300,300italic,400,400italic,700,700italic|Open Sans:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
 <link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Long+Cang&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Cormorant+Garamond:wght@300&family=Long+Cang&display=swap" rel="stylesheet">
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"zhangdongxuan.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+    var CONFIG = {"hostname":"zhangdongxuan.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
   <meta name="description" content="程序员的成长之路">
@@ -173,6 +178,7 @@
     <i class="fa fa-arrow-up"></i>
     <span>0%</span>
   </div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
 
 
     <main class="main">
@@ -289,7 +295,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-03-27 18:57:41" itemprop="dateModified" datetime="2022-03-27T18:57:41+08:00">2022-03-27</time>
+                <time title="修改时间：2022-06-12 15:45:00" itemprop="dateModified" datetime="2022-06-12T15:45:00+08:00">2022-06-12</time>
               </span>
 
           
@@ -303,15 +309,45 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>系统会为App预先配置audio session的行为</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-%E4%BA%8C/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
+          <h2 id="一、Audio-Session的默认行为"><a href="#一、Audio-Session的默认行为" class="headerlink" title="一、Audio Session的默认行为"></a>一、Audio Session的默认行为</h2><ul>
+<li>可以播放，但不能进行录制；</li>
+<li>静音开关设置为静音模式的时候，这个App的任何的音频播放都会被设置为静音；</li>
+<li>当设备锁屏时，这个app的音频会被静音；</li>
+<li>当App播放音频时，其他在后台播放的音频都会被静音；</li>
+</ul>
+<h2 id="二、配置Audio-Session"><a href="#二、配置Audio-Session" class="headerlink" title="二、配置Audio Session"></a>二、配置Audio Session</h2><p>在categories设置了Audio最基本的行为的同时，可以通过设置category的mode更进一步的设置Audio的行为。例如拥有Voice over IP (VoIP)功能的App，它会在使用<code>AVAudioSessionCategoryPlayAndRecord</code>的同时，将Audio Session的mode也设置为<code>AVAudioSessionModeVoiceChat</code>，这样可以通过系统级别的数字信号处理使音频信号得到提升。<br>某些categories支持使用设置options重写category默认的Audio行为，举例来讲，Category为<code>AVAudioSessionCategoryPlayback</code>的Audio Session 在active的时候，会打断系统其他的Audio，大多数场景我们都需要这样的表现，但是如果想和系统其他音频进行混播，可以通过设置Category的options为<code>AVAudioSessionCategoryOptionMixWithOthers</code>来进行实现，使用的方法为<code> setCategory:mode:options:error:</code>。</p>
+<h2 id="三、冲突的音频需求"><a href="#三、冲突的音频需求" class="headerlink" title="三、冲突的音频需求"></a>三、冲突的音频需求</h2><p>同一时间内可能有多个app需要使用Audio device，系统这里做了一个比较形象的比。将使用Audio Device比作机场的跑道，将app比作正在飞机，系统服务作为塔台:<br><img src="/images/audio/competing_audio_demands.png" width="600"/><br>图中，第一步，你的App请求激活audio session；第二步，系统会判断你配置的category，这里你的app要求其他App进行静音；第三步和第四部，系统deactivates了音乐App的Audio Session，停止了它的音频播放；最后，系统激活了你的audio session，然后你就可以开始播放了；</p>
+<h2 id="四、Audio-Session的激活和释放"><a href="#四、Audio-Session的激活和释放" class="headerlink" title="四、Audio Session的激活和释放"></a>四、Audio Session的激活和释放</h2><p>虽然AVFoundation的播放和录音会自动激活Audio Session，但是手动激活可以让你知道active audio session是否成功。<br>闹钟、来电或者日历提醒的时候，系统会将你的App deactive掉，当用户dismiss或者挂断电话后，系统允许app再次active audio session，这个时候你可以决定是否将自己的AudioSession进行激活。</p>
+<p>激活AudioSession的方法如下</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Configure your audio session category, options, and mode</span></span><br><span class="line">[[<span class="built_in">AVAudioSession</span> sharedInstance] setCategory:<span class="built_in">AVAudioSessionCategoryPlayback</span> withOptions:<span class="number">0</span> error:<span class="literal">nil</span>];</span><br><span class="line"></span><br><span class="line"><span class="comment">// Activate your audio session to enable your custom configuration</span></span><br><span class="line"><span class="built_in">NSError</span> *outError = <span class="literal">nil</span>;</span><br><span class="line"><span class="type">BOOL</span> ret = [[<span class="built_in">AVAudioSession</span> sharedInstance] setActive:<span class="literal">YES</span> error:&amp;outError];</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p> 可以将<code>setActive</code> 的参数设置为NO来释放AudioSession。除了一些VoIP、录音这些App，大多数App并不需要对AudioSession进行显式的释放。</p>
+<blockquote>
+<p>对拥有VoIP功能的App，要确保在后台待机运行的情况下不激活AudioSession，确保只有收到呼叫的时候才激活AudioSession；</p>
+<p>对于使用recording category的App，要确保只有它在录音的时候才处于激活状态。在录音前和录音结束后，要将AudioSession设置为未激活态，这样其他功能的音频提示、消息才能被正确播放出来；</p>
+</blockquote>
+<h2 id="五、处理中断"><a href="#五、处理中断" class="headerlink" title="五、处理中断"></a>五、处理中断</h2><p>为了让App的可以在AudioSesson被电话呼叫、闹钟和其他App的Active事件打断后正常工作，我们需要去监听AudioSession的打断事件。音频的打断来自于那些被激活且未配置mix with others的AudioSession，打断会使我们的AudioSession处于未激活状态，然后结束我们对Audio的使用。</p>
+ <img src="/images/audio/audio_session_interrupted.png" width="600"/>
+
+<p>以上图片演示了一个播放应用程序的AudioSessionz在中断之前、期间和之后的事件序列。</p>
+<p>可以使用<code>AVAudioSessionInterruptionNotification</code> 来监听AudioSession的变化：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[[<span class="built_in">NSNotificationCenter</span> defaultCenter] addObserver:<span class="keyword">self</span> selector:<span class="keyword">@selector</span>(handleInterruption:) name:<span class="built_in">AVAudioSessionInterruptionNotification</span> object:[<span class="built_in">AVAudioSession</span> sharedInstance]];</span><br></pre></td></tr></table></figure>
+
+<p>在interrupt begin和interrupt end的时候做对应处理，当interruptType为<code>AVAudioSessionInterruptionTypeEnded</code>时，可以从userInfo中通过<code>AVAudioSessionInterruptionOptionKey</code>拿到option，当option的值为<code>AVAudioSessionInterruptionOptionShouldResume</code>时，可以重新激活AudioSession并开始进行record或者play。</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">void</span>)handleInterruption:(<span class="built_in">NSNotification</span> *)notification &#123;</span><br><span class="line">    <span class="built_in">NSDictionary</span> *info = notification.userInfo;</span><br><span class="line">    <span class="built_in">AVAudioSessionInterruptionType</span> interruptType = [info[<span class="built_in">AVAudioSessionInterruptionTypeKey</span>] unsignedIntegerValue];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (interruptType == <span class="built_in">AVAudioSessionInterruptionTypeBegan</span>) &#123;</span><br><span class="line">        <span class="comment">// Interruption began, take appropriate actions (save state, update user interface)</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (interruptType == <span class="built_in">AVAudioSessionInterruptionTypeEnded</span>) &#123;</span><br><span class="line">        <span class="built_in">AVAudioSessionInterruptionOptions</span> option = [info[<span class="built_in">AVAudioSessionInterruptionOptionKey</span>] unsignedIntegerValue];</span><br><span class="line">        <span class="keyword">if</span> (option == <span class="built_in">AVAudioSessionInterruptionOptionShouldResume</span>) &#123;</span><br><span class="line">            <span class="comment">// reactive audio session &amp; play</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="六、响应媒体服务重置"><a href="#六、响应媒体服务重置" class="headerlink" title="六、响应媒体服务重置"></a>六、响应媒体服务重置</h2><p>媒体服务通过共享服务进程来提供音频和其他多媒体功能。虽然很罕见，但是在你的App处于active的时候，媒体服务重置的情况还是有可能发生的。可以通过注册 <code>AVAudioSessionMediaServicesWereResetNotification</code> 来监听媒体服务被重置的情况。当这种情况发生时，你需要做一些处理:</p>
+<ul>
+<li>清理之前的audio对象（例如players、recorders、converters和audio queue），重新创建一个新的；</li>
+<li>重置所有正在跟踪的内部音频状态，包括AVAudioSession的所有属性；</li>
+<li>适当时，使用setActive:error:方法重新激活AVAudioSession实例；</li>
+</ul>
+<blockquote>
+<p>Apps 无需重新注册AudioSession的notification，无需对AudioSession的属性进行 key-value 监控进行重置；</p>
+</blockquote>
+
       
     </div>
 
@@ -1050,6 +1086,8 @@
 
 
 <script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
 
 
 
