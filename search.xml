@@ -160,6 +160,52 @@
       </tags>
   </entry>
   <entry>
+    <title>Audio Session编程指南(二)</title>
+    <url>/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-%E4%BA%8C/</url>
+    <content><![CDATA[<h2 id="一、Audio-Session的默认行为"><a href="#一、Audio-Session的默认行为" class="headerlink" title="一、Audio Session的默认行为"></a>一、Audio Session的默认行为</h2><ul>
+<li>可以播放，但不能进行录制；</li>
+<li>静音开关设置为静音模式的时候，这个App的任何的音频播放都会被设置为静音；</li>
+<li>当设备锁屏时，这个app的音频会被静音；</li>
+<li>当App播放音频时，其他在后台播放的音频都会被静音；</li>
+</ul>
+<h2 id="二、配置Audio-Session"><a href="#二、配置Audio-Session" class="headerlink" title="二、配置Audio Session"></a>二、配置Audio Session</h2><p>在categories设置了Audio最基本的行为的同时，可以通过设置category的mode更进一步的设置Audio的行为。例如拥有Voice over IP (VoIP)功能的App，它会在使用<code>AVAudioSessionCategoryPlayAndRecord</code>的同时，将Audio Session的mode也设置为<code>AVAudioSessionModeVoiceChat</code>，这样可以通过系统级别的数字信号处理使音频信号得到提升。<br>某些categories支持使用设置options重写category默认的Audio行为，举例来讲，Category为<code>AVAudioSessionCategoryPlayback</code>的Audio Session 在active的时候，会打断系统其他的Audio，大多数场景我们都需要这样的表现，但是如果想和系统其他音频进行混播，可以通过设置Category的options为<code>AVAudioSessionCategoryOptionMixWithOthers</code>来进行实现，使用的方法为<code> setCategory:mode:options:error:</code>。</p>
+<h2 id="三、冲突的音频需求"><a href="#三、冲突的音频需求" class="headerlink" title="三、冲突的音频需求"></a>三、冲突的音频需求</h2><p>同一时间内可能有多个app需要使用Audio device，系统这里做了一个比较形象的比。将使用Audio Device比作机场的跑道，将app比作正在飞机，系统服务作为塔台:<br><img src="/images/audio/competing_audio_demands.png" width="600"/><br>图中，第一步，你的App请求激活audio session；第二步，系统会判断你配置的category，这里你的app要求其他App进行静音；第三步和第四部，系统deactivates了音乐App的Audio Session，停止了它的音频播放；最后，系统激活了你的audio session，然后你就可以开始播放了；</p>
+<h2 id="四、Audio-Session的激活和释放"><a href="#四、Audio-Session的激活和释放" class="headerlink" title="四、Audio Session的激活和释放"></a>四、Audio Session的激活和释放</h2><p>虽然AVFoundation的播放和录音会自动激活Audio Session，但是手动激活可以让你知道active audio session是否成功。<br>闹钟、来电或者日历提醒的时候，系统会将你的App deactive掉，当用户dismiss或者挂断电话后，系统允许app再次active audio session，这个时候你可以决定是否将自己的AudioSession进行激活。</p>
+<p>激活AudioSession的方法如下</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Configure your audio session category, options, and mode</span></span><br><span class="line">[[<span class="built_in">AVAudioSession</span> sharedInstance] setCategory:<span class="built_in">AVAudioSessionCategoryPlayback</span> withOptions:<span class="number">0</span> error:<span class="literal">nil</span>];</span><br><span class="line"></span><br><span class="line"><span class="comment">// Activate your audio session to enable your custom configuration</span></span><br><span class="line"><span class="built_in">NSError</span> *outError = <span class="literal">nil</span>;</span><br><span class="line"><span class="type">BOOL</span> ret = [[<span class="built_in">AVAudioSession</span> sharedInstance] setActive:<span class="literal">YES</span> error:&amp;outError];</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p> 可以将<code>setActive</code> 的参数设置为NO来释放AudioSession。除了一些VoIP、录音这些App，大多数App并不需要对AudioSession进行显式的释放。</p>
+<blockquote>
+<p>对拥有VoIP功能的App，要确保在后台待机运行的情况下不激活AudioSession，确保只有收到呼叫的时候才激活AudioSession；</p>
+<p>对于使用recording category的App，要确保只有它在录音的时候才处于激活状态。在录音前和录音结束后，要将AudioSession设置为未激活态，这样其他功能的音频提示、消息才能被正确播放出来；</p>
+</blockquote>
+<h2 id="五、处理中断"><a href="#五、处理中断" class="headerlink" title="五、处理中断"></a>五、处理中断</h2><p>为了让App的可以在AudioSesson被电话呼叫、闹钟和其他App的Active事件打断后正常工作，我们需要去监听AudioSession的打断事件。音频的打断来自于那些被激活且未配置mix with others的AudioSession，打断会使我们的AudioSession处于未激活状态，然后结束我们对Audio的使用。</p>
+ <img src="/images/audio/audio_session_interrupted.png" width="600"/>
+
+<p>以上图片演示了一个播放应用程序的AudioSessionz在中断之前、期间和之后的事件序列。</p>
+<p>可以使用<code>AVAudioSessionInterruptionNotification</code> 来监听AudioSession的变化：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">[[<span class="built_in">NSNotificationCenter</span> defaultCenter] addObserver:<span class="keyword">self</span> selector:<span class="keyword">@selector</span>(handleInterruption:) name:<span class="built_in">AVAudioSessionInterruptionNotification</span> object:[<span class="built_in">AVAudioSession</span> sharedInstance]];</span><br></pre></td></tr></table></figure>
+
+<p>在interrupt begin和interrupt end的时候做对应处理，当interruptType为<code>AVAudioSessionInterruptionTypeEnded</code>时，可以从userInfo中通过<code>AVAudioSessionInterruptionOptionKey</code>拿到option，当option的值为<code>AVAudioSessionInterruptionOptionShouldResume</code>时，可以重新激活AudioSession并开始进行record或者play。</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">- (<span class="type">void</span>)handleInterruption:(<span class="built_in">NSNotification</span> *)notification &#123;</span><br><span class="line">    <span class="built_in">NSDictionary</span> *info = notification.userInfo;</span><br><span class="line">    <span class="built_in">AVAudioSessionInterruptionType</span> interruptType = [info[<span class="built_in">AVAudioSessionInterruptionTypeKey</span>] unsignedIntegerValue];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (interruptType == <span class="built_in">AVAudioSessionInterruptionTypeBegan</span>) &#123;</span><br><span class="line">        <span class="comment">// Interruption began, take appropriate actions (save state, update user interface)</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (interruptType == <span class="built_in">AVAudioSessionInterruptionTypeEnded</span>) &#123;</span><br><span class="line">        <span class="built_in">AVAudioSessionInterruptionOptions</span> option = [info[<span class="built_in">AVAudioSessionInterruptionOptionKey</span>] unsignedIntegerValue];</span><br><span class="line">        <span class="keyword">if</span> (option == <span class="built_in">AVAudioSessionInterruptionOptionShouldResume</span>) &#123;</span><br><span class="line">            <span class="comment">// reactive audio session &amp; play</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="六、响应媒体服务重置"><a href="#六、响应媒体服务重置" class="headerlink" title="六、响应媒体服务重置"></a>六、响应媒体服务重置</h2><p>媒体服务通过共享服务进程来提供音频和其他多媒体功能。虽然很罕见，但是在你的App处于active的时候，媒体服务重置的情况还是有可能发生的。可以通过注册 <code>AVAudioSessionMediaServicesWereResetNotification</code> 来监听媒体服务被重置的情况。当这种情况发生时，你需要做一些处理:</p>
+<ul>
+<li>清理之前的audio对象（例如players、recorders、converters和audio queue），重新创建一个新的；</li>
+<li>重置所有正在跟踪的内部音频状态，包括AVAudioSession的所有属性；</li>
+<li>适当时，使用setActive:error:方法重新激活AVAudioSession实例；</li>
+</ul>
+<blockquote>
+<p>Apps 无需重新注册AudioSession的notification，无需对AudioSession的属性进行 key-value 监控进行重置；</p>
+</blockquote>
+]]></content>
+      <tags>
+        <tag>音视频</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Flex &amp; Bison</title>
     <url>/2018/09/09/Flex-Bison/</url>
     <content><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><h3 id="Flex"><a href="#Flex" class="headerlink" title="Flex"></a>Flex</h3><p>Flex是一个词法分析工具，词法分析可以称为lexical analysis，或称scanning； </p>
@@ -241,131 +287,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Audio Session编程指南(二)</title>
-    <url>/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-%E4%BA%8C/</url>
-    <content><![CDATA[<h2 id="一、Audio-Session的默认行为"><a href="#一、Audio-Session的默认行为" class="headerlink" title="一、Audio Session的默认行为"></a>一、Audio Session的默认行为</h2><ul>
-<li>可以播放，但不能进行录制；</li>
-<li>静音开关设置为静音模式的时候，这个App的任何的音频播放都会被设置为静音；</li>
-<li>当设备锁屏时，这个app的音频会被静音；</li>
-<li>当App播放音频时，其他在后台播放的音频都会被静音；</li>
-</ul>
-<h2 id="二、配置Audio-Session"><a href="#二、配置Audio-Session" class="headerlink" title="二、配置Audio Session"></a>二、配置Audio Session</h2><p>在categories设置了Audio最基本的行为的同时，可以通过设置category的mode更进一步的设置Audio的行为。例如拥有Voice over IP (VoIP)功能的App，它会在使用<code>AVAudioSessionCategoryPlayAndRecord</code>的同时，将Audio Session的mode也设置为<code>AVAudioSessionModeVoiceChat</code>，这样可以通过系统级别的数字信号处理使音频信号得到提升。<br>某些categories支持使用设置options重写category默认的Audio行为，举例来讲，Category为<code>AVAudioSessionCategoryPlayback</code>的Audio Session 在active的时候，会打断系统其他的Audio，大多数场景我们都需要这样的表现，但是如果想和系统其他音频进行混播，可以通过设置Category的options为<code>AVAudioSessionCategoryOptionMixWithOthers</code>来进行实现，使用的方法为<code> setCategory:mode:options:error:</code>。</p>
-<h2 id="三、冲突的音频需求"><a href="#三、冲突的音频需求" class="headerlink" title="三、冲突的音频需求"></a>三、冲突的音频需求</h2><p>同一时间内可能有多个app需要使用Audio device，系统这里做了一个比较形象的比。将使用Audio Device比作机场的跑道，将app比作正在飞机，系统服务作为塔台:<br><img src="/images/audio/competing_audio_demands.png" width="600"/><br>图中，第一步，你的App请求激活audio session；第二步，系统会判断你配置的category，这里你的app要求其他App进行静音；第三步和第四部，系统deactivates了音乐App的Audio Session，停止了它的音频播放；最后，系统激活了你的audio session，然后你就可以开始播放了；</p>
-<h2 id="四、Audio-Session的激活和释放"><a href="#四、Audio-Session的激活和释放" class="headerlink" title="四、Audio Session的激活和释放"></a>四、Audio Session的激活和释放</h2><p>虽然AVFoundation的播放和录音会自动激活Audio Session，但是手动激活可以让你知道active audio session是否成功。<br>闹钟、来电或者日历提醒的时候，系统会将你的App deactive掉，当用户dismiss或者挂断电话后，系统允许app再次active audio session，这个时候你可以决定是否将自己的AudioSession进行激活。</p>
-<p>激活AudioSession的方法如下</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Configure your audio session category, options, and mode</span></span><br><span class="line">[[<span class="built_in">AVAudioSession</span> sharedInstance] setCategory:<span class="built_in">AVAudioSessionCategoryPlayback</span> withOptions:<span class="number">0</span> error:<span class="literal">nil</span>];</span><br><span class="line"></span><br><span class="line"><span class="comment">// Activate your audio session to enable your custom configuration</span></span><br><span class="line"><span class="built_in">NSError</span> *outError = <span class="literal">nil</span>;</span><br><span class="line"><span class="type">BOOL</span> ret = [[<span class="built_in">AVAudioSession</span> sharedInstance] setActive:<span class="literal">YES</span> error:&amp;outError];</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<p> 可以将<code>setActive</code> 的参数设置为NO来释放AudioSession。除了一些VoIP、录音这些App，大多数App并不需要对AudioSession进行显式的释放。</p>
-<blockquote>
-<p>对拥有VoIP功能的App，要确保在后台待机运行的情况下不激活AudioSession，确保只有收到呼叫的时候才激活AudioSession；</p>
-<p>对于使用recording category的App，要确保只有它在录音的时候才处于激活状态。在录音前和录音结束后，要将AudioSession设置为未激活态，这样其他功能的音频提示、消息才能被正确播放出来；</p>
-</blockquote>
-<h2 id="五、处理中断"><a href="#五、处理中断" class="headerlink" title="五、处理中断"></a>五、处理中断</h2><p>为了让App的可以在AudioSesson被电话呼叫、闹钟和其他App的Active事件打断后正常工作，我们需要去监听AudioSession的打断事件。音频的打断来自于那些被激活且未配置mix with others的AudioSession，打断会使我们的AudioSession处于未激活状态，然后结束我们对Audio的使用。</p>
- <img src="/images/audio/audio_session_interrupted.png" width="600"/>
-
-<p>以上图片演示了一个播放应用程序的AudioSessionz在中断之前、期间和之后的事件序列。</p>
-<p>可以使用<code>AVAudioSessionInterruptionNotification</code> 来监听AudioSession的变化：</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">[[<span class="built_in">NSNotificationCenter</span> defaultCenter] addObserver:<span class="keyword">self</span> selector:<span class="keyword">@selector</span>(handleInterruption:) name:<span class="built_in">AVAudioSessionInterruptionNotification</span> object:[<span class="built_in">AVAudioSession</span> sharedInstance]];</span><br></pre></td></tr></table></figure>
-
-<p>在interrupt begin和interrupt end的时候做对应处理，当interruptType为<code>AVAudioSessionInterruptionTypeEnded</code>时，可以从userInfo中通过<code>AVAudioSessionInterruptionOptionKey</code>拿到option，当option的值为<code>AVAudioSessionInterruptionOptionShouldResume</code>时，可以重新激活AudioSession并开始进行record或者play。</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">- (<span class="type">void</span>)handleInterruption:(<span class="built_in">NSNotification</span> *)notification &#123;</span><br><span class="line">    <span class="built_in">NSDictionary</span> *info = notification.userInfo;</span><br><span class="line">    <span class="built_in">AVAudioSessionInterruptionType</span> interruptType = [info[<span class="built_in">AVAudioSessionInterruptionTypeKey</span>] unsignedIntegerValue];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (interruptType == <span class="built_in">AVAudioSessionInterruptionTypeBegan</span>) &#123;</span><br><span class="line">        <span class="comment">// Interruption began, take appropriate actions (save state, update user interface)</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (interruptType == <span class="built_in">AVAudioSessionInterruptionTypeEnded</span>) &#123;</span><br><span class="line">        <span class="built_in">AVAudioSessionInterruptionOptions</span> option = [info[<span class="built_in">AVAudioSessionInterruptionOptionKey</span>] unsignedIntegerValue];</span><br><span class="line">        <span class="keyword">if</span> (option == <span class="built_in">AVAudioSessionInterruptionOptionShouldResume</span>) &#123;</span><br><span class="line">            <span class="comment">// reactive audio session &amp; play</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h2 id="六、响应媒体服务重置"><a href="#六、响应媒体服务重置" class="headerlink" title="六、响应媒体服务重置"></a>六、响应媒体服务重置</h2><p>媒体服务通过共享服务进程来提供音频和其他多媒体功能。虽然很罕见，但是在你的App处于active的时候，媒体服务重置的情况还是有可能发生的。可以通过注册 <code>AVAudioSessionMediaServicesWereResetNotification</code> 来监听媒体服务被重置的情况。当这种情况发生时，你需要做一些处理:</p>
-<ul>
-<li>清理之前的audio对象（例如players、recorders、converters和audio queue），重新创建一个新的；</li>
-<li>重置所有正在跟踪的内部音频状态，包括AVAudioSession的所有属性；</li>
-<li>适当时，使用setActive:error:方法重新激活AVAudioSession实例；</li>
-</ul>
-<blockquote>
-<p>Apps 无需重新注册AudioSession的notification，无需对AudioSession的属性进行 key-value 监控进行重置；</p>
-</blockquote>
-]]></content>
-      <tags>
-        <tag>音视频</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>MacOS 编译C++</title>
-    <url>/2016/10/31/MacOS-%E7%BC%96%E8%AF%91C/</url>
-    <content><![CDATA[<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><p>指用编译器(compiler)将源代码(source code)生成二进制目标文件(object file)，在Windows下也就是 .obj 文件，UNIX下是 .o 文件。编译时，编译器需要的是语法的正确，函数与变量的声明的正确，编译器只检测程序语法，和函数、变量是否被声明，函数并不需要被定义。<br>mac os 下编译C++的文件：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ -c test.cpp    </span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>-c 是compile的意思<br>生成二进制文件 test.o。</p>
-<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><p>找到所要用到函数所在的目标文件，并把它们链接在一起合成为可执行文件(executable file)。链接时，要确保编译器能找到所有被用到了的函数所在的目标文件。<br>mac os 下编译C++的文件：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o -o output </span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>生成可执行文件output。这里可以将多个文件同时</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o test2.o -o output</span><br></pre></td></tr></table></figure>
-<h2 id="结合"><a href="#结合" class="headerlink" title="结合"></a>结合</h2><p>编译和链接两个过程可以结合起来：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp test2.cpp -o output</span><br></pre></td></tr></table></figure>
-<p>一步生成可执行文件output。中间会先编译生成目标文件，然后链接生成可执行文件。</p>
-<p>另外如果只有一个C++文件，可以一步到位，生成执行文件a.out</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp</span><br></pre></td></tr></table></figure>]]></content>
-      <categories>
-        <category>备忘</category>
-      </categories>
-      <tags>
-        <tag>C++</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>NSObject对象占用多少内存</title>
-    <url>/2021/04/09/NSObject%E5%AF%B9%E8%B1%A1%E5%8D%A0%E7%94%A8%E5%A4%9A%E5%B0%91%E5%86%85%E5%AD%98/</url>
-    <content><![CDATA[<h3 id="NSObject的本质"><a href="#NSObject的本质" class="headerlink" title="NSObject的本质"></a>NSObject的本质</h3><figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&lt;Foundation/Foundation.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSObject</span> *obj = [[<span class="built_in">NSObject</span> alloc] init];</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;Hello, World!&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>以上一段代码使用如下一段命令进行rewrite后，会被改为c++代码，生成main.cpp</p>
-<blockquote>
-<p>xcrun  -sdk  iphoneos  clang  -arch  arm64  -rewrite-objc main.m</p>
-</blockquote>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="comment">/* @autoreleasepool */</span> &#123; __AtAutoreleasePool __autoreleasepool; </span><br><span class="line">        <span class="built_in">NSObject</span> *obj = ((<span class="built_in">NSObject</span> *(*)(<span class="type">id</span>, SEL))(<span class="type">void</span> *)objc_msgSend)((<span class="type">id</span>)((<span class="built_in">NSObject</span> *(*)(<span class="type">id</span>, SEL))(<span class="type">void</span> *)objc_msgSend)((<span class="type">id</span>)objc_getClass(<span class="string">&quot;NSObject&quot;</span>), sel_registerName(<span class="string">&quot;alloc&quot;</span>)), sel_registerName(<span class="string">&quot;init&quot;</span>));</span><br><span class="line">        <span class="built_in">NSLog</span>((<span class="built_in">NSString</span> *)&amp;__NSConstantStringImpl__var_folders_s0_4wsgyhps0fv7r90xwgjm4lwr0000gn_T_main_96c2d6_mi_0);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>NSObject 的结构为</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> objc_class *Class;</span><br><span class="line"><span class="keyword">struct</span> objc_object &#123;</span><br><span class="line">    Class _Nonnull isa __attribute__((deprecated));</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> objc_object <span class="built_in">NSObject</span>;</span><br></pre></td></tr></table></figure>
-
-<p>可以看到NSObject是由结构体objc_object来定义的，objc_object里面只有一个Class类型的isa属性，指向该类的类信息；Class是由结构体 objc_class来定义。由此可以知道oc编写的代码都会被翻译为C++代码。</p>
-<h3 id="NSObject的内存占用"><a href="#NSObject的内存占用" class="headerlink" title="NSObject的内存占用"></a>NSObject的内存占用</h3><p><code>class_getInstanceSize</code>是一个runtime提供的API，用于获取类实例对象所占用的内存大小，源码如下：</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">size_t class_getInstanceSize(Class cls)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (!cls) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">return</span> cls-&gt;alignedInstanceSize();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Class&#x27;s ivar size rounded up to a pointer-size boundary.</span></span><br><span class="line">uint32_t alignedInstanceSize() <span class="keyword">const</span> &#123;</span><br><span class="line">   <span class="keyword">return</span> word_align(unalignedInstanceSize());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>根据源码的意思来看， <code>class_getInstanceSize</code> 就是获取实例对象中成员变量内存大小。</p>
-<p>下面我们使用一个case来说明一个对象占用内存的大小：</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&lt;Foundation/Foundation.h&gt;</span></span></span><br><span class="line"><span class="meta">#import <span class="string">&lt;objc/runtime.h&gt;</span></span></span><br><span class="line"><span class="meta">#import <span class="string">&lt;malloc/malloc.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSObject</span> *obj = [[<span class="built_in">NSObject</span> alloc] init];</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获得NSObject实例对象的成员变量所占用的大小</span></span><br><span class="line">        size_t class_size = class_getInstanceSize(<span class="built_in">NSObject</span>.class);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获得ptr指针所指向内存的大小</span></span><br><span class="line">        <span class="type">void</span> *ptr = (__bridge <span class="type">void</span> *)obj;</span><br><span class="line">        size_t ptrmalloc_size = malloc_size(ptr);</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;class_size:%zu ptrmalloc_size:%zu&quot;</span>, class_size, ptrmalloc_size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-<p>运行结果为</p>
-<blockquote>
-<p>class_size:8 ptrmalloc_size:16</p>
-</blockquote>
-<p>运行结果说明nsobject类对象的大小正好是isa指针的大小为8个字节，使用view memory可以查看ptr指向的内存，占用16个字节。<br>这是因为在objc的alloc内存申请的流程中有这样一段代码，限制一个NSObect对象的大小至少要占用16个字节。</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">size_t instanceSize(size_t extraBytes) <span class="keyword">const</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (fastpath(cache.hasFastInstanceSize(extraBytes))) &#123;</span><br><span class="line">        <span class="keyword">return</span> cache.fastInstanceSize(extraBytes);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    size_t size = alignedInstanceSize() + extraBytes;</span><br><span class="line">    <span class="comment">// CF requires all objects be at least 16 bytes.</span></span><br><span class="line">    <span class="keyword">if</span> (size &lt; <span class="number">16</span>) size = <span class="number">16</span>;</span><br><span class="line">    <span class="keyword">return</span> size;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-<p><strong>所以我们知道NSObject中只有一个isa指针，所以NSObject类对象占用8个字节，NSObject在内存中占用16个字节。</strong></p>
-<h3 id="自定义类的内存占用"><a href="#自定义类的内存占用" class="headerlink" title="自定义类的内存占用"></a>自定义类的内存占用</h3><p>定义Test类，并进行如下初始化，那么obj在内存中是怎样布局的呢？</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Test</span> : <span class="title">NSObject</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_1;</span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_2;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Test</span></span></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        </span><br><span class="line">        Test *obj = [[Test alloc] init];</span><br><span class="line">        obj.property_1 = <span class="number">1</span>;</span><br><span class="line">        obj.property_2 = <span class="number">2</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获得NSObject实例对象的成员变量所占用的大小</span></span><br><span class="line">        size_t class_size = class_getInstanceSize(Test.class);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获得ptr指针所指向内存的大小</span></span><br><span class="line">        <span class="type">void</span> *ptr = (__bridge <span class="type">void</span> *)obj;</span><br><span class="line">        size_t ptrmalloc_size = malloc_size(ptr);</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;class_size:%zu ptrmalloc_size:%zu&quot;</span>, class_size, ptrmalloc_size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>运行的结果如下</p>
-<blockquote>
-<p>class_size:16 ptrmalloc_size:16</p>
-</blockquote>
-<p>使用view memory查看ptr指向的内存，如下图<br><img src="/images/ios/1.png"><br>其中红框是对象属性property_1和property_2 的值，分别是1和2，int类型各占4个字节。</p>
-<p>如果Test的定义如下</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Test</span> : <span class="title">NSObject</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_1;</span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_2;</span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_3;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
-
-<p>初始化obj并赋值</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">Test *obj = [[Test alloc] init];</span><br><span class="line">obj.property_1 = <span class="number">1</span>;</span><br><span class="line">obj.property_2 = <span class="number">2</span>;</span><br><span class="line">obj.property_3 = <span class="number">3</span>;</span><br></pre></td></tr></table></figure>
-<p>运行结果为</p>
-<blockquote>
-<p>class_size:24 ptrmalloc_size:32</p>
-</blockquote>
-<p>则在内存中的布局如下，可以看到property_1、property_2和property_3 的值分别为1、2、3<br><img src="/images/ios/2.png"><br>首先Test的类对象的大小为24，但是为何不是 8(isa指针) + 三个属性占用的12个字节 &#x3D; 20 个字节？<br>这是因为表示Class的struct objc_class是一个结构体，结构体大小结果要为成员中最大字节的整数倍，所以Test类指向的objc_class变量大小为24。</p>
-<p>对象在内存中占用了32个字节，这是因为malloc要满足 16 字节对齐原则 ( 可以在 libmaclloc 源码查找到 ) , 因此实际总占用内存为24. 而实际开辟则满足对齐标准开辟为 32.<br><img src="/images/ios/3.png"></p>
-<p>参考<br><a href="https://juejin.cn/post/6844903939985391629">https://juejin.cn/post/6844903939985391629</a><br><a href="https://zhuanlan.zhihu.com/p/98432137">https://zhuanlan.zhihu.com/p/98432137</a></p>
-]]></content>
-      <tags>
-        <tag>iOS基础</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>NSAutoreleasePool分析</title>
     <url>/2017/09/26/NSAutoreleasePool%E5%88%86%E6%9E%90/</url>
     <content><![CDATA[<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p><code>NSAutoreleasePool</code>是用来做引用计数管理的，当一个对象收到<code>autorelease</code>消息的时候，这个对象就会被放到<code>NSAutoreleasePool</code>中。当<code>NSAutoreleasePool</code>被销毁的时候，<code>NSAutoreleasePool</code>向它包含的每一个对象发送<code>release</code>消息，也就是说调用<code>autorelease</code>并不会立马销毁对象，这样就延长了这个对象的生命周期。</p>
@@ -440,6 +361,28 @@
       </tags>
   </entry>
   <entry>
+    <title>MacOS 编译C++</title>
+    <url>/2016/10/31/MacOS-%E7%BC%96%E8%AF%91C/</url>
+    <content><![CDATA[<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><p>指用编译器(compiler)将源代码(source code)生成二进制目标文件(object file)，在Windows下也就是 .obj 文件，UNIX下是 .o 文件。编译时，编译器需要的是语法的正确，函数与变量的声明的正确，编译器只检测程序语法，和函数、变量是否被声明，函数并不需要被定义。<br>mac os 下编译C++的文件：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ -c test.cpp    </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>-c 是compile的意思<br>生成二进制文件 test.o。</p>
+<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><p>找到所要用到函数所在的目标文件，并把它们链接在一起合成为可执行文件(executable file)。链接时，要确保编译器能找到所有被用到了的函数所在的目标文件。<br>mac os 下编译C++的文件：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o -o output </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>生成可执行文件output。这里可以将多个文件同时</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o test2.o -o output</span><br></pre></td></tr></table></figure>
+<h2 id="结合"><a href="#结合" class="headerlink" title="结合"></a>结合</h2><p>编译和链接两个过程可以结合起来：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp test2.cpp -o output</span><br></pre></td></tr></table></figure>
+<p>一步生成可执行文件output。中间会先编译生成目标文件，然后链接生成可执行文件。</p>
+<p>另外如果只有一个C++文件，可以一步到位，生成执行文件a.out</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>备忘</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Socket Programming in C/C++</title>
     <url>/2022/06/04/Socket-Programming-in-C-C/</url>
     <content><![CDATA[<p><img src="/images/network/socket.jpeg"></p>
@@ -509,42 +452,65 @@ close server socket:3
 </code></pre>
 <p><a href="https://www.ibm.com/docs/en/i/7.4?topic=designs-using-poll-instead-select">https://www.ibm.com/docs/en/i/7.4?topic=designs-using-poll-instead-select</a></p>
 ]]></content>
+      <tags>
+        <tag>网络编程</tag>
+      </tags>
   </entry>
   <entry>
-    <title>iOS实现文字复制</title>
-    <url>/2016/12/05/iOS%E5%AE%9E%E7%8E%B0%E6%96%87%E5%AD%97%E5%A4%8D%E5%88%B6/</url>
-    <content><![CDATA[<p>实现的目标是长按label，弹出复制菜单，然后复制。<br>我的做法是实现一个通用的可复制UILabel控件。下面是具体的步骤。</p>
-<h2 id="创建UILabel子类"><a href="#创建UILabel子类" class="headerlink" title="创建UILabel子类"></a>创建UILabel子类</h2><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">CopyLabel</span> : <span class="title">UILabel</span></span></span><br><span class="line"></span><br><span class="line">- (<span class="type">id</span>)initWithFrame:(<span class="built_in">CGRect</span>)frame;</span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+    <title>NSObject对象占用多少内存</title>
+    <url>/2021/04/09/NSObject%E5%AF%B9%E8%B1%A1%E5%8D%A0%E7%94%A8%E5%A4%9A%E5%B0%91%E5%86%85%E5%AD%98/</url>
+    <content><![CDATA[<h3 id="NSObject的本质"><a href="#NSObject的本质" class="headerlink" title="NSObject的本质"></a>NSObject的本质</h3><figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&lt;Foundation/Foundation.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSObject</span> *obj = [[<span class="built_in">NSObject</span> alloc] init];</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;Hello, World!&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h2 id="使UILabel可响应"><a href="#使UILabel可响应" class="headerlink" title="使UILabel可响应"></a>使UILabel可响应</h2><p>使CopyLabel可以成为第一响应者</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="type">BOOL</span>)canBecomeFirstResponder</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>使CopyLabel可响应copyText命令</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="type">BOOL</span>)canPerformAction:(SEL)action withSender:(<span class="type">id</span>)sender</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">return</span> (action == <span class="keyword">@selector</span>(copyText:));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>以上一段代码使用如下一段命令进行rewrite后，会被改为c++代码，生成main.cpp</p>
 <blockquote>
-<p>1、 UIResponder类声明了canPerformAction:withSender:方法。响应者类可以实现这个方法，以根据当前的上下文显示或移除编辑菜单上的命令。<br>2、 在自定义的UIView子类中，需要实现canBecomeFirstResponder方法，并返回YES(默认返回FALSE)，才可使becomeFirstResponder可返回YES,才可使其成为第一响应者，即接受第一响应者状态。一个响应者只有当当前响应者可以取消第一响应者状态 (canResignFirstResponder) 并且新的响应者可以成为第一响应者时，才可以成为第一响应者。</p>
+<p>xcrun  -sdk  iphoneos  clang  -arch  arm64  -rewrite-objc main.m</p>
 </blockquote>
-<h2 id="添加监听"><a href="#添加监听" class="headerlink" title="添加监听"></a>添加监听</h2><h3 id="在初始化方法中添加长按手势"><a href="#在初始化方法中添加长按手势" class="headerlink" title="在初始化方法中添加长按手势"></a>在初始化方法中添加长按手势</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="built_in">UILongPressGestureRecognizer</span>* longPressGr = [[<span class="built_in">UILongPressGestureRecognizer</span> alloc] initWithTarget:<span class="keyword">self</span> action:<span class="keyword">@selector</span>(pressToCopy:)];</span><br><span class="line"><span class="comment">//设置最短长按时间</span></span><br><span class="line">longPressGr.minimumPressDuration = <span class="number">0.5</span>f;</span><br><span class="line">[<span class="keyword">self</span> addGestureRecognizer:longPressGr];</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="comment">/* @autoreleasepool */</span> &#123; __AtAutoreleasePool __autoreleasepool; </span><br><span class="line">        <span class="built_in">NSObject</span> *obj = ((<span class="built_in">NSObject</span> *(*)(<span class="type">id</span>, SEL))(<span class="type">void</span> *)objc_msgSend)((<span class="type">id</span>)((<span class="built_in">NSObject</span> *(*)(<span class="type">id</span>, SEL))(<span class="type">void</span> *)objc_msgSend)((<span class="type">id</span>)objc_getClass(<span class="string">&quot;NSObject&quot;</span>), sel_registerName(<span class="string">&quot;alloc&quot;</span>)), sel_registerName(<span class="string">&quot;init&quot;</span>));</span><br><span class="line">        <span class="built_in">NSLog</span>((<span class="built_in">NSString</span> *)&amp;__NSConstantStringImpl__var_folders_s0_4wsgyhps0fv7r90xwgjm4lwr0000gn_T_main_96c2d6_mi_0);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h3 id="使UILabel可交互"><a href="#使UILabel可交互" class="headerlink" title="使UILabel可交互"></a>使UILabel可交互</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">self</span>.userInteractionEnabled = <span class="literal">YES</span>;</span><br></pre></td></tr></table></figure>
+<p>NSObject 的结构为</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> objc_class *Class;</span><br><span class="line"><span class="keyword">struct</span> objc_object &#123;</span><br><span class="line">    Class _Nonnull isa __attribute__((deprecated));</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> objc_object <span class="built_in">NSObject</span>;</span><br></pre></td></tr></table></figure>
 
-<h3 id="添加菜单消失的监听"><a href="#添加菜单消失的监听" class="headerlink" title="添加菜单消失的监听"></a>添加菜单消失的监听</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">[[<span class="built_in">NSNotificationCenter</span> defaultCenter] addObserver:<span class="keyword">self</span> selector:<span class="keyword">@selector</span>(menuItemHidden:)name:<span class="built_in">UIMenuControllerWillHideMenuNotification</span> object:<span class="literal">nil</span>];</span><br></pre></td></tr></table></figure>
+<p>可以看到NSObject是由结构体objc_object来定义的，objc_object里面只有一个Class类型的isa属性，指向该类的类信息；Class是由结构体 objc_class来定义。由此可以知道oc编写的代码都会被翻译为C++代码。</p>
+<h3 id="NSObject的内存占用"><a href="#NSObject的内存占用" class="headerlink" title="NSObject的内存占用"></a>NSObject的内存占用</h3><p><code>class_getInstanceSize</code>是一个runtime提供的API，用于获取类实例对象所占用的内存大小，源码如下：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">size_t class_getInstanceSize(Class cls)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (!cls) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">return</span> cls-&gt;alignedInstanceSize();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Class&#x27;s ivar size rounded up to a pointer-size boundary.</span></span><br><span class="line">uint32_t alignedInstanceSize() <span class="keyword">const</span> &#123;</span><br><span class="line">   <span class="keyword">return</span> word_align(unalignedInstanceSize());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h2 id="实现响应方法"><a href="#实现响应方法" class="headerlink" title="实现响应方法"></a>实现响应方法</h2><h3 id="长按后在文字上方弹出复制菜单"><a href="#长按后在文字上方弹出复制菜单" class="headerlink" title="长按后在文字上方弹出复制菜单"></a>长按后在文字上方弹出复制菜单</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">-(<span class="type">void</span>)pressToCopy:(<span class="built_in">UILongPressGestureRecognizer</span> *)sender&#123;</span><br><span class="line"><span class="keyword">if</span> (sender.state == <span class="built_in">UIGestureRecognizerStateBegan</span>) &#123;</span><br><span class="line">[<span class="keyword">self</span> becomeFirstResponder];</span><br><span class="line"></span><br><span class="line"><span class="built_in">UIMenuController</span> *menu = [<span class="built_in">UIMenuController</span> sharedMenuController];</span><br><span class="line"><span class="built_in">UIMenuItem</span> *<span class="keyword">copy</span> = [[<span class="built_in">UIMenuItem</span> alloc] initWithTitle:<span class="string">@&quot;复制&quot;</span> action:<span class="keyword">@selector</span>(copyText:)];</span><br><span class="line">menu.menuItems = @[<span class="keyword">copy</span>];</span><br><span class="line">[menu setTargetRect:<span class="keyword">self</span>.bounds inView:<span class="keyword">self</span>];</span><br><span class="line">[menu setMenuVisible:<span class="literal">YES</span> animated:<span class="literal">YES</span>];</span><br><span class="line"><span class="comment">//文字颜色的0.5透明度作为uilabel背景色</span></span><br><span class="line"><span class="keyword">self</span>.backgroundColor = [<span class="keyword">self</span>.textColor colorWithAlphaComponent:<span class="number">0.5</span>f];</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="当复制菜单消失后，使uilabel背景色变为透明"><a href="#当复制菜单消失后，使uilabel背景色变为透明" class="headerlink" title="当复制菜单消失后，使uilabel背景色变为透明"></a>当复制菜单消失后，使uilabel背景色变为透明</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">-(<span class="type">void</span>)menuItemHidden:(<span class="type">id</span>)sender&#123;</span><br><span class="line"><span class="keyword">self</span>.backgroundColor = [<span class="built_in">UIColor</span> clearColor];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>根据源码的意思来看， <code>class_getInstanceSize</code> 就是获取实例对象中成员变量内存大小。</p>
+<p>下面我们使用一个case来说明一个对象占用内存的大小：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&lt;Foundation/Foundation.h&gt;</span></span></span><br><span class="line"><span class="meta">#import <span class="string">&lt;objc/runtime.h&gt;</span></span></span><br><span class="line"><span class="meta">#import <span class="string">&lt;malloc/malloc.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSObject</span> *obj = [[<span class="built_in">NSObject</span> alloc] init];</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获得NSObject实例对象的成员变量所占用的大小</span></span><br><span class="line">        size_t class_size = class_getInstanceSize(<span class="built_in">NSObject</span>.class);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获得ptr指针所指向内存的大小</span></span><br><span class="line">        <span class="type">void</span> *ptr = (__bridge <span class="type">void</span> *)obj;</span><br><span class="line">        size_t ptrmalloc_size = malloc_size(ptr);</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;class_size:%zu ptrmalloc_size:%zu&quot;</span>, class_size, ptrmalloc_size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h3 id="实现复制方法"><a href="#实现复制方法" class="headerlink" title="实现复制方法"></a>实现复制方法</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">-(<span class="type">void</span>)copyText:(<span class="type">id</span>)sender</span><br><span class="line">&#123;</span><br><span class="line"><span class="built_in">UIPasteboard</span> *pasteboard = [<span class="built_in">UIPasteboard</span> generalPasteboard];</span><br><span class="line">pasteboard.string = <span class="keyword">self</span>.label.text;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>运行结果为</p>
 <blockquote>
-<p>1、 UIMenuController类可以在选定的拷贝、剪切、和粘贴对象的上下方显示一个编辑菜单。编辑菜单上的命令可以有拷贝、剪切、粘贴、选定、和全部选定。<br>2、UIPasteboard类提供了粘贴板的接口。粘贴板是用于在一个应用程序内或不同应用程序间进行数据共享的受保护区域。该类提供了读写剪贴板上数据项目的方法。</p>
+<p>class_size:8 ptrmalloc_size:16</p>
 </blockquote>
-<h2 id="移除监听"><a href="#移除监听" class="headerlink" title="移除监听"></a>移除监听</h2><p>当组件释放的时候需要移除其上面的添加的所有监听</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">-(<span class="type">void</span>)dealloc&#123;</span><br><span class="line">[[<span class="built_in">NSNotificationCenter</span> defaultCenter] removeObserver:<span class="keyword">self</span>];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行结果说明nsobject类对象的大小正好是isa指针的大小为8个字节，使用view memory可以查看ptr指向的内存，占用16个字节。<br>这是因为在objc的alloc内存申请的流程中有这样一段代码，限制一个NSObect对象的大小至少要占用16个字节。</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">size_t instanceSize(size_t extraBytes) <span class="keyword">const</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (fastpath(cache.hasFastInstanceSize(extraBytes))) &#123;</span><br><span class="line">        <span class="keyword">return</span> cache.fastInstanceSize(extraBytes);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    size_t size = alignedInstanceSize() + extraBytes;</span><br><span class="line">    <span class="comment">// CF requires all objects be at least 16 bytes.</span></span><br><span class="line">    <span class="keyword">if</span> (size &lt; <span class="number">16</span>) size = <span class="number">16</span>;</span><br><span class="line">    <span class="keyword">return</span> size;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p><strong>所以我们知道NSObject中只有一个isa指针，所以NSObject类对象占用8个字节，NSObject在内存中占用16个字节。</strong></p>
+<h3 id="自定义类的内存占用"><a href="#自定义类的内存占用" class="headerlink" title="自定义类的内存占用"></a>自定义类的内存占用</h3><p>定义Test类，并进行如下初始化，那么obj在内存中是怎样布局的呢？</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Test</span> : <span class="title">NSObject</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_1;</span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_2;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Test</span></span></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        </span><br><span class="line">        Test *obj = [[Test alloc] init];</span><br><span class="line">        obj.property_1 = <span class="number">1</span>;</span><br><span class="line">        obj.property_2 = <span class="number">2</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获得NSObject实例对象的成员变量所占用的大小</span></span><br><span class="line">        size_t class_size = class_getInstanceSize(Test.class);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获得ptr指针所指向内存的大小</span></span><br><span class="line">        <span class="type">void</span> *ptr = (__bridge <span class="type">void</span> *)obj;</span><br><span class="line">        size_t ptrmalloc_size = malloc_size(ptr);</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;class_size:%zu ptrmalloc_size:%zu&quot;</span>, class_size, ptrmalloc_size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>运行的结果如下</p>
+<blockquote>
+<p>class_size:16 ptrmalloc_size:16</p>
+</blockquote>
+<p>使用view memory查看ptr指向的内存，如下图<br><img src="/images/ios/1.png"><br>其中红框是对象属性property_1和property_2 的值，分别是1和2，int类型各占4个字节。</p>
+<p>如果Test的定义如下</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Test</span> : <span class="title">NSObject</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_1;</span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_2;</span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_3;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<p>初始化obj并赋值</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">Test *obj = [[Test alloc] init];</span><br><span class="line">obj.property_1 = <span class="number">1</span>;</span><br><span class="line">obj.property_2 = <span class="number">2</span>;</span><br><span class="line">obj.property_3 = <span class="number">3</span>;</span><br></pre></td></tr></table></figure>
+<p>运行结果为</p>
+<blockquote>
+<p>class_size:24 ptrmalloc_size:32</p>
+</blockquote>
+<p>则在内存中的布局如下，可以看到property_1、property_2和property_3 的值分别为1、2、3<br><img src="/images/ios/2.png"><br>首先Test的类对象的大小为24，但是为何不是 8(isa指针) + 三个属性占用的12个字节 &#x3D; 20 个字节？<br>这是因为表示Class的struct objc_class是一个结构体，结构体大小结果要为成员中最大字节的整数倍，所以Test类指向的objc_class变量大小为24。</p>
+<p>对象在内存中占用了32个字节，这是因为malloc要满足 16 字节对齐原则 ( 可以在 libmaclloc 源码查找到 ) , 因此实际总占用内存为24. 而实际开辟则满足对齐标准开辟为 32.<br><img src="/images/ios/3.png"></p>
+<p>参考<br><a href="https://juejin.cn/post/6844903939985391629">https://juejin.cn/post/6844903939985391629</a><br><a href="https://zhuanlan.zhihu.com/p/98432137">https://zhuanlan.zhihu.com/p/98432137</a></p>
 ]]></content>
-      <categories>
-        <category>iOS</category>
-      </categories>
       <tags>
-        <tag>UI</tag>
+        <tag>iOS基础</tag>
       </tags>
   </entry>
   <entry>
@@ -832,6 +798,43 @@ CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
       </tags>
   </entry>
   <entry>
+    <title>iOS实现文字复制</title>
+    <url>/2016/12/05/iOS%E5%AE%9E%E7%8E%B0%E6%96%87%E5%AD%97%E5%A4%8D%E5%88%B6/</url>
+    <content><![CDATA[<p>实现的目标是长按label，弹出复制菜单，然后复制。<br>我的做法是实现一个通用的可复制UILabel控件。下面是具体的步骤。</p>
+<h2 id="创建UILabel子类"><a href="#创建UILabel子类" class="headerlink" title="创建UILabel子类"></a>创建UILabel子类</h2><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">CopyLabel</span> : <span class="title">UILabel</span></span></span><br><span class="line"></span><br><span class="line">- (<span class="type">id</span>)initWithFrame:(<span class="built_in">CGRect</span>)frame;</span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="使UILabel可响应"><a href="#使UILabel可响应" class="headerlink" title="使UILabel可响应"></a>使UILabel可响应</h2><p>使CopyLabel可以成为第一响应者</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="type">BOOL</span>)canBecomeFirstResponder</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使CopyLabel可响应copyText命令</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="type">BOOL</span>)canPerformAction:(SEL)action withSender:(<span class="type">id</span>)sender</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">return</span> (action == <span class="keyword">@selector</span>(copyText:));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>1、 UIResponder类声明了canPerformAction:withSender:方法。响应者类可以实现这个方法，以根据当前的上下文显示或移除编辑菜单上的命令。<br>2、 在自定义的UIView子类中，需要实现canBecomeFirstResponder方法，并返回YES(默认返回FALSE)，才可使becomeFirstResponder可返回YES,才可使其成为第一响应者，即接受第一响应者状态。一个响应者只有当当前响应者可以取消第一响应者状态 (canResignFirstResponder) 并且新的响应者可以成为第一响应者时，才可以成为第一响应者。</p>
+</blockquote>
+<h2 id="添加监听"><a href="#添加监听" class="headerlink" title="添加监听"></a>添加监听</h2><h3 id="在初始化方法中添加长按手势"><a href="#在初始化方法中添加长按手势" class="headerlink" title="在初始化方法中添加长按手势"></a>在初始化方法中添加长按手势</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="built_in">UILongPressGestureRecognizer</span>* longPressGr = [[<span class="built_in">UILongPressGestureRecognizer</span> alloc] initWithTarget:<span class="keyword">self</span> action:<span class="keyword">@selector</span>(pressToCopy:)];</span><br><span class="line"><span class="comment">//设置最短长按时间</span></span><br><span class="line">longPressGr.minimumPressDuration = <span class="number">0.5</span>f;</span><br><span class="line">[<span class="keyword">self</span> addGestureRecognizer:longPressGr];</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="使UILabel可交互"><a href="#使UILabel可交互" class="headerlink" title="使UILabel可交互"></a>使UILabel可交互</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="keyword">self</span>.userInteractionEnabled = <span class="literal">YES</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="添加菜单消失的监听"><a href="#添加菜单消失的监听" class="headerlink" title="添加菜单消失的监听"></a>添加菜单消失的监听</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">[[<span class="built_in">NSNotificationCenter</span> defaultCenter] addObserver:<span class="keyword">self</span> selector:<span class="keyword">@selector</span>(menuItemHidden:)name:<span class="built_in">UIMenuControllerWillHideMenuNotification</span> object:<span class="literal">nil</span>];</span><br></pre></td></tr></table></figure>
+
+<h2 id="实现响应方法"><a href="#实现响应方法" class="headerlink" title="实现响应方法"></a>实现响应方法</h2><h3 id="长按后在文字上方弹出复制菜单"><a href="#长按后在文字上方弹出复制菜单" class="headerlink" title="长按后在文字上方弹出复制菜单"></a>长按后在文字上方弹出复制菜单</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">-(<span class="type">void</span>)pressToCopy:(<span class="built_in">UILongPressGestureRecognizer</span> *)sender&#123;</span><br><span class="line"><span class="keyword">if</span> (sender.state == <span class="built_in">UIGestureRecognizerStateBegan</span>) &#123;</span><br><span class="line">[<span class="keyword">self</span> becomeFirstResponder];</span><br><span class="line"></span><br><span class="line"><span class="built_in">UIMenuController</span> *menu = [<span class="built_in">UIMenuController</span> sharedMenuController];</span><br><span class="line"><span class="built_in">UIMenuItem</span> *<span class="keyword">copy</span> = [[<span class="built_in">UIMenuItem</span> alloc] initWithTitle:<span class="string">@&quot;复制&quot;</span> action:<span class="keyword">@selector</span>(copyText:)];</span><br><span class="line">menu.menuItems = @[<span class="keyword">copy</span>];</span><br><span class="line">[menu setTargetRect:<span class="keyword">self</span>.bounds inView:<span class="keyword">self</span>];</span><br><span class="line">[menu setMenuVisible:<span class="literal">YES</span> animated:<span class="literal">YES</span>];</span><br><span class="line"><span class="comment">//文字颜色的0.5透明度作为uilabel背景色</span></span><br><span class="line"><span class="keyword">self</span>.backgroundColor = [<span class="keyword">self</span>.textColor colorWithAlphaComponent:<span class="number">0.5</span>f];</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="当复制菜单消失后，使uilabel背景色变为透明"><a href="#当复制菜单消失后，使uilabel背景色变为透明" class="headerlink" title="当复制菜单消失后，使uilabel背景色变为透明"></a>当复制菜单消失后，使uilabel背景色变为透明</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">-(<span class="type">void</span>)menuItemHidden:(<span class="type">id</span>)sender&#123;</span><br><span class="line"><span class="keyword">self</span>.backgroundColor = [<span class="built_in">UIColor</span> clearColor];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="实现复制方法"><a href="#实现复制方法" class="headerlink" title="实现复制方法"></a>实现复制方法</h3><figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">-(<span class="type">void</span>)copyText:(<span class="type">id</span>)sender</span><br><span class="line">&#123;</span><br><span class="line"><span class="built_in">UIPasteboard</span> *pasteboard = [<span class="built_in">UIPasteboard</span> generalPasteboard];</span><br><span class="line">pasteboard.string = <span class="keyword">self</span>.label.text;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>1、 UIMenuController类可以在选定的拷贝、剪切、和粘贴对象的上下方显示一个编辑菜单。编辑菜单上的命令可以有拷贝、剪切、粘贴、选定、和全部选定。<br>2、UIPasteboard类提供了粘贴板的接口。粘贴板是用于在一个应用程序内或不同应用程序间进行数据共享的受保护区域。该类提供了读写剪贴板上数据项目的方法。</p>
+</blockquote>
+<h2 id="移除监听"><a href="#移除监听" class="headerlink" title="移除监听"></a>移除监听</h2><p>当组件释放的时候需要移除其上面的添加的所有监听</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">-(<span class="type">void</span>)dealloc&#123;</span><br><span class="line">[[<span class="built_in">NSNotificationCenter</span> defaultCenter] removeObserver:<span class="keyword">self</span>];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>iOS</category>
+      </categories>
+      <tags>
+        <tag>UI</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>模式匹配之KMP算法详解</title>
     <url>/2021/04/17/kmp/</url>
     <content><![CDATA[<img src="/images/algorithm/1.png" width="700"/>
@@ -903,6 +906,12 @@ CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
       <tags>
         <tag>算法</tag>
       </tags>
+  </entry>
+  <entry>
+    <title>诗歌</title>
+    <url>/2016/07/17/song/</url>
+    <content><![CDATA[<p>我愿意成为她的守护天使<br>爱她所爱<br>思她所思<br>为她承担伤痛<br>度过苦难<br>无论贫寒或富贵<br>无论卑贱或高贵<br>无论身处乱世<br>还是神所不顾<br>我愿为她拔剑而战<br>为她收起翅膀<br>不离不弃<br>直至永远</p>
+]]></content>
   </entry>
   <entry>
     <title>Objective-C 中的load和initialize</title>
@@ -983,6 +992,32 @@ CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
       </tags>
   </entry>
   <entry>
+    <title>网络编程中的I/O多路复用 - Select &amp; Poll</title>
+    <url>/2022/07/15/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E4%B8%AD%E7%9A%84I-O%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8-Select-Poll/</url>
+    <content><![CDATA[<p><a src="./2022/07/13/网络编程中的I-O多路复用/">网络编程中的I&#x2F;O多路复用 - I&#x2F;O Models</a></p>
+<h2 id="Select"><a href="#Select" class="headerlink" title="Select()"></a>Select()</h2><p>下面是使用<code>select</code>实现的I&#x2F;O多路复用，Server开启了一个线程用来对所有的socket描述符进行select，下面是一个使用<code>selec()</code>实现I&#x2F;O多路复用的例子：</p>
+<img src="/images/network/select.jpg" width="600"/>
+
+<p>对应的代码如下</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> g_svfd;</span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="type">int</span>&gt; g_fds;</span><br><span class="line"><span class="type">pthread_t</span> select_thread;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">select_servermsg</span><span class="params">(<span class="type">void</span>)</span> &#123;</span><br><span class="line">    <span class="type">pthread_attr_t</span> attr;</span><br><span class="line">    (<span class="type">void</span>)pthread_attr_init(&amp;attr);</span><br><span class="line">    pthread_create(&amp;select_thread, &amp;attr, server_select, <span class="literal">NULL</span>);</span><br><span class="line">    pthread_attr_destroy(&amp;attr);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">accept_client_conn</span><span class="params">(<span class="type">void</span>)</span> &#123;</span><br><span class="line">    <span class="type">int</span> cs = accept(g_svfd, <span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="keyword">if</span> (cs &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        perror(<span class="string">&quot;accept&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    g_fds.push_back(cs);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Server Accept acc:%d\n&quot;</span>, cs);</span><br><span class="line">    <span class="keyword">return</span> cs;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">read_data_from_socket</span><span class="params">(<span class="type">int</span> sockfd)</span> &#123;</span><br><span class="line">    <span class="type">char</span> recv_data[<span class="number">1024</span>] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line">    <span class="type">long</span> rc = recv(sockfd, recv_data, <span class="keyword">sizeof</span>(recv_data), <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (rc &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Server Read Failed cs:%ld\n&quot;</span>, rc);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Server Socket acc:%d revc:%s \n&quot;</span>, sockfd, recv_data);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">mg_add_to_set</span><span class="params">(<span class="type">int</span> sock, fd_set *<span class="built_in">set</span>, <span class="type">int</span> *max_fd)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (sock != INVALID_SOCKET &amp;&amp; sock &lt; (<span class="type">int</span>) FD_SETSIZE) &#123;</span><br><span class="line">        FD_SET(sock, <span class="built_in">set</span>);</span><br><span class="line">        <span class="keyword">if</span> (*max_fd == INVALID_SOCKET || sock &gt; *max_fd) &#123;</span><br><span class="line">            *max_fd = sock;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">server_select</span><span class="params">(<span class="type">void</span> *udata)</span> &#123;</span><br><span class="line">    g_selecting = <span class="literal">true</span>;</span><br><span class="line">    <span class="keyword">while</span> (g_selecting) &#123;</span><br><span class="line">        <span class="type">int</span> milli = <span class="number">1500</span>;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">tv</span>;</span></span><br><span class="line">        tv.tv_sec = milli / <span class="number">1000</span>;</span><br><span class="line">        tv.tv_usec = (milli % <span class="number">1000</span>) * <span class="number">1000</span>;</span><br><span class="line">        </span><br><span class="line">        fd_set read_set, err_set;</span><br><span class="line">        FD_ZERO(&amp;read_set);</span><br><span class="line">        FD_ZERO(&amp;err_set);</span><br><span class="line">        <span class="comment">//    https://stackoverflow.com/questions/36415680/setting-up-select-and-write-fds-in-c</span></span><br><span class="line">        <span class="type">int</span> max_fd = INVALID_SOCKET;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">auto</span> sock = g_fds.begin(); sock != g_fds.end(); sock++) &#123;</span><br><span class="line">            mg_add_to_set(*sock, &amp;read_set, &amp;max_fd);</span><br><span class="line">            mg_add_to_set(*sock, &amp;err_set, &amp;max_fd);</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="type">int</span> num_selected = select((<span class="type">int</span>) max_fd + <span class="number">1</span>, &amp;read_set, <span class="literal">NULL</span>, &amp;err_set, &amp;tv);</span><br><span class="line">        <span class="keyword">if</span> (num_selected &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="type">unsigned</span> <span class="type">long</span> size = g_fds.size();</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; size; i++) &#123;</span><br><span class="line">            <span class="type">int</span> sock = g_fds[i];</span><br><span class="line">            <span class="keyword">if</span> (FD_ISSET(sock, &amp;read_set)) &#123;</span><br><span class="line">                <span class="keyword">if</span> (sock == g_svfd) &#123;</span><br><span class="line">                    accept_client_conn();</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    read_data_from_socket(sock);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">if</span> (FD_ISSET(sock, &amp;err_set)) &#123;</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;select:%d error\n&quot;</span>, sock);</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面<code>select</code>使用的<code>FD_SET</code>和<code>FD_ISSET</code>定义如下:</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifndef</span> FD_ISSET</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> FD_ISSET(n, p)  __DARWIN_FD_ISSET(n, p)</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">/* FD_ISSET */</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> FD_SET</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> FD_SET(n, p)    __DARWIN_FD_SET(n, p)</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">/* FD_SET */</span></span></span><br></pre></td></tr></table></figure>
+
+<p>在iOS系统中，上面的<code>__DARWIN_FD_ISSET</code>和<code>__DARWIN_FD_SET</code>定义在_fd_def.h中，文件内容如下:</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> __DARWIN_FD_SETSIZE     1024</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __DARWIN_NBBY           8                               <span class="comment">/* bits in a byte */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __DARWIN_NFDBITS        (sizeof(__int32_t) * __DARWIN_NBBY) <span class="comment">/* bits per mask */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __DARWIN_howmany(x, y)  ((((x) % (y)) == 0) ? ((x) / (y)) : (((x) / (y)) + 1)) <span class="comment">/* # y&#x27;s == x bits? */</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">fd_set</span> &#123;</span></span><br><span class="line">	<span class="type">__int32_t</span> fds_bits[__DARWIN_howmany(__DARWIN_FD_SETSIZE, __DARWIN_NFDBITS)];</span><br><span class="line">&#125; fd_set;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* This inline avoids argument side-effect issues with FD_ISSET() */</span></span><br><span class="line"><span class="type">int</span> __darwin_fd_isset(<span class="type">int</span> _fd, <span class="type">const</span> <span class="keyword">struct</span> fd_set *_p) &#123;</span><br><span class="line">    <span class="keyword">return</span> _p-&gt;fds_bits[(<span class="type">unsigned</span> <span class="type">long</span>)_fd / __DARWIN_NFDBITS] &amp; ((<span class="type">__int32_t</span>)(((<span class="type">unsigned</span> <span class="type">long</span>)<span class="number">1</span>) &lt;&lt; ((<span class="type">unsigned</span> <span class="type">long</span>)_fd % __DARWIN_NFDBITS)));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> __darwin_fd_set(<span class="type">int</span> _fd, <span class="keyword">struct</span> fd_set *<span class="type">const</span> _p)&#123;	</span><br><span class="line">    (_p-&gt;fds_bits[(<span class="type">unsigned</span> <span class="type">long</span>)_fd / __DARWIN_NFDBITS] |= ((<span class="type">__int32_t</span>)(((<span class="type">unsigned</span> <span class="type">long</span>)<span class="number">1</span>) &lt;&lt; ((<span class="type">unsigned</span> <span class="type">long</span>)_fd % __DARWIN_NFDBITS))));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> __darwin_fd_clr(<span class="type">int</span> _fd, <span class="keyword">struct</span> fd_set *<span class="type">const</span> _p) &#123;</span><br><span class="line">	(_p-&gt;fds_bits[(<span class="type">unsigned</span> <span class="type">long</span>)_fd / __DARWIN_NFDBITS] &amp;= ~((<span class="type">__int32_t</span>)(((<span class="type">unsigned</span> <span class="type">long</span>)<span class="number">1</span>) &lt;&lt; ((<span class="type">unsigned</span> <span class="type">long</span>)_fd % __DARWIN_NFDBITS))));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __DARWIN_FD_SET(n, p)   __darwin_fd_set((n), (p))</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __DARWIN_FD_CLR(n, p)   __darwin_fd_clr((n), (p))</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __DARWIN_FD_ISSET(n, p) __darwin_fd_isset((n), (p))</span></span><br></pre></td></tr></table></figure>
+
+<p>select采用的是位掩码的模型，其使用的<code>fds_bits</code>是一个有32个int32值的数组，一共有32 * 32 &#x3D; 1024 bit位，数组中的每一位代表一个文件句柄的掩码，这个<code>fds_bits</code>只能支持fd &lt; 1024的情况，当socket fd &gt; 1024，就会出现无法处理的情况。</p>
+<h2 id="poll"><a href="#poll" class="headerlink" title="poll()"></a>poll()</h2><p>虽然<code>select</code>和<code>poll</code>都可以实现I&#x2F;O的多路复用，但是大家更推崇poll()，因为poll是通过传入自定义数组pollfd的形式，对socket描述符并没有1024的限制。下面是使用poll的例子</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">//  https://www.ibm.com/docs/en/i/7.4?topic=designs-using-poll-instead-select</span></span><br><span class="line"><span class="type">void</span> *<span class="title function_">server_poll</span><span class="params">(<span class="type">void</span> *udata)</span> &#123;</span><br><span class="line">    g_polling = <span class="literal">true</span>;</span><br><span class="line">    <span class="keyword">while</span> (g_polling) &#123;</span><br><span class="line">        <span class="type">int32_t</span> maxsock = <span class="number">0</span>;</span><br><span class="line">        <span class="type">unsigned</span> <span class="type">long</span> fd_size = g_fds.size() * <span class="keyword">sizeof</span>(pollfd);</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">pollfd</span> *<span class="title">pollfds</span> =</span> (<span class="keyword">struct</span> pollfd *)<span class="built_in">malloc</span>(fd_size);</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">auto</span> sock = g_fds.begin(); sock != g_fds.end(); sock++) &#123;</span><br><span class="line">            pollfds[maxsock].fd = *sock;</span><br><span class="line">            pollfds[maxsock].events = POLLIN;</span><br><span class="line">            ++maxsock;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="type">int</span> rc = poll(pollfds, maxsock, <span class="number">10</span>);</span><br><span class="line">        <span class="keyword">if</span> (rc &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">continue</span>;;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; maxsock; j++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (pollfds[j].revents &amp; POLLIN) &#123;</span><br><span class="line">                <span class="type">int</span> socket = pollfds[j] .fd;</span><br><span class="line">                <span class="keyword">if</span> (socket == g_svfd) &#123;</span><br><span class="line">                    accept_client_conn();</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    read_data_from_socket(socket);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">poll_servermsg</span><span class="params">(<span class="type">void</span>)</span> &#123;</span><br><span class="line">    <span class="type">pthread_attr_t</span> attr;</span><br><span class="line">    (<span class="type">void</span>)pthread_attr_init(&amp;attr);</span><br><span class="line">    pthread_create(&amp;poll_thread, &amp;attr, server_poll, <span class="literal">NULL</span>);</span><br><span class="line">    pthread_attr_destroy(&amp;attr);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="the-difference-of-select-and-poll"><a href="#the-difference-of-select-and-poll" class="headerlink" title="the difference of select and poll"></a>the difference of select and poll</h2><p>这里总结一下select和poll的不同：<br>1、select使用的是定长数组，而poll是通过用户自定义数组长度的形式(pollfd[])；<br>2、select只支持最大fd &lt; 1024，如果单个进程的文件句柄数超过1024，select就不能用了。poll在接口上无限制，考虑到每次都要拷贝到内核，一般文件句柄多的情况下建议用epoll；<br>3、select由于使用的是位运算，所以select需要分别设置read&#x2F;write&#x2F;error fds的掩码。而poll是通过设置数据结构中fd和event参数来实现read&#x2F;write，比如读为POLLIN，写为POLLOUT，出错为POLLERR；<br>4、select中fd_set是被内核和用户共同修改的，所以要么每次FD_CLR再FD_SET，要么备份一份memcpy进去。而poll中用户修改的是events，系统修改的是revents。所以参考muduo的代码，都不需要自己去清除revents，从而使得代码更加简洁；<br>5、select的timeout为NULL时表示无限等待，否则是指定的超时目标时间；poll的timeout为-1表示无限等待。所以有用select来实现usleep的；</p>
+]]></content>
+      <tags>
+        <tag>网络编程</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>视频播放基本原理</title>
     <url>/2018/09/01/%E8%A7%86%E9%A2%91%E6%92%AD%E6%94%BE%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86/</url>
     <content><![CDATA[<h2 id="基本定义"><a href="#基本定义" class="headerlink" title="基本定义"></a>基本定义</h2><h3 id="视频"><a href="#视频" class="headerlink" title="视频"></a>视频</h3><p>视频（Video）泛指将一系列静态影像以电信号的方式加以捕捉、纪录、处理、储存、传送与重现的各种技术。连续的图像变化每秒超过24帧（frame）画面以上时，根据视觉暂留原理，人眼无法辨别单幅的静态画面；看上去是平滑连续的视觉效果，这样连续的画面叫做视频。</p>
@@ -1010,10 +1045,49 @@ CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
       </tags>
   </entry>
   <entry>
-    <title>诗歌</title>
-    <url>/2016/07/17/song/</url>
-    <content><![CDATA[<p>我愿意成为她的守护天使<br>爱她所爱<br>思她所思<br>为她承担伤痛<br>度过苦难<br>无论贫寒或富贵<br>无论卑贱或高贵<br>无论身处乱世<br>还是神所不顾<br>我愿为她拔剑而战<br>为她收起翅膀<br>不离不弃<br>直至永远</p>
+    <title>网络编程中的I/O多路复用 -  I/O Models</title>
+    <url>/2022/07/13/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E4%B8%AD%E7%9A%84I-O%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/</url>
+    <content><![CDATA[<p>实现IO多路复用的方法主要是依赖系统提供的<code>select</code>和<code>poll方法</code>，在对它们进行描述之前，我们需要回过头看一下IO多路复用出现的大背景，先了解一下Unix提供给我们的五种I&#x2F;O模型:</p>
+<ul>
+<li>blocking I&#x2F;O</li>
+<li>nonblocking I&#x2F;O</li>
+<li>I&#x2F;O multiplexing(<code>select</code> and <code>poll</code>)</li>
+<li>signal driven I&#x2F;O(<code>SIGIO</code>)</li>
+<li>asynchronous I&#x2F;O(the POSIX <code>aio_</code>functions)</li>
+</ul>
+<h2 id="阻塞式IO"><a href="#阻塞式IO" class="headerlink" title="阻塞式IO"></a>阻塞式IO</h2><p>要理解IO多路复用，首先要了解普通的IO模型，通常的IO操作都是阻塞式IO，当对socket句柄调用recv时，如果没有收到数据，那么线程就会被挂起，收到数据时被唤醒继续执行。<br><img src="/images/network/blockio.gif" width="600"/></p>
+<p>如果server要处理N个Socket连接，那么就需要开N个线程来处理这N个连接，recv会使大部分线程进入阻塞状态，如果N很大，那么光是创建这些线程就会消耗大量的内存空间；<br>另外大量的线程间切换也会会导致每个线程能分到的CPU时间较少，使程序的性能变差。<br>所以阻塞式IO只适用并发量小的网络应用开发。</p>
+<h2 id="非阻塞式IO"><a href="#非阻塞式IO" class="headerlink" title="非阻塞式IO"></a>非阻塞式IO</h2><p>非阻塞IO顾名思义就是调用IO方法不会阻塞线程，例如在调用recv的时候，如果内核缓冲区有数据就返回数据，没有数据就返回例如<code>EWOULDBLOCK</code>的错误码。设置为非阻塞的方法也比较简单，可以通过fcntl（POSIX）或ioctl（Unix）设为句柄设置为非阻塞。虽然这样不会阻塞了，但是还是需要不断的对众多句柄调用recv方法进行轮训，这样会消耗大量的CPU资源。<br><img src="/images/network/nonblockingio.gif" width="600"/></p>
+<p>非阻塞式IO适用并发量较小、且不需要及时响应的网络应用开发；</p>
+<h2 id="I-x2F-O多路复用"><a href="#I-x2F-O多路复用" class="headerlink" title="I&#x2F;O多路复用"></a>I&#x2F;O多路复用</h2><p>多路复用是使用一个线程来检查多个socket描述符的ready状态，比如调用<code>select</code>函数，传入多个socket描述符，有任意一个socket描述符对应的IO在内核缓冲区有数据时就返回，否则会阻塞直到超时。对ready的socket描述符进行recv时，可以放到一个线程，也可以新开线程执行。<br><img src="/images/network/multiplexing.gif" width="600"/></p>
+<p>实现I&#x2F;O多路复用的三种方案: <code>select</code>、<code>poll</code>、<code>epoll</code>;</p>
+<p>特点：</p>
+<ul>
+<li>专一进程解决多个进程IO的阻塞问题，性能好；</li>
+<li>实现、开发应用难度较大；</li>
+<li>适用高并发服务应用开发：一个进程（线程）响应多个请求；</li>
+</ul>
+<h2 id="信号驱动IO模型"><a href="#信号驱动IO模型" class="headerlink" title="信号驱动IO模型"></a>信号驱动IO模型</h2><img src="/images/network/signalio.png" width="600"/>
+当进程发起一个IO操作，会向内核注册一个信号处理函数，然后进程返回不阻塞；当内核数据就绪时会发送一个信号给进程，进程便在信号处理函数中调用IO读取数据。
+
+<p>特点：回调机制，实现、开发应用难度大；</p>
+<h2 id="异步IO模型"><a href="#异步IO模型" class="headerlink" title="异步IO模型"></a>异步IO模型</h2><img src="/images/network/asyncio.png" width="600"/>
+当进程发起一个IO操作，进程返回（不阻塞），但也不能返回果结；内核把整个IO处理完后，会通知进程结果。如果IO操作成功则进程直接获取到数据。
+异步IO和信号驱动的IO主要的区别是，信号驱动的IO是内核告诉我们这个IO操作可以开始了，但是异步IO是内核告诉我们IO操作已经完成了。
+
+
+<h2 id="几种IO模型的比较"><a href="#几种IO模型的比较" class="headerlink" title="几种IO模型的比较"></a>几种IO模型的比较</h2><img src="/images/network/comio.png" width="600"/>
+POSIX defines these two terms as follows:
+
+<ul>
+<li>A synchronous I&#x2F;O operation causes the requesting process to be blocked until that I&#x2F;O operation completes.</li>
+<li>An asynchronous I&#x2F;O operation does not cause the requesting process to be blocked.</li>
+</ul>
+<p>Using these definitions, the first four I&#x2F;O models—blocking, nonblocking, I&#x2F;O multiplexing, and signal-driven I&#x2F;O—are all synchronous because the actual I&#x2F;O operation (recvfrom) blocks the process. Only the asynchronous I&#x2F;O model matches the asynchronous I&#x2F;O definition.</p>
 ]]></content>
+      <tags>
+        <tag>网络编程</tag>
+      </tags>
   </entry>
   <entry>
     <title>音频基本概念</title>
