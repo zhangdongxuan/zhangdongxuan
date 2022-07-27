@@ -243,16 +243,24 @@
 
       
         <p>最近在解决Share Extension发送大图导致爆内存的问题，测试用27M的图片，用的是iPhone 7P，系统分配给Share Extension的内存应该有100M，一步步debug发现问题出在压缩的过程。</p>
-<h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><p>在缩小图片的时候用了下面的代码：</p>
+<h3 id="问题"><a class="markdownIt-Anchor" href="#问题"></a> 问题</h3>
+<p>在缩小图片的时候用了下面的代码：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">UIGraphicsBeginImageContext(imgSize);</span><br><span class="line"></span><br><span class="line">[self drawInRect:CGRectMake(0, 0, imgSize.width, imgSize.height)];</span><br><span class="line">UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();</span><br><span class="line"></span><br><span class="line">UIGraphicsEndImageContext();</span><br><span class="line">return newImage;</span><br></pre></td></tr></table></figure>
-
-<p>运行到drawInRect的时候程序直接退出了，可见drawInRect是比较吃内存的。<br>于是在网上搜索关键字<code>uiimage drawinrect memory warning</code>，但是貌似都是关于memory not release的帖子，解决方法是添加autoreleasepool，<br>很显然无法解决爆内存的问题。</p>
-<h3 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h3><p>后来同事推荐使用ImageIO来解决这个问题：</p>
+<p>运行到drawInRect的时候程序直接退出了，可见drawInRect是比较吃内存的。<br />
+于是在网上搜索关键字<code>uiimage drawinrect memory warning</code>，但是貌似都是关于memory not release的帖子，解决方法是添加autoreleasepool，<br />
+很显然无法解决爆内存的问题。</p>
+<h3 id="解决方法"><a class="markdownIt-Anchor" href="#解决方法"></a> 解决方法</h3>
+<p>后来同事推荐使用ImageIO来解决这个问题：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">CGFloat maxPixelSize = 100;</span><br><span class="line">CGImageSourceRef sourceRef = CGImageSourceCreateWithData((__bridge CFDataRef)data, nil);</span><br><span class="line"></span><br><span class="line">CFDictionaryRef options = (__bridge CFDictionaryRef) @&#123;</span><br><span class="line">(id) kCGImageSourceCreateThumbnailWithTransform : @YES,</span><br><span class="line">(id) kCGImageSourceCreateThumbnailFromImageAlways : @YES,</span><br><span class="line">(id) kCGImageSourceThumbnailMaxPixelSize : @(maxPixelSize)</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">UIImage *result = nil;</span><br><span class="line">CGImageRef imageRef = CGImageSourceCreateThumbnailAtIndex(sourceRef, 0, options);</span><br><span class="line"></span><br><span class="line">if (imageRef) &#123;</span><br><span class="line">result = [UIImage imageWithCGImage:imageRef scale:scale orientation:orientation];</span><br><span class="line">CGImageRelease(imageRef);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">if (sourceRef) &#123;</span><br><span class="line">CFRelease(sourceRef);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">return result;</span><br></pre></td></tr></table></figure>
-
 <p>使用改代码对测试用的27M的图片进行压缩，内存在执行CGImageSourceCreateThumbnailAtIndex的时候只上升了20M。</p>
-<p>如下是对一个9.2M的图片进行压缩的内存变化图<br><img src="/images/WechatIMG386.jpeg"><br>图中1是将图片读入内存导致的内存增加，在使用ImageIO进行压缩的过程中内存没有出现明显的变化，2是使用drawInRect进行压缩，可见内存飙升到了38.8。</p>
-<p>参考：<br>[Resizing High Resolution Images on iOS Without Memory Issues][1]<br>[UIImage vs. CIImage vs. CGImage][2]<br>[1]:<a target="_blank" rel="noopener" href="http://pulkitgoyal.in/resizing-high-resolution-images-on-ios-without-memory-issues/">http://pulkitgoyal.in/resizing-high-resolution-images-on-ios-without-memory-issues/</a><br>[2]:<a target="_blank" rel="noopener" href="https://medium.com/@ranleung/uiimage-vs-ciimage-vs-cgimage-3db9d8b83d94">https://medium.com/@ranleung/uiimage-vs-ciimage-vs-cgimage-3db9d8b83d94</a></p>
+<p>如下是对一个9.2M的图片进行压缩的内存变化图<br />
+<img src="/images/WechatIMG386.jpeg" alt="" /><br />
+图中1是将图片读入内存导致的内存增加，在使用ImageIO进行压缩的过程中内存没有出现明显的变化，2是使用drawInRect进行压缩，可见内存飙升到了38.8。</p>
+<p>参考：<br />
+[Resizing High Resolution Images on iOS Without Memory Issues][1]<br />
+[UIImage vs. CIImage vs. CGImage][2]<br />
+[1]:<a target="_blank" rel="noopener" href="http://pulkitgoyal.in/resizing-high-resolution-images-on-ios-without-memory-issues/">http://pulkitgoyal.in/resizing-high-resolution-images-on-ios-without-memory-issues/</a><br />
+[2]:<a target="_blank" rel="noopener" href="https://medium.com/@ranleung/uiimage-vs-ciimage-vs-cgimage-3db9d8b83d94">https://medium.com/@ranleung/uiimage-vs-ciimage-vs-cgimage-3db9d8b83d94</a></p>
 
     </div>
 
@@ -333,7 +341,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text">解决方法</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text"> 问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text"> 解决方法</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -349,7 +357,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">24</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -360,7 +368,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -453,6 +461,11 @@
 
 
   
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0/dist/katex.min.css">
+
 
   
 

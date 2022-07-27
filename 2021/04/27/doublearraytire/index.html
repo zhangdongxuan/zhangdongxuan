@@ -255,17 +255,19 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h2 id="一、背景"><a href="#一、背景" class="headerlink" title="一、背景"></a>一、背景</h2><p>AC自动机以Trie树为基础的，每一个状态都由一个<code>TrieNode</code>来表示，TireNode的定义如下：</p>
+        <h2 id="一-背景"><a class="markdownIt-Anchor" href="#一-背景"></a> 一、背景</h2>
+<p>AC自动机以Trie树为基础的，每一个状态都由一个<code>TrieNode</code>来表示，TireNode的定义如下：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">struct TrieNode &#123;</span><br><span class="line">    bool flag;</span><br><span class="line">    wstring keyword;</span><br><span class="line">    TrieNode *fail;</span><br><span class="line">    map&lt;wstring, TrieNode *&gt; next;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
 <p>测试过程中29W个关键词来构建出的Trie树有<code>762922</code>个TrieNode节点，每个节点占用内存空间20byte，则占用内存空间为</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">762922 * 20 / 1024 / 1024 = 46M</span><br></pre></td></tr></table></figure>
 <p>仅仅是TireNode节点占用的空间已经达到了46M，加上额外keyword和map指向的内存占用，会直接达到100M左右，显然在内存受限的场景中是无法接受的。</p>
 <p>因此基于双数组Tire树的AC自动机被提出，以降低AC自动机的内存占用。</p>
-<h2 id="二、双数组Tire树介绍"><a href="#二、双数组Tire树介绍" class="headerlink" title="二、双数组Tire树介绍"></a>二、双数组Tire树介绍</h2><blockquote>
+<h2 id="二-双数组tire树介绍"><a class="markdownIt-Anchor" href="#二-双数组tire树介绍"></a> 二、双数组Tire树介绍</h2>
+<blockquote>
 <p><font size=2>双数组Trie (Double-Array Trie)结构由日本人JUN-ICHI AOE于1989年提出的，是Trie结构的压缩形式，仅用两个线性数组来表示Trie树，该结构有效结合了数字搜索树(Digital Search Tree)检索时间高效的特点和链式表示的Trie空间结构紧凑的特点。双数组Trie的本质是一个确定有限状态自动机（DFA），每个节点代表自动机的一个状态，根据变量不同，进行状态转移，当到达结束状态或无法转移时，完成一次查询操作。在双数组所有键中包含的字符之间的联系都是通过简单的数学加法运算表示，不仅提高了检索速度，而且省去了链式结构中使用的大量指针，节省了存储空间。——《基于双数组Trie树算法的字典改进和实现》</font></p>
 </blockquote>
-<p>双数组Trie树主要的优点就是相比链式结构Trie树大大降低了内存占用，是一种空间复杂度低的Trie树，其使用两个一维数组 BASE 和 CHECK 来表示整棵树。<br><br>DAT中有几个基本的概念</p>
+<p>双数组Trie树主要的优点就是相比链式结构Trie树大大降低了内存占用，是一种空间复杂度低的Trie树，其使用两个一维数组 BASE 和 CHECK 来表示整棵树。<br><br />
+DAT中有几个基本的概念</p>
 <blockquote>
 <font size=2> 
 STATE : 状态，实际是BASE数组的下标；<br>
@@ -281,12 +283,16 @@ BASE[s] + c = t <br>
 CHECK[t] = BASE[s]
 </font>
 </blockquote>
-<p>举个🌰 ， 如果字符<code>h</code>，加上字符<code>e</code>，可以组成前缀<code>he</code>。<br><img src="/images/algorithm/DAT1.jpg" width="200"/></p>
+<p>举个🌰 ， 如果字符<code>h</code>，加上字符<code>e</code>，可以组成前缀<code>he</code>。<br />
+<img src="/images/algorithm/DAT1.jpg" width="200"/></p>
 <p>则有<code>BASE[h] + e = he</code>，表示<code>h</code>和<code>e</code>的状态转移关系，另外<code>CHECK[he] = h</code>确保该状态转移的正确性。</p>
-<h3 id="三、构建双数组Tire树"><a href="#三、构建双数组Tire树" class="headerlink" title="三、构建双数组Tire树"></a>三、构建双数组Tire树</h3><p>这里以模式串 { he, hers, his, she} 为例，来讲解双数组trie的构建，其对应的Trie树结构如下图所示。<br><img src="/images/algorithm/DAT2.jpg" width="300"/></p>
-<h4 id="1-构建CODE编码表"><a href="#1-构建CODE编码表" class="headerlink" title="1. 构建CODE编码表"></a>1. 构建CODE编码表</h4><img src="/images/algorithm/DAT3.jpg" width="500"/>
-
-<h4 id="2-构建BASE和CHECK状态表"><a href="#2-构建BASE和CHECK状态表" class="headerlink" title="2. 构建BASE和CHECK状态表"></a>2. 构建BASE和CHECK状态表</h4><p>假设当前状态为S，S的后继节点的字符为{A、B、C…}，BASE[S]需满足</p>
+<h3 id="三-构建双数组tire树"><a class="markdownIt-Anchor" href="#三-构建双数组tire树"></a> 三、构建双数组Tire树</h3>
+<p>这里以模式串 { he, hers, his, she} 为例，来讲解双数组trie的构建，其对应的Trie树结构如下图所示。<br />
+<img src="/images/algorithm/DAT2.jpg" width="300"/></p>
+<h4 id="1-构建code编码表"><a class="markdownIt-Anchor" href="#1-构建code编码表"></a> 1. 构建CODE编码表</h4>
+<img src="/images/algorithm/DAT3.jpg" width="500"/>
+<h4 id="2-构建base和check状态表"><a class="markdownIt-Anchor" href="#2-构建base和check状态表"></a> 2. 构建BASE和CHECK状态表</h4>
+<p>假设当前状态为S，S的后继节点的字符为{A、B、C…}，BASE[S]需满足</p>
 <blockquote>
 <font size=2> 
 BASE[S] + CODE(A) = BASE[S] + CODE(B) = BASE[S] +CODE(C) = ... = 0 <br>
@@ -299,54 +305,81 @@ CHECK[BASE[S] + CODE(A)] = CHECK[BASE[S] + CODE(B)] = CHECK[...] = 0
 CHECK[BASE[S] + CODE(A)] = CHECK[BASE[S] + CODE(B)] = ... = S
 </font>
 </blockquote>
-<h5 id="2-1-初始化Double-Array"><a href="#2-1-初始化Double-Array" class="headerlink" title="2.1 初始化Double Array"></a>2.1 初始化Double Array</h5><p>将根节点状态置为1，check置为0，将第一层结点<code>h</code>和<code>s</code>对应位置的值初始化为1，因为没有前缀，将CHECK设为-1（也可以是1）<br><img src="/images/algorithm/DAT_1.jpg" width="600"/></p>
-<h5 id="2-2-第一层节点的字符s"><a href="#2-2-第一层节点的字符s" class="headerlink" title="2.2 第一层节点的字符s"></a>2.2 第一层节点的字符<code>s</code></h5><p>首先处理第一层节点的字符<code>s</code>，由于<code>CODE(s) = 3</code>，即确定 BASE[3]的值。<br></p>
-<p>BASE[3]的后继子节点字符为<code>h</code>，<code>CODE(h) = 1</code>，可以得出其begin值为1，即 BASE[3] &#x3D; 1。<br>同时状态转移需要满足：</p>
+<h5 id="21-初始化double-array"><a class="markdownIt-Anchor" href="#21-初始化double-array"></a> 2.1 初始化Double Array</h5>
+<p>将根节点状态置为1，check置为0，将第一层结点<code>h</code>和<code>s</code>对应位置的值初始化为1，因为没有前缀，将CHECK设为-1（也可以是1）<br />
+<img src="/images/algorithm/DAT_1.jpg" width="600"/></p>
+<h5 id="22-第一层节点的字符s"><a class="markdownIt-Anchor" href="#22-第一层节点的字符s"></a> 2.2 第一层节点的字符<code>s</code></h5>
+<p>首先处理第一层节点的字符<code>s</code>，由于<code>CODE(s) = 3</code>，即确定 BASE[3]的值。<br></p>
+<p>BASE[3]的后继子节点字符为<code>h</code>，<code>CODE(h) = 1</code>，可以得出其begin值为1，即 BASE[3] = 1。<br />
+同时状态转移需要满足：</p>
 <blockquote>
 <font size=2> 
 CHECK[t] = BASE[s]， 即 CHECK[2] = 3
 </font>
 </blockquote>
-<p>赋值后的 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_2.jpg" width="600"/></p>
-<h5 id="2-3-第一层节点的字符h"><a href="#2-3-第一层节点的字符h" class="headerlink" title="2.3 第一层节点的字符h"></a>2.3 第一层节点的字符<code>h</code></h5><p>第一层节点的字符<code>h</code>，由于<code>CODE(h) = 1</code>，即确定 BASE[1]的值。<br><br>BASE[1]的后继子节点字符为<code>e</code>、<code>i</code>，CODE(e) &#x3D; 2，CODE(i) &#x3D; 4 <br></p>
+<p>赋值后的 BASE 和 CHECK 数组如下<br />
+<img src="/images/algorithm/DAT_2.jpg" width="600"/></p>
+<h5 id="23-第一层节点的字符h"><a class="markdownIt-Anchor" href="#23-第一层节点的字符h"></a> 2.3 第一层节点的字符<code>h</code></h5>
+<p>第一层节点的字符<code>h</code>，由于<code>CODE(h) = 1</code>，即确定 BASE[1]的值。<br><br />
+BASE[1]的后继子节点字符为<code>e</code>、<code>i</code>，CODE(e) = 2，CODE(i) = 4 <br></p>
 <ul>
-<li>当begin &#x3D; 0的话，由于CHECK[2] !&#x3D; 0，所以不成立；<br></li>
-<li>当begin &#x3D; 1的话，由于BASE[3] !&#x3D; 0，所以不成立；<br></li>
-<li>当begin &#x3D; 2的话，<code>BASE[4] == BASE[6] == 0 &amp;&amp; CHECK[4] == CHECK[6] == 0</code>，则begin值可为2，即 BASE[1] &#x3D; 2。<br></li>
+<li>当begin = 0的话，由于CHECK[2] != 0，所以不成立；<br></li>
+<li>当begin = 1的话，由于BASE[3] != 0，所以不成立；<br></li>
+<li>当begin = 2的话，<code>BASE[4] == BASE[6] == 0 &amp;&amp; CHECK[4] == CHECK[6] == 0</code>，则begin值可为2，即 BASE[1] = 2。<br></li>
 </ul>
 <p>另外给子节点的CHECK进行赋值</p>
 <blockquote>
 <font size=2> 
-CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
+</blockquote>
+<p>CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1</p>
+<blockquote>
 </font>
 </blockquote>
-<p>赋值后的 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_3.jpg" width="600"/></p>
-<h5 id="2-4-第二层节点的字符h"><a href="#2-4-第二层节点的字符h" class="headerlink" title="2.4 第二层节点的字符h"></a>2.4 第二层节点的字符<code>h</code></h5><p>第二层节点的字符<code>h</code>对应的状态是BASE[2]，只有一个子节点<code>e</code>，CODE(e) &#x3D; 2; <br> </p>
+<p>赋值后的 BASE 和 CHECK 数组如下<br />
+<img src="/images/algorithm/DAT_3.jpg" width="600"/></p>
+<h5 id="24-第二层节点的字符h"><a class="markdownIt-Anchor" href="#24-第二层节点的字符h"></a> 2.4 第二层节点的字符<code>h</code></h5>
+<p>第二层节点的字符<code>h</code>对应的状态是BASE[2]，只有一个子节点<code>e</code>，CODE(e) = 2; <br></p>
 <ul>
-<li>当begin &#x3D; 0，CHECK[2] !&#x3D; 0，不成立；<br></li>
-<li>当begin &#x3D; 1，BASE[3] !&#x3D; 0，不成立；<br></li>
-<li>当begin &#x3D; 2，CHECK[4] !&#x3D; 0，不成立；<br></li>
-<li>当begin &#x3D; 3，BASE[5] &#x3D;&#x3D; 0 &amp; CHECK[5] &#x3D;&#x3D; 0，成立，则BASE[2] &#x3D; 3，CHECK[5] &#x3D; 2；<br></li>
+<li>当begin = 0，CHECK[2] != 0，不成立；<br></li>
+<li>当begin = 1，BASE[3] != 0，不成立；<br></li>
+<li>当begin = 2，CHECK[4] != 0，不成立；<br></li>
+<li>当begin = 3，BASE[5] == 0 &amp; CHECK[5] == 0，成立，则BASE[2] = 3，CHECK[5] = 2；<br></li>
 </ul>
-<p>赋值后的 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_4.jpg" width="600"/></p>
-<h5 id="2-5-第二层节点的字符e"><a href="#2-5-第二层节点的字符e" class="headerlink" title="2.5 第二层节点的字符e"></a>2.5 第二层节点的字符<code>e</code></h5><p>第二层节点的字符<code>e</code>对应的状态是BASE[4]，只有一个子节点<code>r</code>，CODE(r) &#x3D; 5; <br> </p>
+<p>赋值后的 BASE 和 CHECK 数组如下<br />
+<img src="/images/algorithm/DAT_4.jpg" width="600"/></p>
+<h5 id="25-第二层节点的字符e"><a class="markdownIt-Anchor" href="#25-第二层节点的字符e"></a> 2.5 第二层节点的字符<code>e</code></h5>
+<p>第二层节点的字符<code>e</code>对应的状态是BASE[4]，只有一个子节点<code>r</code>，CODE® = 5; <br></p>
 <ul>
-<li>当begin &#x3D; 0，CHECK[2] !&#x3D; 0，不成立；<br></li>
-<li>当begin &#x3D; 1，BASE[3] !&#x3D; 0，不成立；<br></li>
-<li>当begin &#x3D; 2，BASE[7] &#x3D;&#x3D; 0 &amp; CHECK[7] &#x3D;&#x3D; 0，成立，则BASE[4] &#x3D; 2，CHECK[7] &#x3D; 4；<br></li>
+<li>当begin = 0，CHECK[2] != 0，不成立；<br></li>
+<li>当begin = 1，BASE[3] != 0，不成立；<br></li>
+<li>当begin = 2，BASE[7] == 0 &amp; CHECK[7] == 0，成立，则BASE[4] = 2，CHECK[7] = 4；<br></li>
 </ul>
-<p>因为<code>he</code>为关键词，则将其base状态设置为负值，赋值后的 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_5.jpg" width="600"/></p>
-<h5 id="2-6-第二层节点的字符i"><a href="#2-6-第二层节点的字符i" class="headerlink" title="2.6 第二层节点的字符i"></a>2.6 第二层节点的字符<code>i</code></h5><p>第二层节点的字符<code>e</code>对应的状态是BASE[6]，只有一个子节点<code>s</code>，CODE(s) &#x3D; 3; <br><br>根据上面的规则可得，begin &#x3D; 5，则则BASE[6] &#x3D; 5，CHECK[8] &#x3D; 6；<br><br>赋值后的 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_6.jpg" width="600"/></p>
-<h5 id="2-7-按规则初始化第三层和第四层节点"><a href="#2-7-按规则初始化第三层和第四层节点" class="headerlink" title="2.7 按规则初始化第三层和第四层节点"></a>2.7 按规则初始化第三层和第四层节点</h5><p>整个初始化的过程如下<br><img src="/images/algorithm/DAT_ALL.gif" width="800"/></p>
-<p>最终 BASE 和 CHECK 数组如下<br><img src="/images/algorithm/DAT_10.jpg" width="600"/></p>
-<h3 id="四、构建适配数组"><a href="#四、构建适配数组" class="headerlink" title="四、构建适配数组"></a>四、构建适配数组</h3><p>AC自动机是由Tire树配合适配指针构成，Trie树由双数组表示后，适配信息也由数组的方式来表示。<br>下图中的虚线是由指针形式表示的适配信息。<br><img src="/images/algorithm/DAT_11.jpg" width="600"/></p>
-<h3 id="五、内存占用"><a href="#五、内存占用" class="headerlink" title="五、内存占用"></a>五、内存占用</h3><p>测试过程中29W个关键词来构建出的基于双数组Trie树的AC自动机，占用内存超过60M。<br><br>其中<br></p>
+<p>因为<code>he</code>为关键词，则将其base状态设置为负值，赋值后的 BASE 和 CHECK 数组如下<br />
+<img src="/images/algorithm/DAT_5.jpg" width="600"/></p>
+<h5 id="26-第二层节点的字符i"><a class="markdownIt-Anchor" href="#26-第二层节点的字符i"></a> 2.6 第二层节点的字符<code>i</code></h5>
+<p>第二层节点的字符<code>e</code>对应的状态是BASE[6]，只有一个子节点<code>s</code>，CODE(s) = 3; <br><br />
+根据上面的规则可得，begin = 5，则则BASE[6] = 5，CHECK[8] = 6；<br><br />
+赋值后的 BASE 和 CHECK 数组如下<br />
+<img src="/images/algorithm/DAT_6.jpg" width="600"/></p>
+<h5 id="27-按规则初始化第三层和第四层节点"><a class="markdownIt-Anchor" href="#27-按规则初始化第三层和第四层节点"></a> 2.7 按规则初始化第三层和第四层节点</h5>
+<p>整个初始化的过程如下<br />
+<img src="/images/algorithm/DAT_ALL.gif" width="800"/></p>
+<p>最终 BASE 和 CHECK 数组如下<br />
+<img src="/images/algorithm/DAT_10.jpg" width="600"/></p>
+<h3 id="四-构建适配数组"><a class="markdownIt-Anchor" href="#四-构建适配数组"></a> 四、构建适配数组</h3>
+<p>AC自动机是由Tire树配合适配指针构成，Trie树由双数组表示后，适配信息也由数组的方式来表示。<br />
+下图中的虚线是由指针形式表示的适配信息。<br />
+<img src="/images/algorithm/DAT_11.jpg" width="600"/></p>
+<h3 id="五-内存占用"><a class="markdownIt-Anchor" href="#五-内存占用"></a> 五、内存占用</h3>
+<p>测试过程中29W个关键词来构建出的基于双数组Trie树的AC自动机，占用内存超过60M。<br><br />
+其中<br></p>
 <blockquote>
-<p>2110589长度的check 和 base数组(16M)<br><br>758618长度的&lt;int, int&gt; fail状态转移 map (5.7M)<br><br>29W个&lt;int, string&gt; 的状态到关键词的map(23M)<br></p>
+<p>2110589长度的check 和 base数组(16M)<br><br />
+758618长度的&lt;int, int&gt; fail状态转移 map (5.7M)<br><br />
+29W个&lt;int, string&gt; 的状态到关键词的map(23M)<br></p>
 </blockquote>
 <img src="/images/algorithm/dat_q.jpg" width="100"/>
 内存还是很高，虽然内存还有优化的空间，但是也很难做出一个数量级的优化，那对于在内存受限的设备上，如何实现更性能高效，低内存占用的多模式匹配呢？
-
 <p><a target="_blank" rel="noopener" href="https://github.com/zhangdongxuan/CodeSlice/tree/master/algorithm/Aho%E2%80%93Corasic/DoubleArrayTrieAC">点击查看源码</a></p>
 
     </div>
@@ -431,7 +464,7 @@ CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%8F%8C%E6%95%B0%E7%BB%84Tire%E6%A0%91%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">二、双数组Tire树介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E6%9E%84%E5%BB%BA%E5%8F%8C%E6%95%B0%E7%BB%84Tire%E6%A0%91"><span class="nav-number">2.1.</span> <span class="nav-text">三、构建双数组Tire树</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E6%9E%84%E5%BB%BACODE%E7%BC%96%E7%A0%81%E8%A1%A8"><span class="nav-number">2.1.1.</span> <span class="nav-text">1. 构建CODE编码表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E6%9E%84%E5%BB%BABASE%E5%92%8CCHECK%E7%8A%B6%E6%80%81%E8%A1%A8"><span class="nav-number">2.1.2.</span> <span class="nav-text">2. 构建BASE和CHECK状态表</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#2-1-%E5%88%9D%E5%A7%8B%E5%8C%96Double-Array"><span class="nav-number">2.1.2.1.</span> <span class="nav-text">2.1 初始化Double Array</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-2-%E7%AC%AC%E4%B8%80%E5%B1%82%E8%8A%82%E7%82%B9%E7%9A%84%E5%AD%97%E7%AC%A6s"><span class="nav-number">2.1.2.2.</span> <span class="nav-text">2.2 第一层节点的字符s</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-3-%E7%AC%AC%E4%B8%80%E5%B1%82%E8%8A%82%E7%82%B9%E7%9A%84%E5%AD%97%E7%AC%A6h"><span class="nav-number">2.1.2.3.</span> <span class="nav-text">2.3 第一层节点的字符h</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-4-%E7%AC%AC%E4%BA%8C%E5%B1%82%E8%8A%82%E7%82%B9%E7%9A%84%E5%AD%97%E7%AC%A6h"><span class="nav-number">2.1.2.4.</span> <span class="nav-text">2.4 第二层节点的字符h</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-5-%E7%AC%AC%E4%BA%8C%E5%B1%82%E8%8A%82%E7%82%B9%E7%9A%84%E5%AD%97%E7%AC%A6e"><span class="nav-number">2.1.2.5.</span> <span class="nav-text">2.5 第二层节点的字符e</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-6-%E7%AC%AC%E4%BA%8C%E5%B1%82%E8%8A%82%E7%82%B9%E7%9A%84%E5%AD%97%E7%AC%A6i"><span class="nav-number">2.1.2.6.</span> <span class="nav-text">2.6 第二层节点的字符i</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-7-%E6%8C%89%E8%A7%84%E5%88%99%E5%88%9D%E5%A7%8B%E5%8C%96%E7%AC%AC%E4%B8%89%E5%B1%82%E5%92%8C%E7%AC%AC%E5%9B%9B%E5%B1%82%E8%8A%82%E7%82%B9"><span class="nav-number">2.1.2.7.</span> <span class="nav-text">2.7 按规则初始化第三层和第四层节点</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E6%9E%84%E5%BB%BA%E9%80%82%E9%85%8D%E6%95%B0%E7%BB%84"><span class="nav-number">2.2.</span> <span class="nav-text">四、构建适配数组</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8"><span class="nav-number">2.3.</span> <span class="nav-text">五、内存占用</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80-%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text"> 一、背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C-%E5%8F%8C%E6%95%B0%E7%BB%84tire%E6%A0%91%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text"> 二、双数组Tire树介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%89-%E6%9E%84%E5%BB%BA%E5%8F%8C%E6%95%B0%E7%BB%84tire%E6%A0%91"><span class="nav-number">2.1.</span> <span class="nav-text"> 三、构建双数组Tire树</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E6%9E%84%E5%BB%BAcode%E7%BC%96%E7%A0%81%E8%A1%A8"><span class="nav-number">2.1.1.</span> <span class="nav-text"> 1. 构建CODE编码表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E6%9E%84%E5%BB%BAbase%E5%92%8Ccheck%E7%8A%B6%E6%80%81%E8%A1%A8"><span class="nav-number">2.1.2.</span> <span class="nav-text"> 2. 构建BASE和CHECK状态表</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#21-%E5%88%9D%E5%A7%8B%E5%8C%96double-array"><span class="nav-number">2.1.2.1.</span> <span class="nav-text"> 2.1 初始化Double Array</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#22-%E7%AC%AC%E4%B8%80%E5%B1%82%E8%8A%82%E7%82%B9%E7%9A%84%E5%AD%97%E7%AC%A6s"><span class="nav-number">2.1.2.2.</span> <span class="nav-text"> 2.2 第一层节点的字符s</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#23-%E7%AC%AC%E4%B8%80%E5%B1%82%E8%8A%82%E7%82%B9%E7%9A%84%E5%AD%97%E7%AC%A6h"><span class="nav-number">2.1.2.3.</span> <span class="nav-text"> 2.3 第一层节点的字符h</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#24-%E7%AC%AC%E4%BA%8C%E5%B1%82%E8%8A%82%E7%82%B9%E7%9A%84%E5%AD%97%E7%AC%A6h"><span class="nav-number">2.1.2.4.</span> <span class="nav-text"> 2.4 第二层节点的字符h</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#25-%E7%AC%AC%E4%BA%8C%E5%B1%82%E8%8A%82%E7%82%B9%E7%9A%84%E5%AD%97%E7%AC%A6e"><span class="nav-number">2.1.2.5.</span> <span class="nav-text"> 2.5 第二层节点的字符e</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#26-%E7%AC%AC%E4%BA%8C%E5%B1%82%E8%8A%82%E7%82%B9%E7%9A%84%E5%AD%97%E7%AC%A6i"><span class="nav-number">2.1.2.6.</span> <span class="nav-text"> 2.6 第二层节点的字符i</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#27-%E6%8C%89%E8%A7%84%E5%88%99%E5%88%9D%E5%A7%8B%E5%8C%96%E7%AC%AC%E4%B8%89%E5%B1%82%E5%92%8C%E7%AC%AC%E5%9B%9B%E5%B1%82%E8%8A%82%E7%82%B9"><span class="nav-number">2.1.2.7.</span> <span class="nav-text"> 2.7 按规则初始化第三层和第四层节点</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%9B-%E6%9E%84%E5%BB%BA%E9%80%82%E9%85%8D%E6%95%B0%E7%BB%84"><span class="nav-number">2.2.</span> <span class="nav-text"> 四、构建适配数组</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%94-%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8"><span class="nav-number">2.3.</span> <span class="nav-text"> 五、内存占用</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -447,7 +480,7 @@ CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">24</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -458,7 +491,7 @@ CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -551,6 +584,11 @@ CHECK[BASE[1] + CODE(e)] = CHECK[BASE[1] + CODE(i)] = 1
 
 
   
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0/dist/katex.min.css">
+
 
   
 

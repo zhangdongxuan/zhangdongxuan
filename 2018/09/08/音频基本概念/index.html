@@ -36,7 +36,7 @@
 <meta property="og:image" content="http://zhangdongxuan.com/images/audio/sample.png">
 <meta property="og:image" content="http://zhangdongxuan.com/images/audio/Audio.png">
 <meta property="article:published_time" content="2018-09-07T21:00:15.000Z">
-<meta property="article:modified_time" content="2022-03-02T23:57:31.436Z">
+<meta property="article:modified_time" content="2022-07-15T13:26:40.995Z">
 <meta property="article:author" content="Dongxuan Zhang">
 <meta property="article:tag" content="音视频">
 <meta name="twitter:card" content="summary">
@@ -230,7 +230,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-03-03 07:57:31" itemprop="dateModified" datetime="2022-03-03T07:57:31+08:00">2022-03-03</time>
+                <time title="修改时间：2022-07-15 21:26:40" itemprop="dateModified" datetime="2022-07-15T21:26:40+08:00">2022-07-15</time>
               </span>
 
           
@@ -246,149 +246,174 @@
 
       
         <p>在优化语音输入、语音播放需求，需要整理一下音频的基本概念。</p>
-<h3 id="声音的原理"><a href="#声音的原理" class="headerlink" title="声音的原理"></a>声音的原理</h3><p>声音是振动产生的声波，通过介质（空气或固体、液体）传播并能被人或动物听觉器官所感知的波动现象。当物体振动时，同时伴随声音的产生。当振动体不再振动时，声音也随之停止。所以从生活的观察中可以归纳出：声音是由物体的振动所引起。</p>
+<h3 id="声音的原理"><a class="markdownIt-Anchor" href="#声音的原理"></a> 声音的原理</h3>
+<p>声音是振动产生的声波，通过介质（空气或固体、液体）传播并能被人或动物听觉器官所感知的波动现象。当物体振动时，同时伴随声音的产生。当振动体不再振动时，声音也随之停止。所以从生活的观察中可以归纳出：声音是由物体的振动所引起。</p>
 <p>声音的频率一般会以赫兹表示，记为Hz，指每秒周期性震动的次数。</p>
 <ul>
-<li><p>频率</p>
+<li>频率</li>
+</ul>
 <blockquote>
 <p>音调越高，频率越大；音调越低，频率越小。（弦乐器中，越细的弦振动的频率越高，音调越高）</p>
 </blockquote>
-</li>
-<li><p>波长</p>
+<ul>
+<li>波长</li>
+</ul>
 <blockquote>
 <p>音调越高，波长越短；音调越低，波长越长。（频率高波长短）</p>
 </blockquote>
-</li>
-<li><p>振幅</p>
+<ul>
+<li>振幅</li>
+</ul>
 <blockquote>
 <p>音量（响度）越大，振幅越大；音量越小，振幅越小。</p>
 </blockquote>
-</li>
-</ul>
 <p>人耳可以感知到的声音，其频率范围为20 Hz至20,000 Hz，在标准状况下的空气中，上述音波对应的波长从17 m至17 mm之间。</p>
-<h2 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h2><h3 id="PCM"><a href="#PCM" class="headerlink" title="PCM"></a>PCM</h3><p>PCM是脉冲编码调制，简单的说就是在录制音频是对连续音频信号抽样，以0和1的数字形式记录，所以PCM不是连续音频；</p>
-<h3 id="Sample"><a href="#Sample" class="headerlink" title="Sample"></a>Sample</h3><blockquote>
+<h2 id="基本概念"><a class="markdownIt-Anchor" href="#基本概念"></a> 基本概念</h2>
+<h3 id="pcm"><a class="markdownIt-Anchor" href="#pcm"></a> PCM</h3>
+<p>PCM是脉冲编码调制，简单的说就是在录制音频是对连续音频信号抽样，以0和1的数字形式记录，所以PCM不是连续音频；</p>
+<h3 id="sample"><a class="markdownIt-Anchor" href="#sample"></a> Sample</h3>
+<blockquote>
 <p>In signal processing, sampling is the reduction of a continuous-time signal to a discrete-time signal.</p>
 <p>译文： 在信号处理中，采样就是将连续时间的信号减少成离散时间的信号。</p>
 </blockquote>
 <p><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Signal_Sampling.png/300px-Signal_Sampling.png" width="300"/><br/><br/></p>
 <p>数码音频系统是通过将声波波形转换成一连串的二进制数据来再现原始声音，和我们的视频一样，视频其实就是用图片不断的采样组合而成。</p>
-<h3 id="Sample-Rate"><a href="#Sample-Rate" class="headerlink" title="Sample Rate"></a>Sample Rate</h3><blockquote>
-<p>Sample Rate is the number of samples of audio carried per second. </p>
+<h3 id="sample-rate"><a class="markdownIt-Anchor" href="#sample-rate"></a> Sample Rate</h3>
+<blockquote>
+<p>Sample Rate is the number of samples of audio carried per second.</p>
 <p>译文： 采样率就是每秒中对音频采样的次数。</p>
 </blockquote>
-<p>采样率表示音频信号每秒的数字快照数。该速率决定了音频文件的频率范围。采样率越高，数字波形的形状越接近原始模拟波形。低采样率会限制可录制的频率范围，这可导致录音表现原始声音的效果不佳。<br><img src="/images/audio/sample.png" width="400"></p>
-<h3 id="Channel"><a href="#Channel" class="headerlink" title="Channel"></a>Channel</h3><blockquote>
+<p>采样率表示音频信号每秒的数字快照数。该速率决定了音频文件的频率范围。采样率越高，数字波形的形状越接近原始模拟波形。低采样率会限制可录制的频率范围，这可导致录音表现原始声音的效果不佳。<br />
+<img src="/images/audio/sample.png" width="400"></p>
+<h3 id="channel"><a class="markdownIt-Anchor" href="#channel"></a> Channel</h3>
+<blockquote>
 <p>即声道数（1-8个）,声道的个数可以理解为有多少个采样点采样，采样点越多表示越多的表达方式。</p>
 </blockquote>
 <p>单声道在声音处理过程中只有单数据流，而立体声则需要左、右声道的两个数据流。显然，立体声的效果要好，但相应的数据量要比单声道的数据量加倍。</p>
-<h3 id="Audio-bit-depth"><a href="#Audio-bit-depth" class="headerlink" title="Audio bit depth"></a>Audio bit depth</h3><blockquote>
+<h3 id="audio-bit-depth"><a class="markdownIt-Anchor" href="#audio-bit-depth"></a> Audio bit depth</h3>
+<blockquote>
 <p>In digital audio using pulse-code modulation (PCM), bit depth is the number of bits of information in each sample, and it directly corresponds to the resolution of each sample.</p>
 <p>译文 : 在使用脉冲编码调制（PCM）的数字音频中，bit depth是每个Sample(采样)点占用的位数，并且它直接对应于每个采样的分辨率。</p>
 </blockquote>
 <p>Audio bit depth一般为16位，即采样时用16位来表示一个音频采样点.</p>
-<h3 id="Bit-Rate"><a href="#Bit-Rate" class="headerlink" title="Bit Rate"></a>Bit Rate</h3><blockquote>
+<h3 id="bit-rate"><a class="markdownIt-Anchor" href="#bit-rate"></a> Bit Rate</h3>
+<blockquote>
 <p>比特率是指每秒传送的比特(bit)数。单位为 bps(Bit Per Second)，比特率越高，传送数据速度越快。声音中的比特率是指将模拟声音信号转换成数字声音信号后，单位时间内的二进制数据量，是间接衡量音频质量的一个指标。</p>
 </blockquote>
-<p><code>Bit Rate(bps) = Sample Rate × Audio bit depth × Channel</code><br>即<br><code>比特率(bps) = 采样频率 × 采样位数 × 声道数</code></p>
-<h3 id="Frame"><a href="#Frame" class="headerlink" title="Frame"></a>Frame</h3><blockquote>
+<p><code>Bit Rate(bps) = Sample Rate × Audio bit depth × Channel</code><br />
+即<br />
+<code>比特率(bps) = 采样频率 × 采样位数 × 声道数</code></p>
+<h3 id="frame"><a class="markdownIt-Anchor" href="#frame"></a> Frame</h3>
+<blockquote>
 <p>A frame is a collection of time-coincident samples. For instance, a linear PCM stereo sound file has two samples per frame, one for the left channel and one for the right channel.</p>
 </blockquote>
 <blockquote>
 <p>译文 ： frame 是离散采样的集合，例如，一个linear PCM stereo sound 文件有中每个frame中有两个采样，分别来自左声道和右声道。</p>
 </blockquote>
 <p>frame是最小单位时间点包含的一个或多个声音采样，最小单位时间点取决于声音采样设备，是一个时间点多个采样的集合。</p>
-<h3 id="Packet"><a href="#Packet" class="headerlink" title="Packet"></a>Packet</h3><blockquote>
+<h3 id="packet"><a class="markdownIt-Anchor" href="#packet"></a> Packet</h3>
+<blockquote>
 <p>A packet is a collection of one or more contiguous frames. A packet defines the smallest meaningful set of frames for a given audio data format, and is the smallest data unit for which time can be measured. In linear PCM audio, a packet holds a single frame. In compressed formats, it typically holds more; in some formats, the number of frames per packet varies.</p>
 <p>译文： Packet是一个或者多个连续frame的集合。对于一个给定的音频数据格式，Packet定义了定义了最小有意义的frame集合，并且是最小的可测量时间单位。</p>
 </blockquote>
-<p>下图展示了Packet、Frame和Sample的关系。<br><img src="/images/audio/Audio.png" width="700"><br><strong>在未压缩的音频中，一个Packet只有一个frame;</strong><br><strong>在压缩的音频中，一个Packet是不可在分割的压缩数据块，例如在一个AAC格式的Packet中就包含了1024个采样帧；</strong></p>
-<h2 id="iOS录音基本单位"><a href="#iOS录音基本单位" class="headerlink" title="iOS录音基本单位"></a>iOS录音基本单位</h2><p>在微信项目中有大量场景使用到CoreAudio，基本概念先围绕基本的数据类型介绍<br>AudioStreamBasicDescription是在使用AudioQueue进行语音录音时要传给AudioQueueNewInput方法的结构体。<br>该结构体封装了一个音频流所有的基本描述信息，该数据结构对描述一个不同声道相同且恒定bitrate的音频格式是足够的，所以在微信中我们一般使用这个结构来描述。</p>
+<p>下图展示了Packet、Frame和Sample的关系。<br />
+<img src="/images/audio/Audio.png" width="700"><br />
+<strong>在未压缩的音频中，一个Packet只有一个frame;</strong><br />
+<strong>在压缩的音频中，一个Packet是不可在分割的压缩数据块，例如在一个AAC格式的Packet中就包含了1024个采样帧；</strong></p>
+<h2 id="ios录音基本单位"><a class="markdownIt-Anchor" href="#ios录音基本单位"></a> iOS录音基本单位</h2>
+<p>在微信项目中有大量场景使用到CoreAudio，基本概念先围绕基本的数据类型介绍<br />
+AudioStreamBasicDescription是在使用AudioQueue进行语音录音时要传给AudioQueueNewInput方法的结构体。<br />
+该结构体封装了一个音频流所有的基本描述信息，该数据结构对描述一个不同声道相同且恒定bitrate的音频格式是足够的，所以在微信中我们一般使用这个结构来描述。</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">struct AudioStreamBasicDescription</span><br><span class="line">&#123;</span><br><span class="line">    Float64 mSampleRate;</span><br><span class="line">    AudioFormatID mFormatID;</span><br><span class="line">    AudioFormatFlags mFormatFlags;</span><br><span class="line">    UInt32 mBytesPerPacket;</span><br><span class="line">    UInt32 mFramesPerPacket;</span><br><span class="line">    UInt32 mBytesPerFrame;</span><br><span class="line">    UInt32 mChannelsPerFrame;</span><br><span class="line">    UInt32 mBitsPerChannel;</span><br><span class="line">    UInt32 mReserved;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
 <p>我对其中定义的数据进行了如下注释。</p>
 <ul>
-<li><p>mFormatID   </p>
+<li>mFormatID</li>
+</ul>
 <blockquote>
 <p>一般用kAudioFormatLinearPCM，Linear-PCM是PCM的一种，具备比普通CD音频中的PCM数码流更高的位深和采样率，音质好很多。</p>
 </blockquote>
-</li>
-<li><p>mSampleRate  </p>
+<ul>
+<li>mSampleRate</li>
+</ul>
 <blockquote>
 <p>The number of sample frames per second of the data in the stream.</p>
 </blockquote>
-</li>
-<li><p>mChannelsPerFrame</p>
+<ul>
+<li>mChannelsPerFrame</li>
+</ul>
 <blockquote>
 <p>The number of channels in each frame of data.</p>
 </blockquote>
-</li>
-<li><p>mBytesPerFrame</p>
+<ul>
+<li>mBytesPerFrame</li>
+</ul>
 <blockquote>
-<p>The number of bytes in a single sample frame of data. </p>
+<p>The number of bytes in a single sample frame of data.</p>
 </blockquote>
-</li>
-<li><p>mFramesPerPacket</p>
+<ul>
+<li>mFramesPerPacket</li>
+</ul>
 <blockquote>
-<p>The number of sample frames in each packet of data. </p>
+<p>The number of sample frames in each packet of data.</p>
 </blockquote>
-</li>
-<li><p>mBytesPerPacket</p>
+<ul>
+<li>mBytesPerPacket</li>
+</ul>
 <blockquote>
 <p>The number of bytes in a packet of data.</p>
 </blockquote>
-</li>
-</ul>
 <p>结合日常录音开发中其中使用的设置。</p>
 <table>
 <thead>
 <tr>
-<th align="center">Property</th>
-<th align="center">Definition</th>
-<th align="center">Example</th>
+<th style="text-align:center">Property</th>
+<th style="text-align:center">Definition</th>
+<th style="text-align:center">Example</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">mSampleRate</td>
-<td align="center">采样率</td>
-<td align="center">16000</td>
+<tbody>
+<tr>
+<td style="text-align:center">mSampleRate</td>
+<td style="text-align:center">采样率</td>
+<td style="text-align:center">16000</td>
 </tr>
 <tr>
-<td align="center">mFormatID</td>
-<td align="center">格式</td>
-<td align="center">kAudioFormatLinearPCM</td>
+<td style="text-align:center">mFormatID</td>
+<td style="text-align:center">格式</td>
+<td style="text-align:center">kAudioFormatLinearPCM</td>
 </tr>
 <tr>
-<td align="center">mFormatFlags</td>
-<td align="center">标签格式</td>
-<td align="center">kLinearPCMFormatFlagIsSignedInteger kLinearPCMFormatFlagIsPacked</td>
+<td style="text-align:center">mFormatFlags</td>
+<td style="text-align:center">标签格式</td>
+<td style="text-align:center">kLinearPCMFormatFlagIsSignedInteger kLinearPCMFormatFlagIsPacked</td>
 </tr>
 <tr>
-<td align="center">mBitsPerChannel</td>
-<td align="center">语音每采样点占用位数</td>
-<td align="center">[8&#x2F;16&#x2F;24&#x2F;32]</td>
+<td style="text-align:center">mBitsPerChannel</td>
+<td style="text-align:center">语音每采样点占用位数</td>
+<td style="text-align:center">[8/16/24/32]</td>
 </tr>
 <tr>
-<td align="center">mChannelsPerFrame</td>
-<td align="center">声道数</td>
-<td align="center">1:单声道；2:立体声</td>
+<td style="text-align:center">mChannelsPerFrame</td>
+<td style="text-align:center">声道数</td>
+<td style="text-align:center">1:单声道；2:立体声</td>
 </tr>
 <tr>
-<td align="center">mBytesPerFrame</td>
-<td align="center">每帧的byte数</td>
-<td align="center">mBitsPerChannel * mChannelsPerFrame &#x2F; 8</td>
+<td style="text-align:center">mBytesPerFrame</td>
+<td style="text-align:center">每帧的byte数</td>
+<td style="text-align:center">mBitsPerChannel * mChannelsPerFrame / 8</td>
 </tr>
 <tr>
-<td align="center">mFramesPerPacket</td>
-<td align="center">每个Packet的帧数量</td>
-<td align="center">1</td>
+<td style="text-align:center">mFramesPerPacket</td>
+<td style="text-align:center">每个Packet的帧数量</td>
+<td style="text-align:center">1</td>
 </tr>
 <tr>
-<td align="center">mBytesPerPacket</td>
-<td align="center">每个Packet的Bytes数量</td>
-<td align="center">mBytesPerFrame * mFramesPerPacket</td>
+<td style="text-align:center">mBytesPerPacket</td>
+<td style="text-align:center">每个Packet的Bytes数量</td>
+<td style="text-align:center">mBytesPerFrame * mFramesPerPacket</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 
     </div>
 
@@ -472,7 +497,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A3%B0%E9%9F%B3%E7%9A%84%E5%8E%9F%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text">声音的原理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="nav-number"></span> <span class="nav-text">基本概念</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#PCM"><span class="nav-number">1.</span> <span class="nav-text">PCM</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Sample"><span class="nav-number">2.</span> <span class="nav-text">Sample</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Sample-Rate"><span class="nav-number">3.</span> <span class="nav-text">Sample Rate</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Channel"><span class="nav-number">4.</span> <span class="nav-text">Channel</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Audio-bit-depth"><span class="nav-number">5.</span> <span class="nav-text">Audio bit depth</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Bit-Rate"><span class="nav-number">6.</span> <span class="nav-text">Bit Rate</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Frame"><span class="nav-number">7.</span> <span class="nav-text">Frame</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Packet"><span class="nav-number">8.</span> <span class="nav-text">Packet</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#iOS%E5%BD%95%E9%9F%B3%E5%9F%BA%E6%9C%AC%E5%8D%95%E4%BD%8D"><span class="nav-number"></span> <span class="nav-text">iOS录音基本单位</span></a></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A3%B0%E9%9F%B3%E7%9A%84%E5%8E%9F%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text"> 声音的原理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="nav-number"></span> <span class="nav-text"> 基本概念</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#pcm"><span class="nav-number">1.</span> <span class="nav-text"> PCM</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#sample"><span class="nav-number">2.</span> <span class="nav-text"> Sample</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#sample-rate"><span class="nav-number">3.</span> <span class="nav-text"> Sample Rate</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#channel"><span class="nav-number">4.</span> <span class="nav-text"> Channel</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#audio-bit-depth"><span class="nav-number">5.</span> <span class="nav-text"> Audio bit depth</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bit-rate"><span class="nav-number">6.</span> <span class="nav-text"> Bit Rate</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#frame"><span class="nav-number">7.</span> <span class="nav-text"> Frame</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#packet"><span class="nav-number">8.</span> <span class="nav-text"> Packet</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ios%E5%BD%95%E9%9F%B3%E5%9F%BA%E6%9C%AC%E5%8D%95%E4%BD%8D"><span class="nav-number"></span> <span class="nav-text"> iOS录音基本单位</span></a></div>
       </div>
       <!--/noindex-->
 
@@ -488,7 +513,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">24</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -499,7 +524,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -592,6 +617,11 @@
 
 
   
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0/dist/katex.min.css">
+
 
   
 

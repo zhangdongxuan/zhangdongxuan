@@ -248,43 +248,50 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>实现IO多路复用的方法主要是依赖系统提供的<code>select</code>和<code>poll方法</code>，在对它们进行描述之前，我们需要回过头看一下IO多路复用出现的大背景，先了解一下Unix提供给我们的五种I&#x2F;O模型:</p>
+        <p>实现IO多路复用的方法主要是依赖系统提供的<code>select</code>和<code>poll方法</code>，在对它们进行描述之前，我们需要回过头看一下IO多路复用出现的大背景，先了解一下Unix提供给我们的五种I/O模型:</p>
 <ul>
-<li>blocking I&#x2F;O</li>
-<li>nonblocking I&#x2F;O</li>
-<li>I&#x2F;O multiplexing(<code>select</code> and <code>poll</code>)</li>
-<li>signal driven I&#x2F;O(<code>SIGIO</code>)</li>
-<li>asynchronous I&#x2F;O(the POSIX <code>aio_</code>functions)</li>
+<li>blocking I/O</li>
+<li>nonblocking I/O</li>
+<li>I/O multiplexing(<code>select</code> and <code>poll</code>)</li>
+<li>signal driven I/O(<code>SIGIO</code>)</li>
+<li>asynchronous I/O(the POSIX <code>aio_</code>functions)</li>
 </ul>
-<h2 id="阻塞式IO"><a href="#阻塞式IO" class="headerlink" title="阻塞式IO"></a>阻塞式IO</h2><p>要理解IO多路复用，首先要了解普通的IO模型，通常的IO操作都是阻塞式IO，当对socket句柄调用recv时，如果没有收到数据，那么线程就会被挂起，收到数据时被唤醒继续执行。<br><img src="/images/network/blockio.gif" width="600"/></p>
-<p>如果server要处理N个Socket连接，那么就需要开N个线程来处理这N个连接，recv会使大部分线程进入阻塞状态，如果N很大，那么光是创建这些线程就会消耗大量的内存空间；<br>另外大量的线程间切换也会会导致每个线程能分到的CPU时间较少，使程序的性能变差。<br>所以阻塞式IO只适用并发量小的网络应用开发。</p>
-<h2 id="非阻塞式IO"><a href="#非阻塞式IO" class="headerlink" title="非阻塞式IO"></a>非阻塞式IO</h2><p>非阻塞IO顾名思义就是调用IO方法不会阻塞线程，例如在调用recv的时候，如果内核缓冲区有数据就返回数据，没有数据就返回例如<code>EWOULDBLOCK</code>的错误码。设置为非阻塞的方法也比较简单，可以通过fcntl（POSIX）或ioctl（Unix）设为句柄设置为非阻塞。虽然这样不会阻塞了，但是还是需要不断的对众多句柄调用recv方法进行轮训，这样会消耗大量的CPU资源。<br><img src="/images/network/nonblockingio.gif" width="600"/></p>
+<h2 id="阻塞式io"><a class="markdownIt-Anchor" href="#阻塞式io"></a> 阻塞式IO</h2>
+<p>要理解IO多路复用，首先要了解普通的IO模型，通常的IO操作都是阻塞式IO，当对socket句柄调用recv时，如果没有收到数据，那么线程就会被挂起，收到数据时被唤醒继续执行。<br />
+<img src="/images/network/blockio.gif" width="600"/></p>
+<p>如果server要处理N个Socket连接，那么就需要开N个线程来处理这N个连接，recv会使大部分线程进入阻塞状态，如果N很大，那么光是创建这些线程就会消耗大量的内存空间；<br />
+另外大量的线程间切换也会会导致每个线程能分到的CPU时间较少，使程序的性能变差。<br />
+所以阻塞式IO只适用并发量小的网络应用开发。</p>
+<h2 id="非阻塞式io"><a class="markdownIt-Anchor" href="#非阻塞式io"></a> 非阻塞式IO</h2>
+<p>非阻塞IO顾名思义就是调用IO方法不会阻塞线程，例如在调用recv的时候，如果内核缓冲区有数据就返回数据，没有数据就返回例如<code>EWOULDBLOCK</code>的错误码。设置为非阻塞的方法也比较简单，可以通过fcntl（POSIX）或ioctl（Unix）设为句柄设置为非阻塞。虽然这样不会阻塞了，但是还是需要不断的对众多句柄调用recv方法进行轮训，这样会消耗大量的CPU资源。<br />
+<img src="/images/network/nonblockingio.gif" width="600"/></p>
 <p>非阻塞式IO适用并发量较小、且不需要及时响应的网络应用开发；</p>
-<h2 id="I-x2F-O多路复用"><a href="#I-x2F-O多路复用" class="headerlink" title="I&#x2F;O多路复用"></a>I&#x2F;O多路复用</h2><p>多路复用是使用一个线程来检查多个socket描述符的ready状态，比如调用<code>select</code>函数，传入多个socket描述符，有任意一个socket描述符对应的IO在内核缓冲区有数据时就返回，否则会阻塞直到超时。对ready的socket描述符进行recv时，可以放到一个线程，也可以新开线程执行。<br><img src="/images/network/multiplexing.gif" width="600"/></p>
-<p>实现I&#x2F;O多路复用的三种方案: <code>select</code>、<code>poll</code>、<code>epoll</code>;</p>
+<h2 id="io多路复用"><a class="markdownIt-Anchor" href="#io多路复用"></a> I/O多路复用</h2>
+<p>多路复用是使用一个线程来检查多个socket描述符的ready状态，比如调用<code>select</code>函数，传入多个socket描述符，有任意一个socket描述符对应的IO在内核缓冲区有数据时就返回，否则会阻塞直到超时。对ready的socket描述符进行recv时，可以放到一个线程，也可以新开线程执行。<br />
+<img src="/images/network/multiplexing.gif" width="600"/></p>
+<p>实现I/O多路复用的三种方案: <code>select</code>、<code>poll</code>、<code>epoll</code>;</p>
 <p>特点：</p>
 <ul>
 <li>专一进程解决多个进程IO的阻塞问题，性能好；</li>
 <li>实现、开发应用难度较大；</li>
 <li>适用高并发服务应用开发：一个进程（线程）响应多个请求；</li>
 </ul>
-<h2 id="信号驱动IO模型"><a href="#信号驱动IO模型" class="headerlink" title="信号驱动IO模型"></a>信号驱动IO模型</h2><img src="/images/network/signalio.png" width="600"/>
+<h2 id="信号驱动io模型"><a class="markdownIt-Anchor" href="#信号驱动io模型"></a> 信号驱动IO模型</h2>
+<img src="/images/network/signalio.png" width="600"/>
 当进程发起一个IO操作，会向内核注册一个信号处理函数，然后进程返回不阻塞；当内核数据就绪时会发送一个信号给进程，进程便在信号处理函数中调用IO读取数据。
-
 <p>特点：回调机制，实现、开发应用难度大；</p>
-<h2 id="异步IO模型"><a href="#异步IO模型" class="headerlink" title="异步IO模型"></a>异步IO模型</h2><img src="/images/network/asyncio.png" width="600"/>
+<h2 id="异步io模型"><a class="markdownIt-Anchor" href="#异步io模型"></a> 异步IO模型</h2>
+<img src="/images/network/asyncio.png" width="600"/>
 当进程发起一个IO操作，进程返回（不阻塞），但也不能返回果结；内核把整个IO处理完后，会通知进程结果。如果IO操作成功则进程直接获取到数据。
 异步IO和信号驱动的IO主要的区别是，信号驱动的IO是内核告诉我们这个IO操作可以开始了，但是异步IO是内核告诉我们IO操作已经完成了。
-
-
-<h2 id="几种IO模型的比较"><a href="#几种IO模型的比较" class="headerlink" title="几种IO模型的比较"></a>几种IO模型的比较</h2><img src="/images/network/comio.png" width="600"/>
+<h2 id="几种io模型的比较"><a class="markdownIt-Anchor" href="#几种io模型的比较"></a> 几种IO模型的比较</h2>
+<img src="/images/network/comio.png" width="600"/>
 POSIX defines these two terms as follows:
-
 <ul>
-<li>A synchronous I&#x2F;O operation causes the requesting process to be blocked until that I&#x2F;O operation completes.</li>
-<li>An asynchronous I&#x2F;O operation does not cause the requesting process to be blocked.</li>
+<li>A synchronous I/O operation causes the requesting process to be blocked until that I/O operation completes.</li>
+<li>An asynchronous I/O operation does not cause the requesting process to be blocked.</li>
 </ul>
-<p>Using these definitions, the first four I&#x2F;O models—blocking, nonblocking, I&#x2F;O multiplexing, and signal-driven I&#x2F;O—are all synchronous because the actual I&#x2F;O operation (recvfrom) blocks the process. Only the asynchronous I&#x2F;O model matches the asynchronous I&#x2F;O definition.</p>
+<p>Using these definitions, the first four I/O models—blocking, nonblocking, I/O multiplexing, and signal-driven I/O—are all synchronous because the actual I/O operation (recvfrom) blocks the process. Only the asynchronous I/O model matches the asynchronous I/O definition.</p>
 
     </div>
 
@@ -368,7 +375,7 @@ POSIX defines these two terms as follows:
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%BB%E5%A1%9E%E5%BC%8FIO"><span class="nav-number">1.</span> <span class="nav-text">阻塞式IO</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9D%9E%E9%98%BB%E5%A1%9E%E5%BC%8FIO"><span class="nav-number">2.</span> <span class="nav-text">非阻塞式IO</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#I-x2F-O%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8"><span class="nav-number">3.</span> <span class="nav-text">I&#x2F;O多路复用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BF%A1%E5%8F%B7%E9%A9%B1%E5%8A%A8IO%E6%A8%A1%E5%9E%8B"><span class="nav-number">4.</span> <span class="nav-text">信号驱动IO模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%82%E6%AD%A5IO%E6%A8%A1%E5%9E%8B"><span class="nav-number">5.</span> <span class="nav-text">异步IO模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%A0%E7%A7%8DIO%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%AF%94%E8%BE%83"><span class="nav-number">6.</span> <span class="nav-text">几种IO模型的比较</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%BB%E5%A1%9E%E5%BC%8Fio"><span class="nav-number">1.</span> <span class="nav-text"> 阻塞式IO</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9D%9E%E9%98%BB%E5%A1%9E%E5%BC%8Fio"><span class="nav-number">2.</span> <span class="nav-text"> 非阻塞式IO</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#io%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8"><span class="nav-number">3.</span> <span class="nav-text"> I&#x2F;O多路复用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BF%A1%E5%8F%B7%E9%A9%B1%E5%8A%A8io%E6%A8%A1%E5%9E%8B"><span class="nav-number">4.</span> <span class="nav-text"> 信号驱动IO模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%82%E6%AD%A5io%E6%A8%A1%E5%9E%8B"><span class="nav-number">5.</span> <span class="nav-text"> 异步IO模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%A0%E7%A7%8Dio%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%AF%94%E8%BE%83"><span class="nav-number">6.</span> <span class="nav-text"> 几种IO模型的比较</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -384,7 +391,7 @@ POSIX defines these two terms as follows:
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">24</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -395,7 +402,7 @@ POSIX defines these two terms as follows:
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -488,6 +495,11 @@ POSIX defines these two terms as follows:
 
 
   
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0/dist/katex.min.css">
+
 
   
 

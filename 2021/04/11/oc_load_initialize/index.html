@@ -241,17 +241,25 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h3 id="load调用时机"><a href="#load调用时机" class="headerlink" title="load调用时机"></a>load调用时机</h3><blockquote>
+        <h3 id="load调用时机"><a class="markdownIt-Anchor" href="#load调用时机"></a> load调用时机</h3>
+<blockquote>
 <p>在这个文件被程序装载时调用。</p>
 </blockquote>
-<p>当我们启动程序时，参与了编译的类、分类都会被加载进内存，load方法就是在这个类被加载的时候调用的，这个过程与这个类是否被使用是无关的，只要是在Compile Sources中出现的文件总是会被装载。<br><code>load</code>是在main之前进行调用。</p>
-<h3 id="load调用顺序"><a href="#load调用顺序" class="headerlink" title="load调用顺序"></a>load调用顺序</h3><p>一个程序中如果所有的类、分类都实现了load方法，那么所有的load方法都会被调用。它们的执行顺序遵循以下规则：</p>
-<p>先执行所有类的<code>load</code>方法，再执行所有分类的<code>load</code>方法。<br>执行类的<code>load</code>方法时，是按照参与编译的顺序，先编译的类先执行，但是如果某个类是继承自另一个类，那么会先执行父类的<code>load</code>方法个再执行自己的<code>load</code>方法。<br>执行分类的<code>load</code>方法时，是按照分类参与编译的顺序，先编译的分类先执行。</p>
+<p>当我们启动程序时，参与了编译的类、分类都会被加载进内存，load方法就是在这个类被加载的时候调用的，这个过程与这个类是否被使用是无关的，只要是在Compile Sources中出现的文件总是会被装载。<br />
+<code>load</code>是在main之前进行调用。</p>
+<h3 id="load调用顺序"><a class="markdownIt-Anchor" href="#load调用顺序"></a> load调用顺序</h3>
+<p>一个程序中如果所有的类、分类都实现了load方法，那么所有的load方法都会被调用。它们的执行顺序遵循以下规则：</p>
+<p>先执行所有类的<code>load</code>方法，再执行所有分类的<code>load</code>方法。<br />
+执行类的<code>load</code>方法时，是按照参与编译的顺序，先编译的类先执行，但是如果某个类是继承自另一个类，那么会先执行父类的<code>load</code>方法个再执行自己的<code>load</code>方法。<br />
+执行分类的<code>load</code>方法时，是按照分类参与编译的顺序，先编译的分类先执行。</p>
 <p>编译顺序是按照项目中<code>Build Phases --&gt; Compile Sources</code>文件排序来进行的，最上面的就最先编译。</p>
-<h3 id="initialize调用时机"><a href="#initialize调用时机" class="headerlink" title="initialize调用时机"></a>initialize调用时机</h3><p><code>initialize</code>方法是在类或它的子类收到第一条消息时被调用的，这里的消息就是指实例方法或类方法的调用，所以所有类的<code>initialize</code>调用是在执行<code>main</code>函数之后调用的。而且一个类只会调用一次<code>initialize</code>方法。如果一个类在程序运行过程中一直没有被使用过，那这个类的<code>initialize</code>方法也就不会被调用，这一点和<code>load</code>方法是不一样的。</p>
+<h3 id="initialize调用时机"><a class="markdownIt-Anchor" href="#initialize调用时机"></a> initialize调用时机</h3>
+<p><code>initialize</code>方法是在类或它的子类收到第一条消息时被调用的，这里的消息就是指实例方法或类方法的调用，所以所有类的<code>initialize</code>调用是在执行<code>main</code>函数之后调用的。而且一个类只会调用一次<code>initialize</code>方法。如果一个类在程序运行过程中一直没有被使用过，那这个类的<code>initialize</code>方法也就不会被调用，这一点和<code>load</code>方法是不一样的。</p>
 <p>使用initialize要比使用load安全(因为在调用initialize时所有类已经被加载进内存了)，但我们还是要尽量少用initialize这个方法个，尤其要谨慎在分类中实现initialize方法，因为如果在分类中实现了，本类实现的initialize方法将不会被调用。实际开发中initialize方法一般用于初始化全局变量或静态变量。</p>
-<h3 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h3><p><code>load</code>方法通常用来进行<code>Method Swizzle</code>，<code>initialize</code>方法一般用于初始化全局变量或静态变量，<code>load</code>和<code>initialize</code>方法内部使用了锁，因此它们是线程安全的。实现时要尽可能保持简单，避免阻塞线程，不要再使用锁。</p>
-<p>参考<br><a target="_blank" rel="noopener" href="https://juejin.cn/post/6844904040703197191">https://juejin.cn/post/6844904040703197191</a></p>
+<h3 id="应用场景"><a class="markdownIt-Anchor" href="#应用场景"></a> 应用场景</h3>
+<p><code>load</code>方法通常用来进行<code>Method Swizzle</code>，<code>initialize</code>方法一般用于初始化全局变量或静态变量，<code>load</code>和<code>initialize</code>方法内部使用了锁，因此它们是线程安全的。实现时要尽可能保持简单，避免阻塞线程，不要再使用锁。</p>
+<p>参考<br />
+<a target="_blank" rel="noopener" href="https://juejin.cn/post/6844904040703197191">https://juejin.cn/post/6844904040703197191</a></p>
 
     </div>
 
@@ -335,7 +343,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#load%E8%B0%83%E7%94%A8%E6%97%B6%E6%9C%BA"><span class="nav-number">1.</span> <span class="nav-text">load调用时机</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#load%E8%B0%83%E7%94%A8%E9%A1%BA%E5%BA%8F"><span class="nav-number">2.</span> <span class="nav-text">load调用顺序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#initialize%E8%B0%83%E7%94%A8%E6%97%B6%E6%9C%BA"><span class="nav-number">3.</span> <span class="nav-text">initialize调用时机</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">4.</span> <span class="nav-text">应用场景</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#load%E8%B0%83%E7%94%A8%E6%97%B6%E6%9C%BA"><span class="nav-number">1.</span> <span class="nav-text"> load调用时机</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#load%E8%B0%83%E7%94%A8%E9%A1%BA%E5%BA%8F"><span class="nav-number">2.</span> <span class="nav-text"> load调用顺序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#initialize%E8%B0%83%E7%94%A8%E6%97%B6%E6%9C%BA"><span class="nav-number">3.</span> <span class="nav-text"> initialize调用时机</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">4.</span> <span class="nav-text"> 应用场景</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -351,7 +359,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">24</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -362,7 +370,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -455,6 +463,11 @@
 
 
   
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0/dist/katex.min.css">
+
 
   
 

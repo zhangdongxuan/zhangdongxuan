@@ -241,64 +241,83 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><h3 id="Flex"><a href="#Flex" class="headerlink" title="Flex"></a>Flex</h3><p>Flex是一个词法分析工具，词法分析可以称为lexical analysis，或称scanning； </p>
+        <h2 id="简介"><a class="markdownIt-Anchor" href="#简介"></a> 简介</h2>
+<h3 id="flex"><a class="markdownIt-Anchor" href="#flex"></a> Flex</h3>
+<p>Flex是一个词法分析工具，词法分析可以称为lexical analysis，或称scanning；</p>
 <blockquote>
 <p>词法分析把输入分割成一个个有意义的词块，称为记号（token）；</p>
 </blockquote>
-<h3 id="Bison"><a href="#Bison" class="headerlink" title="Bison"></a>Bison</h3><p>Bison是一个语法分析工具，语法分析可以称为syntax analysis，或称parsing；</p>
+<h3 id="bison"><a class="markdownIt-Anchor" href="#bison"></a> Bison</h3>
+<p>Bison是一个语法分析工具，语法分析可以称为syntax analysis，或称parsing；</p>
 <blockquote>
 <p>语法分析主要是确定词法分析记号（token）是如何彼此关联的；</p>
 </blockquote>
 <p>基本所有的编译器项目中，都会使用lex或者flex做词法分析，并利用Yacc或者Bison对词法分析的结果进行语法分析。</p>
 <p>flex和bison最早是用来生成编译器的，他们具备处理结构化的输入的能力，后来发现他们可以用在很多地方，例如解析css文件、json文件、XML文件等。</p>
-<h2 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h2><h3 id="上下文无关文法"><a href="#上下文无关文法" class="headerlink" title="上下文无关文法"></a>上下文无关文法</h3><p>当我们编写一个语法分析器，就需要我们用一定的方法来描述记号转化为语法分析树的规则。<br>这种描述的方法在计算机中最常用的就是上下文无关文法Context-Free Grammar。<br>上下文无关文法就是说这个文法中所有的产生式左边只有一个非终结符。</p>
+<h2 id="语法"><a class="markdownIt-Anchor" href="#语法"></a> 语法</h2>
+<h3 id="上下文无关文法"><a class="markdownIt-Anchor" href="#上下文无关文法"></a> 上下文无关文法</h3>
+<p>当我们编写一个语法分析器，就需要我们用一定的方法来描述记号转化为语法分析树的规则。<br />
+这种描述的方法在计算机中最常用的就是上下文无关文法Context-Free Grammar。<br />
+上下文无关文法就是说这个文法中所有的产生式左边只有一个非终结符。</p>
 <p>例如下面这个就是上下文无关文法</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">S -&gt; aSb | ab      这个文法产生了语言 &#123;a^n * b^n : n ≥ 1&#125; </span><br></pre></td></tr></table></figure>
-
 <p>这个文法有两个产生式，每个产生式左边只有一个非终结符S，这就是上下文无关文法，因为你只要找到符合产生式右边的串，就可以把它归约为对应的非终结符。</p>
 <p>要理解什么是上下文无关文法，可以先感受一下上下文有关文法，例如</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">S -&gt; ab</span><br><span class="line"></span><br><span class="line">aSb -&gt; aaSbb</span><br></pre></td></tr></table></figure>
 <p>这就是上下文相关文法，因为它的第一个产生式左边有不止一个符号，所以你在匹配这个产生式中的S的时候必需确保这个S有正确的“上下文”，也就是左边的a和右边的b，所以叫上下文相关文法。</p>
 <p>因为上下文无关文法有足够强的表达力来表示大多数程序设计语言的语法，上下文无关文法又足够简单，使得我们可以构造有效的分析算法来检验一个给定字串是否是由某个上下文无关文法产生的。</p>
-<h3 id="BNF文法"><a href="#BNF文法" class="headerlink" title="BNF文法"></a>BNF文法</h3><p>为了编写一个语法分析器，需要一定的方法来描述语法分析器所使用的把一系列记号转化为语法分析树的规则。在计算机分析程序里最常用的语言就是上下文无关文法（Context-Free Grammar, CFG）。书写上下文无关文法的标准格式就是Backus-Naur范式（BackusNaur Form，BNF）。</p>
+<h3 id="bnf文法"><a class="markdownIt-Anchor" href="#bnf文法"></a> BNF文法</h3>
+<p>为了编写一个语法分析器，需要一定的方法来描述语法分析器所使用的把一系列记号转化为语法分析树的规则。在计算机分析程序里最常用的语言就是上下文无关文法（Context-Free Grammar, CFG）。书写上下文无关文法的标准格式就是Backus-Naur范式（BackusNaur Form，BNF）。</p>
 <p>BNF文法用起来是非常简单易懂的，例如我们可以用下面的表达式来表示 1 * 2 + 3 * 4 + 5:</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;exp&gt; ::= &lt;factor&gt; | &lt;exp&gt; + &lt;factor&gt;</span><br><span class="line"></span><br><span class="line">&lt;factor&gt; ::= NUMBER | &lt;factor&gt; * NUMBER</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<p>每一行就是一条规则，用来说明如何创建语法分析树的分支。<br>有效的BNF总是带有递归性的，规则会直接或者间接地指向自身。</p>
-<h3 id="Flex语法结构"><a href="#Flex语法结构" class="headerlink" title="Flex语法结构"></a>Flex语法结构</h3><p>以最简单的word count的程序word_count.l来看</p>
+<p>每一行就是一条规则，用来说明如何创建语法分析树的分支。<br />
+有效的BNF总是带有递归性的，规则会直接或者间接地指向自身。</p>
+<h3 id="flex语法结构"><a class="markdownIt-Anchor" href="#flex语法结构"></a> Flex语法结构</h3>
+<p>以最简单的word count的程序word_count.l来看</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">%&#123;</span><br><span class="line">	int chars = 0;</span><br><span class="line">	int words = 0;</span><br><span class="line">	int lines = 0; </span><br><span class="line">%&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">%%</span><br><span class="line"></span><br><span class="line">[a-zA-Z]+ 	&#123; words++; chars += strlen(yytext); &#125; </span><br><span class="line">\n 			&#123; chars++; lines++; &#125;</span><br><span class="line">. 			&#123; chars++; &#125;</span><br><span class="line"></span><br><span class="line">%%</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">int main(int argc, char **argv)</span><br><span class="line">&#123;</span><br><span class="line">	yylex();</span><br><span class="line">	printf(&quot;%8d%8d%8d\n&quot;, lines, words, chars); </span><br><span class="line">	return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
 <p>MacOS下编译代码命令</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">flex word_count.l</span><br><span class="line">cc lex.yy.c -ll</span><br></pre></td></tr></table></figure>
-
-<h4 id="变量声明"><a href="#变量声明" class="headerlink" title="变量声明"></a>变量声明</h4><p>声明部分可以进行声明和选项设置。<br>可以在%{和%}包围的部分里面定义c代码，里面的内容会被完整地复制到lex.yy.c 的开头，通常会用来放置include、define的信息。</p>
-<h4 id="规则定义"><a href="#规则定义" class="headerlink" title="规则定义"></a>规则定义</h4><p>规则声明部分被两个%%包围，规则为</p>
+<h4 id="变量声明"><a class="markdownIt-Anchor" href="#变量声明"></a> 变量声明</h4>
+<p>声明部分可以进行声明和选项设置。<br />
+可以在%{和%}包围的部分里面定义c代码，里面的内容会被完整地复制到lex.yy.c 的开头，通常会用来放置include、define的信息。</p>
+<h4 id="规则定义"><a class="markdownIt-Anchor" href="#规则定义"></a> 规则定义</h4>
+<p>规则声明部分被两个%%包围，规则为</p>
 <blockquote>
 <p>正则表达式  {匹配到之后执行的C代码}</p>
 </blockquote>
-<p>例如：<br>[a-zA-Z]+     { words++; chars +&#x3D; strlen(yytext); }<br>在任意一个flex的动作中，变量yytext总是被设为指向本次匹配的输入文本。<br>前面的部分就是模式，处于一行的开始位置，后面的部分就是动作，也就是，输入中匹配到了这个模式的时候，对应的进行什么动作。<br>yytext，在输入匹配到该模式的时候，匹配的部分就存储到yytext里面。</p>
-<h4 id="C代码部分"><a href="#C代码部分" class="headerlink" title="C代码部分"></a>C代码部分</h4><p>这部分是C代码，它们会被复制到lex.yy.c的最末尾。</p>
+<p>例如：<br />
+[a-zA-Z]+ 	{ words++; chars += strlen(yytext); }<br />
+在任意一个flex的动作中，变量yytext总是被设为指向本次匹配的输入文本。<br />
+前面的部分就是模式，处于一行的开始位置，后面的部分就是动作，也就是，输入中匹配到了这个模式的时候，对应的进行什么动作。<br />
+yytext，在输入匹配到该模式的时候，匹配的部分就存储到yytext里面。</p>
+<h4 id="c代码部分"><a class="markdownIt-Anchor" href="#c代码部分"></a> C代码部分</h4>
+<p>这部分是C代码，它们会被复制到lex.yy.c的最末尾。</p>
 <p>程序主要由一系列带有指令的正则表达式组成，这些指令确定了正则表达式匹配后相应的动作（action）。</p>
-<h3 id="Bison语法结构"><a href="#Bison语法结构" class="headerlink" title="Bison语法结构"></a>Bison语法结构</h3><p>bison的语法规则也分为三部分，以flex 和 bison协同的计算器程序为例</p>
+<h3 id="bison语法结构"><a class="markdownIt-Anchor" href="#bison语法结构"></a> Bison语法结构</h3>
+<p>bison的语法规则也分为三部分，以flex 和 bison协同的计算器程序为例</p>
 <p>flex部分：创建calculator.l并声明</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">%&#123;</span><br><span class="line">    //calculator_def中定义了记号</span><br><span class="line">	#include &quot;calculator_def.h&quot;</span><br><span class="line">%&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">%%</span><br><span class="line"></span><br><span class="line">&quot;+&quot; 	&#123; return ADD; &#125;</span><br><span class="line">&quot;-&quot; 	&#123; return SUB; &#125;</span><br><span class="line">&quot;*&quot; 	&#123; return MUL; &#125;</span><br><span class="line">&quot;/&quot; 	&#123; return DIV; &#125;</span><br><span class="line">&quot;|&quot; 	&#123; return ABS; &#125;</span><br><span class="line">[0-9]+ 	&#123; yylval = atoi(yytext); return NUMBER; &#125; </span><br><span class="line">\n 		&#123; return EOL; &#125;</span><br><span class="line">[ \t]	&#123; /**whitespace**/ &#125;</span><br><span class="line">.		&#123; printf(&quot;Mystery character %c\n&quot;, *yytext); &#125;</span><br><span class="line"></span><br><span class="line">%%</span><br></pre></td></tr></table></figure>
-
 <p>bison代码：创建calculator.y并编写代码</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">%&#123;</span><br><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">%&#125;</span><br><span class="line"></span><br><span class="line">/* declare tokens */ </span><br><span class="line">%token NUMBER</span><br><span class="line">%token ADD SUB MUL DIV ABS </span><br><span class="line">%token EOL</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">%%</span><br><span class="line">calclist:</span><br><span class="line">		| calclist exp EOL &#123; printf(&quot;= %d\n&quot;, $2); &#125; </span><br><span class="line"></span><br><span class="line"></span><br><span class="line">exp: factor</span><br><span class="line">	| exp ADD factor &#123; $$ = $1 + $3; &#125; </span><br><span class="line">	| exp SUB factor &#123; $$ = $1 - $3; &#125; ;</span><br><span class="line"></span><br><span class="line">factor: term</span><br><span class="line">	| factor MUL term &#123; $$ = $1 * $3; &#125; </span><br><span class="line">	| factor DIV term &#123; $$ = $1 / $3; &#125; ;</span><br><span class="line"></span><br><span class="line">term: NUMBER</span><br><span class="line">	| ABS term &#123; $$ = $2 &gt;= 0? $2 : - $2; &#125; ;</span><br><span class="line"></span><br><span class="line">%%</span><br><span class="line"></span><br><span class="line">int main(int argc, char **argv)</span><br><span class="line">&#123;</span><br><span class="line">	yyparse();</span><br><span class="line">	return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">yyerror(char *s)</span><br><span class="line">&#123;</span><br><span class="line">	fprintf(stderr, &quot;error: %s\n&quot;, s);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<h4 id="声明部分和C代码部分"><a href="#声明部分和C代码部分" class="headerlink" title="声明部分和C代码部分"></a>声明部分和C代码部分</h4><p>被%{和%}包围的部分，里面的内容会被完整地复制到lex.yy.c 的开头，通常会用来放置include、define的信息。</p>
-<p>除此之外一般还要进行token设置。<br>token用于标记语法解析中用到的基本语素，教程里称之为“记号”。<br>用枚举来定义，而且为了避免冲突一般枚举的值从258开始。<br>语法是：<br>%token 记号，例如</p>
+<h4 id="声明部分和c代码部分"><a class="markdownIt-Anchor" href="#声明部分和c代码部分"></a> 声明部分和C代码部分</h4>
+<p>被%{和%}包围的部分，里面的内容会被完整地复制到lex.yy.c 的开头，通常会用来放置include、define的信息。</p>
+<p>除此之外一般还要进行token设置。<br />
+token用于标记语法解析中用到的基本语素，教程里称之为“记号”。<br />
+用枚举来定义，而且为了避免冲突一般枚举的值从258开始。<br />
+语法是：<br />
+%token 记号，例如</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">%token NUMBER</span><br><span class="line">%token ADD SUB MUL DIV ABS </span><br><span class="line">%token EOL</span><br></pre></td></tr></table></figure>
-
 <p>这里一般是当flex成功匹配到一个模式的时候，会return一个token，然后在bison的规则中查找应该进行的动作。</p>
-<h4 id="规则部分"><a href="#规则部分" class="headerlink" title="规则部分"></a>规则部分</h4><p>规则部分遵循DNF范式的定义，每一个bison语法分析器在分析其输入时都会构造一棵语法分析树。<br>在有些应用里，它把整棵树作为一个数据结构创建在内存中以便于后续使用。<br>在其他应用里，语法分析树只是隐式地包含在语法分析器进行的一系列操作中。</p>
+<h4 id="规则部分"><a class="markdownIt-Anchor" href="#规则部分"></a> 规则部分</h4>
+<p>规则部分遵循DNF范式的定义，每一个bison语法分析器在分析其输入时都会构造一棵语法分析树。<br />
+在有些应用里，它把整棵树作为一个数据结构创建在内存中以便于后续使用。<br />
+在其他应用里，语法分析树只是隐式地包含在语法分析器进行的一系列操作中。</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">%%</span><br><span class="line">calclist:</span><br><span class="line">		| calclist exp EOL &#123; printf(&quot;= %d\n&quot;, $2); &#125; ;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">exp: factor</span><br><span class="line">	| exp ADD factor &#123; $$ = $1 + $3; &#125; </span><br><span class="line">	| exp SUB factor &#123; $$ = $1 - $3; &#125; ;</span><br><span class="line"></span><br><span class="line">factor: term</span><br><span class="line">	| factor MUL term &#123; $$ = $1 * $3; &#125; </span><br><span class="line">	| factor DIV term &#123; $$ = $1 / $3; &#125; ;</span><br><span class="line"></span><br><span class="line">term: NUMBER</span><br><span class="line">	| ABS term &#123; $$ = $2 &gt;= 0? $2 : - $2; &#125; ;</span><br><span class="line"></span><br><span class="line">%%</span><br></pre></td></tr></table></figure>
-
-<h4 id="第三部分是用户自定义代码"><a href="#第三部分是用户自定义代码" class="headerlink" title="第三部分是用户自定义代码"></a>第三部分是用户自定义代码</h4><p>以上可以使用如下命令生成编译结果：</p>
+<h4 id="第三部分是用户自定义代码"><a class="markdownIt-Anchor" href="#第三部分是用户自定义代码"></a> 第三部分是用户自定义代码</h4>
+<p>以上可以使用如下命令生成编译结果：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">bison -d calculator.y</span><br><span class="line">flex calculator.l</span><br><span class="line">cc -o calculator calculator.tab.c lex.yy.c -ll</span><br></pre></td></tr></table></figure>
-
-
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>利用flex &amp; bison 除了可以进行语言的词法和文法分析，还可以接续几乎所有的结构化文本。</p>
+<h2 id="总结"><a class="markdownIt-Anchor" href="#总结"></a> 总结</h2>
+<p>利用flex &amp; bison 除了可以进行语言的词法和文法分析，还可以接续几乎所有的结构化文本。</p>
 <p>文章中提到的代码，我放到了github上：<a target="_blank" rel="noopener" href="https://github.com/zhangdongxuan/Flex-Bison%E3%80%82">https://github.com/zhangdongxuan/Flex-Bison。</a></p>
 
     </div>
@@ -383,7 +402,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Flex"><span class="nav-number">1.1.</span> <span class="nav-text">Flex</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Bison"><span class="nav-number">1.2.</span> <span class="nav-text">Bison</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text">语法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E6%97%A0%E5%85%B3%E6%96%87%E6%B3%95"><span class="nav-number">2.1.</span> <span class="nav-text">上下文无关文法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#BNF%E6%96%87%E6%B3%95"><span class="nav-number">2.2.</span> <span class="nav-text">BNF文法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Flex%E8%AF%AD%E6%B3%95%E7%BB%93%E6%9E%84"><span class="nav-number">2.3.</span> <span class="nav-text">Flex语法结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%98%E9%87%8F%E5%A3%B0%E6%98%8E"><span class="nav-number">2.3.1.</span> <span class="nav-text">变量声明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A7%84%E5%88%99%E5%AE%9A%E4%B9%89"><span class="nav-number">2.3.2.</span> <span class="nav-text">规则定义</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#C%E4%BB%A3%E7%A0%81%E9%83%A8%E5%88%86"><span class="nav-number">2.3.3.</span> <span class="nav-text">C代码部分</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Bison%E8%AF%AD%E6%B3%95%E7%BB%93%E6%9E%84"><span class="nav-number">2.4.</span> <span class="nav-text">Bison语法结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A3%B0%E6%98%8E%E9%83%A8%E5%88%86%E5%92%8CC%E4%BB%A3%E7%A0%81%E9%83%A8%E5%88%86"><span class="nav-number">2.4.1.</span> <span class="nav-text">声明部分和C代码部分</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A7%84%E5%88%99%E9%83%A8%E5%88%86"><span class="nav-number">2.4.2.</span> <span class="nav-text">规则部分</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86%E6%98%AF%E7%94%A8%E6%88%B7%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BB%A3%E7%A0%81"><span class="nav-number">2.4.3.</span> <span class="nav-text">第三部分是用户自定义代码</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text"> 简介</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#flex"><span class="nav-number">1.1.</span> <span class="nav-text"> Flex</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bison"><span class="nav-number">1.2.</span> <span class="nav-text"> Bison</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text"> 语法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E6%97%A0%E5%85%B3%E6%96%87%E6%B3%95"><span class="nav-number">2.1.</span> <span class="nav-text"> 上下文无关文法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bnf%E6%96%87%E6%B3%95"><span class="nav-number">2.2.</span> <span class="nav-text"> BNF文法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#flex%E8%AF%AD%E6%B3%95%E7%BB%93%E6%9E%84"><span class="nav-number">2.3.</span> <span class="nav-text"> Flex语法结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%98%E9%87%8F%E5%A3%B0%E6%98%8E"><span class="nav-number">2.3.1.</span> <span class="nav-text"> 变量声明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A7%84%E5%88%99%E5%AE%9A%E4%B9%89"><span class="nav-number">2.3.2.</span> <span class="nav-text"> 规则定义</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#c%E4%BB%A3%E7%A0%81%E9%83%A8%E5%88%86"><span class="nav-number">2.3.3.</span> <span class="nav-text"> C代码部分</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bison%E8%AF%AD%E6%B3%95%E7%BB%93%E6%9E%84"><span class="nav-number">2.4.</span> <span class="nav-text"> Bison语法结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A3%B0%E6%98%8E%E9%83%A8%E5%88%86%E5%92%8Cc%E4%BB%A3%E7%A0%81%E9%83%A8%E5%88%86"><span class="nav-number">2.4.1.</span> <span class="nav-text"> 声明部分和C代码部分</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A7%84%E5%88%99%E9%83%A8%E5%88%86"><span class="nav-number">2.4.2.</span> <span class="nav-text"> 规则部分</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86%E6%98%AF%E7%94%A8%E6%88%B7%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BB%A3%E7%A0%81"><span class="nav-number">2.4.3.</span> <span class="nav-text"> 第三部分是用户自定义代码</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">3.</span> <span class="nav-text"> 总结</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -399,7 +418,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">24</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -410,7 +429,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -503,6 +522,11 @@
 
 
   
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0/dist/katex.min.css">
+
 
   
 

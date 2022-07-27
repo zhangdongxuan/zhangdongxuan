@@ -250,14 +250,20 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><p>指用编译器(compiler)将源代码(source code)生成二进制目标文件(object file)，在Windows下也就是 .obj 文件，UNIX下是 .o 文件。编译时，编译器需要的是语法的正确，函数与变量的声明的正确，编译器只检测程序语法，和函数、变量是否被声明，函数并不需要被定义。<br>mac os 下编译C++的文件：</p>
+        <h2 id="编译"><a class="markdownIt-Anchor" href="#编译"></a> 编译</h2>
+<p>指用编译器(compiler)将源代码(source code)生成二进制目标文件(object file)，在Windows下也就是 .obj 文件，UNIX下是 .o 文件。编译时，编译器需要的是语法的正确，函数与变量的声明的正确，编译器只检测程序语法，和函数、变量是否被声明，函数并不需要被定义。<br />
+mac os 下编译C++的文件：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">g++ -c test.cpp    </span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>-c 是compile的意思<br>生成二进制文件 test.o。</p>
-<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><p>找到所要用到函数所在的目标文件，并把它们链接在一起合成为可执行文件(executable file)。链接时，要确保编译器能找到所有被用到了的函数所在的目标文件。<br>mac os 下编译C++的文件：</p>
+<p>-c 是compile的意思<br />
+生成二进制文件 test.o。</p>
+<h2 id="链接"><a class="markdownIt-Anchor" href="#链接"></a> 链接</h2>
+<p>找到所要用到函数所在的目标文件，并把它们链接在一起合成为可执行文件(executable file)。链接时，要确保编译器能找到所有被用到了的函数所在的目标文件。<br />
+mac os 下编译C++的文件：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">g++ test.o -o output </span><br><span class="line"></span><br></pre></td></tr></table></figure>
 <p>生成可执行文件output。这里可以将多个文件同时</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ test.o test2.o -o output</span><br></pre></td></tr></table></figure>
-<h2 id="结合"><a href="#结合" class="headerlink" title="结合"></a>结合</h2><p>编译和链接两个过程可以结合起来：</p>
+<h2 id="结合"><a class="markdownIt-Anchor" href="#结合"></a> 结合</h2>
+<p>编译和链接两个过程可以结合起来：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ test.cpp test2.cpp -o output</span><br></pre></td></tr></table></figure>
 <p>一步生成可执行文件output。中间会先编译生成目标文件，然后链接生成可执行文件。</p>
 <p>另外如果只有一个C++文件，可以一步到位，生成执行文件a.out</p>
@@ -344,7 +350,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91"><span class="nav-number">1.</span> <span class="nav-text">编译</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5"><span class="nav-number">2.</span> <span class="nav-text">链接</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E5%90%88"><span class="nav-number">3.</span> <span class="nav-text">结合</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91"><span class="nav-number">1.</span> <span class="nav-text"> 编译</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5"><span class="nav-number">2.</span> <span class="nav-text"> 链接</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E5%90%88"><span class="nav-number">3.</span> <span class="nav-text"> 结合</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -360,7 +366,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">24</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -371,7 +377,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -464,6 +470,11 @@
 
 
   
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0/dist/katex.min.css">
+
 
   
 

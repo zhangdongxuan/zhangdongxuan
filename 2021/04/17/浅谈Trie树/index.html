@@ -243,11 +243,21 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>在计算机科学中，trie，又称前缀树或字典树，是一种有序树，用于保存关联数组，其中的键通常是字符串。与二叉查找树不同，键不是直接保存在节点中，而是由节点在树中的位置决定。一个节点的所有子孙都有相同的前缀，也就是这个节点对应的字符串，而根节点对应空字符串。一般情况下，不是所有的节点都有对应的值，只有叶子节点和部分内部节点所对应的键才有相关的值。</p>
-<p><img src="/images/algorithm/trie.gif"></p>
-<h2 id="基本性质"><a href="#基本性质" class="headerlink" title="基本性质"></a>基本性质</h2><p>1、根节点不包含字符，除根节点意外每个节点只包含一个字符。<br>2、从根节点到某一个节点，路径上经过的字符连接起来，为该节点对应的字符串。<br>3、每个节点的所有子节点包含的字符串不相同。</p>
-<h2 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h2><p>可以最大限度地减少无谓的字符串比较，故可以用于词频统计和大量字符串排序。<br>跟哈希表比较：　　　　<br>    1、最坏情况时间复杂度比hash表好<br>    2、没有冲突，除非一个key对应多个值（除key外的其他信息）<br>    3、自带排序功能（类似Radix Sort），中序遍历trie可以得到排序。</p>
-<h2 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h2><p>1、虽然不同单词共享前缀，但其实trie是一个以空间换时间的算法。其每一个字符都可能包含至多字符集大小数目的指针（不包含卫星数据）。</p>
+        <h2 id="定义"><a class="markdownIt-Anchor" href="#定义"></a> 定义</h2>
+<p>在计算机科学中，trie，又称前缀树或字典树，是一种有序树，用于保存关联数组，其中的键通常是字符串。与二叉查找树不同，键不是直接保存在节点中，而是由节点在树中的位置决定。一个节点的所有子孙都有相同的前缀，也就是这个节点对应的字符串，而根节点对应空字符串。一般情况下，不是所有的节点都有对应的值，只有叶子节点和部分内部节点所对应的键才有相关的值。</p>
+<p><img src="/images/algorithm/trie.gif" alt="" /></p>
+<h2 id="基本性质"><a class="markdownIt-Anchor" href="#基本性质"></a> 基本性质</h2>
+<p>1、根节点不包含字符，除根节点意外每个节点只包含一个字符。<br />
+2、从根节点到某一个节点，路径上经过的字符连接起来，为该节点对应的字符串。<br />
+3、每个节点的所有子节点包含的字符串不相同。</p>
+<h2 id="优点"><a class="markdownIt-Anchor" href="#优点"></a> 优点</h2>
+<p>可以最大限度地减少无谓的字符串比较，故可以用于词频统计和大量字符串排序。<br />
+跟哈希表比较：　　　　<br />
+1、最坏情况时间复杂度比hash表好<br />
+2、没有冲突，除非一个key对应多个值（除key外的其他信息）<br />
+3、自带排序功能（类似Radix Sort），中序遍历trie可以得到排序。</p>
+<h2 id="缺点"><a class="markdownIt-Anchor" href="#缺点"></a> 缺点</h2>
+<p>1、虽然不同单词共享前缀，但其实trie是一个以空间换时间的算法。其每一个字符都可能包含至多字符集大小数目的指针（不包含卫星数据）。</p>
 <blockquote>
 <p>每个结点的子树的根节点的组织方式有几种。</p>
 </blockquote>
@@ -257,25 +267,52 @@
 <li>alphabet reduction: 减少字符宽度以减少字母集个数。</li>
 <li>对字符集使用bitmap，再配合链接法。</li>
 </ul>
-<p>2、如果数据存储在外部存储器等较慢位置，Trie会较hash速度慢（hash访问O(1)次外存，Trie访问O(树高)）。<br>3、长的浮点数等会让链变得很长。可用bitwise trie改进。</p>
-<h2 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h2><h4 id="一、字符串检索"><a href="#一、字符串检索" class="headerlink" title="一、字符串检索"></a>一、字符串检索</h4><p>事先将已知的一些字符串（字典）的有关信息保存到trie树里，查找另外一些未知字符串是否出现过或者出现频率。<br>举例：<br>1、给出N 个单词组成的熟词表，以及一篇全用小写英文书写的文章，请你按最早出现的顺序写出所有不在熟词表中的生词。<br>2、给出一个词典，其中的单词为不良单词。单词均为小写字母。再给出一段文本，文本的每一行也由小写字母构成。判断文本中是否含有任何不良单词。例如，若rob是不良单词，那么文本problem含有不良单词。<br>3、1000万字符串，其中有些是重复的，需要把重复的全部去掉，保留没有重复的字符串。</p>
-<h4 id="二、文本预测、自动完成，see-also，拼写检查"><a href="#二、文本预测、自动完成，see-also，拼写检查" class="headerlink" title="二、文本预测、自动完成，see also，拼写检查"></a>二、文本预测、自动完成，see also，拼写检查</h4><h4 id="三、词频统计"><a href="#三、词频统计" class="headerlink" title="三、词频统计"></a>三、词频统计</h4><p>1、有一个1G大小的一个文件，里面每一行是一个词，词的大小不超过16字节，内存限制大小是1M。返回频数最高的100个词。</p>
+<p>2、如果数据存储在外部存储器等较慢位置，Trie会较hash速度慢（hash访问O(1)次外存，Trie访问O(树高)）。<br />
+3、长的浮点数等会让链变得很长。可用bitwise trie改进。</p>
+<h2 id="应用场景"><a class="markdownIt-Anchor" href="#应用场景"></a> 应用场景</h2>
+<h4 id="一-字符串检索"><a class="markdownIt-Anchor" href="#一-字符串检索"></a> 一、字符串检索</h4>
+<p>事先将已知的一些字符串（字典）的有关信息保存到trie树里，查找另外一些未知字符串是否出现过或者出现频率。<br />
+举例：<br />
+1、给出N 个单词组成的熟词表，以及一篇全用小写英文书写的文章，请你按最早出现的顺序写出所有不在熟词表中的生词。<br />
+2、给出一个词典，其中的单词为不良单词。单词均为小写字母。再给出一段文本，文本的每一行也由小写字母构成。判断文本中是否含有任何不良单词。例如，若rob是不良单词，那么文本problem含有不良单词。<br />
+3、1000万字符串，其中有些是重复的，需要把重复的全部去掉，保留没有重复的字符串。</p>
+<h4 id="二-文本预测-自动完成see-also拼写检查"><a class="markdownIt-Anchor" href="#二-文本预测-自动完成see-also拼写检查"></a> 二、文本预测、自动完成，see also，拼写检查</h4>
+<h4 id="三-词频统计"><a class="markdownIt-Anchor" href="#三-词频统计"></a> 三、词频统计</h4>
+<p>1、有一个1G大小的一个文件，里面每一行是一个词，词的大小不超过16字节，内存限制大小是1M。返回频数最高的100个词。</p>
 <p>2、一个文本文件，大约有一万行，每行一个词，要求统计出其中最频繁出现的前10个词，请给出思想，给出时间复杂度分析。</p>
-<p>3、寻找热门查询：搜索引擎会通过日志文件把用户每次检索使用的所有检索串都记录下来，每个查询串的长度为1-255字节。假设目前有一千万个记录，这些查询串的重复度比较高，虽然总数是1千万，但是如果去除重复，不超过3百万个。一个查询串的重复度越高，说明查询它的用户越多，也就越热门。<br>请你统计最热门的10个查询串，要求使用的内存不能超过1G。<br>(1) 请描述你解决这个问题的思路；<br>(2) 请给出主要的处理流程，算法，以及算法的复杂度。</p>
+<p>3、寻找热门查询：搜索引擎会通过日志文件把用户每次检索使用的所有检索串都记录下来，每个查询串的长度为1-255字节。假设目前有一千万个记录，这些查询串的重复度比较高，虽然总数是1千万，但是如果去除重复，不超过3百万个。一个查询串的重复度越高，说明查询它的用户越多，也就越热门。<br />
+请你统计最热门的10个查询串，要求使用的内存不能超过1G。<br />
+(1) 请描述你解决这个问题的思路；<br />
+(2) 请给出主要的处理流程，算法，以及算法的复杂度。</p>
 <blockquote>
-<p>若无内存限制：Trie + “k-大&#x2F;小根堆”（k为要找到的数目）。<br>否则，先hash分段再对每一个段用hash（另一个hash函数）统计词频，再要么利用归并排序的某些特性（如partial_sort），要么利用某使用外存的方法。</p>
+<p>若无内存限制：Trie + “k-大/小根堆”（k为要找到的数目）。<br />
+否则，先hash分段再对每一个段用hash（另一个hash函数）统计词频，再要么利用归并排序的某些特性（如partial_sort），要么利用某使用外存的方法。</p>
 </blockquote>
 <blockquote>
-<p>参考<br>“海量数据处理之归并、堆排、前K方法的应用：一道面试题” <a target="_blank" rel="noopener" href="http://www.dataguru.cn/thread-485388-1-1.html%E3%80%82">http://www.dataguru.cn/thread-485388-1-1.html。</a><br>“算法面试题之统计词频前k大” <a target="_blank" rel="noopener" href="http://blog.csdn.net/u011077606/article/details/42640867">http://blog.csdn.net/u011077606/article/details/42640867</a><br>算法导论笔记——第九章 中位数和顺序统计量 </p>
+<p>参考<br />
+“海量数据处理之归并、堆排、前K方法的应用：一道面试题” <a target="_blank" rel="noopener" href="http://www.dataguru.cn/thread-485388-1-1.html%E3%80%82">http://www.dataguru.cn/thread-485388-1-1.html。</a><br />
+“算法面试题之统计词频前k大” <a target="_blank" rel="noopener" href="http://blog.csdn.net/u011077606/article/details/42640867">http://blog.csdn.net/u011077606/article/details/42640867</a><br />
+算法导论笔记——第九章 中位数和顺序统计量</p>
 </blockquote>
-<h4 id="四、排序"><a href="#四、排序" class="headerlink" title="四、排序"></a>四、排序</h4><p>Trie树是一棵多叉树，只要先序遍历整棵树，输出相应的字符串便是按字典序排序的结果。<br>比如给你N 个互不相同的仅由一个单词构成的英文名，让你将它们按字典序从小到大排序输出。</p>
-<h4 id="五、字符串最长公共前缀"><a href="#五、字符串最长公共前缀" class="headerlink" title="五、字符串最长公共前缀"></a>五、字符串最长公共前缀</h4><p>Trie树利用多个字符串的公共前缀来节省存储空间，当我们把大量字符串存储到一棵trie树上时，我们可以快速得到某些字符串的公共前缀。<br>举例：<br>给出N 个小写英文字母串，以及Q 个询问，即询问某两个串的最长公共前缀的长度是多少？<br>解决方案：首先对所有的串建立其对应的字母树。此时发现，对于两个串的最长公共前缀的长度即它们所在结点的公共祖先个数，于是，问题就转化为了离线（Offline）的最近公共祖先（Least Common Ancestor，简称LCA）问题。<br>而最近公共祖先问题同样是一个经典问题，可以用下面几种方法：</p>
+<h4 id="四-排序"><a class="markdownIt-Anchor" href="#四-排序"></a> 四、排序</h4>
+<p>Trie树是一棵多叉树，只要先序遍历整棵树，输出相应的字符串便是按字典序排序的结果。<br />
+比如给你N 个互不相同的仅由一个单词构成的英文名，让你将它们按字典序从小到大排序输出。</p>
+<h4 id="五-字符串最长公共前缀"><a class="markdownIt-Anchor" href="#五-字符串最长公共前缀"></a> 五、字符串最长公共前缀</h4>
+<p>Trie树利用多个字符串的公共前缀来节省存储空间，当我们把大量字符串存储到一棵trie树上时，我们可以快速得到某些字符串的公共前缀。<br />
+举例：<br />
+给出N 个小写英文字母串，以及Q 个询问，即询问某两个串的最长公共前缀的长度是多少？<br />
+解决方案：首先对所有的串建立其对应的字母树。此时发现，对于两个串的最长公共前缀的长度即它们所在结点的公共祖先个数，于是，问题就转化为了离线（Offline）的最近公共祖先（Least Common Ancestor，简称LCA）问题。<br />
+而最近公共祖先问题同样是一个经典问题，可以用下面几种方法：</p>
 <ol>
 <li>利用并查集（Disjoint Set），可以采用采用经典的Tarjan 算法；</li>
 <li>求出字母树的欧拉序列（Euler Sequence ）后，就可以转为经典的最小值查询（Range Minimum Query，简称RMQ）问题了；</li>
 </ol>
-<h4 id="六、字符串搜索的前缀匹配"><a href="#六、字符串搜索的前缀匹配" class="headerlink" title="六、字符串搜索的前缀匹配"></a>六、字符串搜索的前缀匹配</h4><p>trie树常用于搜索提示。如当输入一个网址，可以自动搜索出可能的选择。当没有完全匹配的搜索结果，可以返回前缀最相似的可能。<br>Trie树检索的时间复杂度可以做到n，n是要检索单词的长度，<br>如果使用暴力检索，需要指数级O(n2)的时间复杂度。</p>
-<h4 id="七、作为其他数据结构和算法的辅助结构"><a href="#七、作为其他数据结构和算法的辅助结构" class="headerlink" title="七、作为其他数据结构和算法的辅助结构"></a>七、作为其他数据结构和算法的辅助结构</h4><p>如后缀树，AC自动机等，后缀树可以用于全文搜索</p>
+<h4 id="六-字符串搜索的前缀匹配"><a class="markdownIt-Anchor" href="#六-字符串搜索的前缀匹配"></a> 六、字符串搜索的前缀匹配</h4>
+<p>trie树常用于搜索提示。如当输入一个网址，可以自动搜索出可能的选择。当没有完全匹配的搜索结果，可以返回前缀最相似的可能。<br />
+Trie树检索的时间复杂度可以做到n，n是要检索单词的长度，<br />
+如果使用暴力检索，需要指数级O(n2)的时间复杂度。</p>
+<h4 id="七-作为其他数据结构和算法的辅助结构"><a class="markdownIt-Anchor" href="#七-作为其他数据结构和算法的辅助结构"></a> 七、作为其他数据结构和算法的辅助结构</h4>
+<p>如后缀树，AC自动机等，后缀树可以用于全文搜索</p>
 <p>摘录于 <a target="_blank" rel="noopener" href="https://www.cnblogs.com/justinh/p/7716421.html">https://www.cnblogs.com/justinh/p/7716421.html</a></p>
 
     </div>
@@ -360,7 +397,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89"><span class="nav-number">1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E6%80%A7%E8%B4%A8"><span class="nav-number">2.</span> <span class="nav-text">基本性质</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E7%82%B9"><span class="nav-number">3.</span> <span class="nav-text">优点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%BA%E7%82%B9"><span class="nav-number">4.</span> <span class="nav-text">缺点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">5.</span> <span class="nav-text">应用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%A3%80%E7%B4%A2"><span class="nav-number">5.0.1.</span> <span class="nav-text">一、字符串检索</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%96%87%E6%9C%AC%E9%A2%84%E6%B5%8B%E3%80%81%E8%87%AA%E5%8A%A8%E5%AE%8C%E6%88%90%EF%BC%8Csee-also%EF%BC%8C%E6%8B%BC%E5%86%99%E6%A3%80%E6%9F%A5"><span class="nav-number">5.0.2.</span> <span class="nav-text">二、文本预测、自动完成，see also，拼写检查</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E8%AF%8D%E9%A2%91%E7%BB%9F%E8%AE%A1"><span class="nav-number">5.0.3.</span> <span class="nav-text">三、词频统计</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E6%8E%92%E5%BA%8F"><span class="nav-number">5.0.4.</span> <span class="nav-text">四、排序</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%9C%80%E9%95%BF%E5%85%AC%E5%85%B1%E5%89%8D%E7%BC%80"><span class="nav-number">5.0.5.</span> <span class="nav-text">五、字符串最长公共前缀</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%AD%E3%80%81%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%90%9C%E7%B4%A2%E7%9A%84%E5%89%8D%E7%BC%80%E5%8C%B9%E9%85%8D"><span class="nav-number">5.0.6.</span> <span class="nav-text">六、字符串搜索的前缀匹配</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%83%E3%80%81%E4%BD%9C%E4%B8%BA%E5%85%B6%E4%BB%96%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95%E7%9A%84%E8%BE%85%E5%8A%A9%E7%BB%93%E6%9E%84"><span class="nav-number">5.0.7.</span> <span class="nav-text">七、作为其他数据结构和算法的辅助结构</span></a></li></ol></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89"><span class="nav-number">1.</span> <span class="nav-text"> 定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E6%80%A7%E8%B4%A8"><span class="nav-number">2.</span> <span class="nav-text"> 基本性质</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E7%82%B9"><span class="nav-number">3.</span> <span class="nav-text"> 优点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%BA%E7%82%B9"><span class="nav-number">4.</span> <span class="nav-text"> 缺点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">5.</span> <span class="nav-text"> 应用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80-%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%A3%80%E7%B4%A2"><span class="nav-number">5.0.1.</span> <span class="nav-text"> 一、字符串检索</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%8C-%E6%96%87%E6%9C%AC%E9%A2%84%E6%B5%8B-%E8%87%AA%E5%8A%A8%E5%AE%8C%E6%88%90see-also%E6%8B%BC%E5%86%99%E6%A3%80%E6%9F%A5"><span class="nav-number">5.0.2.</span> <span class="nav-text"> 二、文本预测、自动完成，see also，拼写检查</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%89-%E8%AF%8D%E9%A2%91%E7%BB%9F%E8%AE%A1"><span class="nav-number">5.0.3.</span> <span class="nav-text"> 三、词频统计</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%9B-%E6%8E%92%E5%BA%8F"><span class="nav-number">5.0.4.</span> <span class="nav-text"> 四、排序</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%94-%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%9C%80%E9%95%BF%E5%85%AC%E5%85%B1%E5%89%8D%E7%BC%80"><span class="nav-number">5.0.5.</span> <span class="nav-text"> 五、字符串最长公共前缀</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%AD-%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%90%9C%E7%B4%A2%E7%9A%84%E5%89%8D%E7%BC%80%E5%8C%B9%E9%85%8D"><span class="nav-number">5.0.6.</span> <span class="nav-text"> 六、字符串搜索的前缀匹配</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%83-%E4%BD%9C%E4%B8%BA%E5%85%B6%E4%BB%96%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95%E7%9A%84%E8%BE%85%E5%8A%A9%E7%BB%93%E6%9E%84"><span class="nav-number">5.0.7.</span> <span class="nav-text"> 七、作为其他数据结构和算法的辅助结构</span></a></li></ol></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -376,7 +413,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">24</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -387,7 +424,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -480,6 +517,11 @@
 
 
   
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0/dist/katex.min.css">
+
 
   
 

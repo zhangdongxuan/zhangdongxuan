@@ -252,70 +252,79 @@
 
       
         <img src="/images/algorithm/1.png" width="700"/>
-
 <p>模式匹配分为单模式匹配和多模式匹配两种类型。</p>
-<p>单模式匹配就是给定一串文本，查找单个子串是否在文本中；<br>多模式匹配就是给定一串文本，查找多个子串是否在文本中；</p>
+<p>单模式匹配就是给定一串文本，查找单个子串是否在文本中；<br />
+多模式匹配就是给定一串文本，查找多个子串是否在文本中；</p>
 <p>本文只介绍单模式匹配。</p>
-<h2 id="算法复杂度"><a href="#算法复杂度" class="headerlink" title="算法复杂度"></a>算法复杂度</h2><p>假设给定的文本的长度为n，给定的子串的长度为m，判断子串是否在文本中。</p>
+<h2 id="算法复杂度"><a class="markdownIt-Anchor" href="#算法复杂度"></a> 算法复杂度</h2>
+<p>假设给定的文本的长度为n，给定的子串的长度为m，判断子串是否在文本中。</p>
 <p>暴力算法</p>
 <blockquote>
-<p>算法复杂度为 $O(n - m + 1) * m$</p>
+<p>算法复杂度为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mi>n</mi><mo>−</mo><mi>m</mi><mo>+</mo><mn>1</mn><mo stretchy="false">)</mo><mo>∗</mo><mi>m</mi></mrow><annotation encoding="application/x-tex">O(n - m + 1) * m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.66666em;vertical-align:-0.08333em;"></span><span class="mord mathnormal">m</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">∗</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">m</span></span></span></span></p>
 </blockquote>
 <p>KMP</p>
 <blockquote>
-<p>算法复杂度为 $O(n + m)$</p>
+<p>算法复杂度为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mi>n</mi><mo>+</mo><mi>m</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(n + m)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">m</span><span class="mclose">)</span></span></span></span></p>
 </blockquote>
-<h2 id="KMP算法"><a href="#KMP算法" class="headerlink" title="KMP算法"></a>KMP算法</h2><p>Knuth-Morris-Pratt算法（简称KMP）是最常用字符串匹配算法之一。<br>它以三个发明者命名，起头的那个K就是著名科学家Donald Knuth。</p>
+<h2 id="kmp算法"><a class="markdownIt-Anchor" href="#kmp算法"></a> KMP算法</h2>
+<p>Knuth-Morris-Pratt算法（简称KMP）是最常用字符串匹配算法之一。<br />
+它以三个发明者命名，起头的那个K就是著名科学家Donald Knuth。</p>
 <p>KMP的核心就是构建失配信息，构建失配信息的核心就是查找 <strong>前缀和后缀最长共有元素</strong>这里后面会进行介绍。</p>
-<p>这里以文本“BBC ABCDAB ABCDABCDABDE”，子串“ABCDABD”的匹配过程为例来进行说明，<br><img src="/images/algorithm/kmp1.png" width="400"/>首先第一步B和A不匹配，直接后移一位；</p>
+<p>这里以文本“BBC ABCDAB ABCDABCDABDE”，子串“ABCDABD”的匹配过程为例来进行说明，<br />
+<img src="/images/algorithm/kmp1.png" width="400"/>首先第一步B和A不匹配，直接后移一位；</p>
 <p><img src="/images/algorithm/kmp2.png" width="400"/>第二步发现B和A也不匹配，再后移，直到匹配到第4位的A；</p>
 <p><img src="/images/algorithm/kmp3.png" width="400"/>从第4位开始，ABCDAB都是和子串部分相匹配。</p>
 <p><img src="/images/algorithm/kmp4.png" width="400"/>这个时候“D”字符无法继续匹配，按照一般的做法，我们会将子串后移一位，从下图的位置继续匹配。</p>
-<p><img src="/images/algorithm/kmp5.png" width="400"/>但是KMP并不是这么做的，KMP会直接向后移动4位,然后将文本的“ ”和子串的“C”进行匹配，这样直接减少了很多不必要的匹配操作；<br><img src="/images/algorithm/kmp6.png" width="400"/></p>
-<h2 id="失配信息表"><a href="#失配信息表" class="headerlink" title="失配信息表"></a>失配信息表</h2><p>失配信息表是在匹配过程中出现失配情况的跳转依据，其核心思想就是<br> <strong>查找当前模式子串的前缀和后缀最长共有元素</strong></p>
-<p>首先，要了解两个概念：“前缀”和“后缀”。<br>“前缀”指除了最后一个字符以外，一个字符串的全部头部组合；<br>“后缀”指除了第一个字符以外，一个字符串的全部尾部组合。</p>
+<p><img src="/images/algorithm/kmp5.png" width="400"/>但是KMP并不是这么做的，KMP会直接向后移动4位,然后将文本的“ ”和子串的“C”进行匹配，这样直接减少了很多不必要的匹配操作；<br />
+<img src="/images/algorithm/kmp6.png" width="400"/></p>
+<h2 id="失配信息表"><a class="markdownIt-Anchor" href="#失配信息表"></a> 失配信息表</h2>
+<p>失配信息表是在匹配过程中出现失配情况的跳转依据，其核心思想就是<br />
+<strong>查找当前模式子串的前缀和后缀最长共有元素</strong></p>
+<p>首先，要了解两个概念：“前缀”和“后缀”。<br />
+“前缀”指除了最后一个字符以外，一个字符串的全部头部组合；<br />
+“后缀”指除了第一个字符以外，一个字符串的全部尾部组合。</p>
 <p>ABCDABD 的失配信息表如下</p>
 <table>
 <thead>
 <tr>
-<th align="center">失配字符</th>
-<th align="center">A</th>
-<th align="center">B</th>
-<th align="center">C</th>
-<th align="center">D</th>
-<th align="center">A</th>
-<th align="center">B</th>
-<th align="center">D</th>
+<th style="text-align:center">失配字符</th>
+<th style="text-align:center">A</th>
+<th style="text-align:center">B</th>
+<th style="text-align:center">C</th>
+<th style="text-align:center">D</th>
+<th style="text-align:center">A</th>
+<th style="text-align:center">B</th>
+<th style="text-align:center">D</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">部分匹配值</td>
-<td align="center">0</td>
-<td align="center">0</td>
-<td align="center">0</td>
-<td align="center">0</td>
-<td align="center">1</td>
-<td align="center">2</td>
-<td align="center">0</td>
+<tbody>
+<tr>
+<td style="text-align:center">部分匹配值</td>
+<td style="text-align:center">0</td>
+<td style="text-align:center">0</td>
+<td style="text-align:center">0</td>
+<td style="text-align:center">0</td>
+<td style="text-align:center">1</td>
+<td style="text-align:center">2</td>
+<td style="text-align:center">0</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p>其构造的方式就是<code>按照查找当前已经匹配部分的前缀和后缀最长共有元素</code>,</p>
 <figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">- <span class="string">&quot;A&quot;</span>的前缀和后缀都为空集，共有元素的长度为<span class="number">0</span>；</span><br><span class="line">- <span class="string">&quot;AB&quot;</span>的前缀为[A]，后缀为[B]，共有元素的长度为<span class="number">0</span>；</span><br><span class="line">- <span class="string">&quot;ABC&quot;</span>的前缀为[A, AB]，后缀为[BC, C]，共有元素的长度<span class="number">0</span>；</span><br><span class="line">- <span class="string">&quot;ABCD&quot;</span>的前缀为[A, AB, ABC]，后缀为[BCD, CD, D]，共有元素的长度为<span class="number">0</span>；</span><br><span class="line">- <span class="string">&quot;ABCDA&quot;</span>的前缀为[A, AB, ABC, ABCD]，后缀为[BCDA, CDA, DA, A]，共有元素为<span class="string">&quot;A&quot;</span>，长度为<span class="number">1</span>；</span><br><span class="line">- <span class="string">&quot;ABCDAB&quot;</span>的前缀为[A, AB, ABC, ABCD, ABCDA]，后缀为[BCDAB, CDAB, DAB, AB, B]，共有元素为<span class="string">&quot;AB&quot;</span>，长度为<span class="number">2</span>；</span><br><span class="line">- <span class="string">&quot;ABCDABD&quot;</span>的前缀为[A, AB, ABC, ABCD, ABCDA, ABCDAB]，后缀为[BCDABD, CDABD, DABD, ABD, BD, D]，共有元素的长度为<span class="number">0</span>。</span><br></pre></td></tr></table></figure>
-
-
-
-<h2 id="失配跳转"><a href="#失配跳转" class="headerlink" title="失配跳转"></a>失配跳转</h2><img src="/images/algorithm/kmp4.png" width="400"/>
+<h2 id="失配跳转"><a class="markdownIt-Anchor" href="#失配跳转"></a> 失配跳转</h2>
+<img src="/images/algorithm/kmp4.png" width="400"/>
 在上面匹配过程中，在出现“D”字符失配的时候，直接往后移动了4位，移动规则如下
-
-
 <blockquote>
-<p> 后移位数 &#x3D; 已匹配的字符数 - 对应的部分匹配值</p>
+<p>后移位数 = 已匹配的字符数 - 对应的部分匹配值</p>
 </blockquote>
-<p>即 后移位数 &#x3D; 6(ABCDAB) - 2 &#x3D; 4，进行跳转以后，使用”C”和当前文本位置的“ ”继续进行比较，这就是KMP算法匹配的跳转过程。<br><img src="/images/algorithm/kmp6.png" width="400"/></p>
-<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">init_next</span><span class="params">(string pattern, <span class="type">int</span> next[])</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> len = pattern.<span class="built_in">length</span>();</span><br><span class="line">    next[<span class="number">0</span>] = <span class="number">0</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">1</span>,k = <span class="number">0</span>; i &lt; len; i++) &#123;</span><br><span class="line">        <span class="keyword">while</span>(k &gt; <span class="number">0</span> &amp;&amp; pattern[k] != pattern[i]) &#123;</span><br><span class="line">            k = next[k - <span class="number">1</span>];</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span>(pattern[k] == pattern[i]) &#123;</span><br><span class="line">            k ++;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        next[i] = k;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">search</span><span class="params">(string content, string pattern)</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> next[pattern.<span class="built_in">length</span>()];</span><br><span class="line">    <span class="built_in">init_next</span>(pattern, next);</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> i = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (i &lt;= content.<span class="built_in">length</span>() - pattern.<span class="built_in">length</span>()) &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="type">int</span> j = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span> (; j &lt; pattern.<span class="built_in">length</span>(); j ++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (pattern[j] == content[i + j]) &#123;</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            <span class="type">int</span> jump = j - next[j - <span class="number">1</span>];</span><br><span class="line">            i += <span class="built_in">MAX</span>(jump, <span class="number">1</span>);;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> (j == pattern.<span class="built_in">length</span>()) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">const</span> <span class="type">char</span> * argv[])</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="type">bool</span> exist = <span class="built_in">search</span>(<span class="string">&quot;ABCDABCDABDE&quot;</span>, <span class="string">&quot;ABCDABD&quot;</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;kmp search exist:%u\n&quot;</span>, exist);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<p>即 后移位数 = 6(ABCDAB) - 2 = 4，进行跳转以后，使用&quot;C&quot;和当前文本位置的“ ”继续进行比较，这就是KMP算法匹配的跳转过程。<br />
+<img src="/images/algorithm/kmp6.png" width="400"/></p>
+<h2 id="代码实现"><a class="markdownIt-Anchor" href="#代码实现"></a> 代码实现</h2>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">init_next</span><span class="params">(string pattern, <span class="type">int</span> next[])</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> len = pattern.<span class="built_in">length</span>();</span><br><span class="line">    next[<span class="number">0</span>] = <span class="number">0</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">1</span>,k = <span class="number">0</span>; i &lt; len; i++) &#123;</span><br><span class="line">        <span class="keyword">while</span>(k &gt; <span class="number">0</span> &amp;&amp; pattern[k] != pattern[i]) &#123;</span><br><span class="line">            k = next[k - <span class="number">1</span>];</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span>(pattern[k] == pattern[i]) &#123;</span><br><span class="line">            k ++;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        next[i] = k;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">search</span><span class="params">(string content, string pattern)</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> next[pattern.<span class="built_in">length</span>()];</span><br><span class="line">    <span class="built_in">init_next</span>(pattern, next);</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> i = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (i &lt;= content.<span class="built_in">length</span>() - pattern.<span class="built_in">length</span>()) &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="type">int</span> j = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span> (; j &lt; pattern.<span class="built_in">length</span>(); j ++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (pattern[j] == content[i + j]) &#123;</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            <span class="type">int</span> jump = j - next[j - <span class="number">1</span>];</span><br><span class="line">            i += <span class="built_in">MAX</span>(jump, <span class="number">1</span>);;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> (j == pattern.<span class="built_in">length</span>()) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">const</span> <span class="type">char</span> * argv[])</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="type">bool</span> exist = <span class="built_in">search</span>(<span class="string">&quot;ABCDABCDABDE&quot;</span>, <span class="string">&quot;ABCDABD&quot;</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;kmp search exist:%u\n&quot;</span>, exist);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><a target="_blank" rel="noopener" href="https://github.com/zhangdongxuan/CodeSlice/tree/master/algorithm/KMP/KMP">点击查看源码</a></p>
-<p>参考<br><a target="_blank" rel="noopener" href="http://www.ruanyifeng.com/blog/2013/05/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm.html">http://www.ruanyifeng.com/blog/2013/05/Knuth–Morris–Pratt_algorithm.html</a></p>
+<p>参考<br />
+<a target="_blank" rel="noopener" href="http://www.ruanyifeng.com/blog/2013/05/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm.html">http://www.ruanyifeng.com/blog/2013/05/Knuth–Morris–Pratt_algorithm.html</a></p>
 
     </div>
 
@@ -399,7 +408,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%97%E6%B3%95%E5%A4%8D%E6%9D%82%E5%BA%A6"><span class="nav-number">1.</span> <span class="nav-text">算法复杂度</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#KMP%E7%AE%97%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text">KMP算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%B1%E9%85%8D%E4%BF%A1%E6%81%AF%E8%A1%A8"><span class="nav-number">3.</span> <span class="nav-text">失配信息表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%B1%E9%85%8D%E8%B7%B3%E8%BD%AC"><span class="nav-number">4.</span> <span class="nav-text">失配跳转</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="nav-number">5.</span> <span class="nav-text">代码实现</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%97%E6%B3%95%E5%A4%8D%E6%9D%82%E5%BA%A6"><span class="nav-number">1.</span> <span class="nav-text"> 算法复杂度</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#kmp%E7%AE%97%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text"> KMP算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%B1%E9%85%8D%E4%BF%A1%E6%81%AF%E8%A1%A8"><span class="nav-number">3.</span> <span class="nav-text"> 失配信息表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%B1%E9%85%8D%E8%B7%B3%E8%BD%AC"><span class="nav-number">4.</span> <span class="nav-text"> 失配跳转</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="nav-number">5.</span> <span class="nav-text"> 代码实现</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -415,7 +424,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">24</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -426,7 +435,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -519,6 +528,11 @@
 
 
   
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0/dist/katex.min.css">
+
 
   
 

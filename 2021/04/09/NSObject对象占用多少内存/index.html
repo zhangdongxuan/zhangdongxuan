@@ -245,55 +245,57 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h3 id="NSObject的本质"><a href="#NSObject的本质" class="headerlink" title="NSObject的本质"></a>NSObject的本质</h3><figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&lt;Foundation/Foundation.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSObject</span> *obj = [[<span class="built_in">NSObject</span> alloc] init];</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;Hello, World!&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+        <h3 id="nsobject的本质"><a class="markdownIt-Anchor" href="#nsobject的本质"></a> NSObject的本质</h3>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&lt;Foundation/Foundation.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSObject</span> *obj = [[<span class="built_in">NSObject</span> alloc] init];</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;Hello, World!&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>以上一段代码使用如下一段命令进行rewrite后，会被改为c++代码，生成main.cpp</p>
 <blockquote>
 <p>xcrun  -sdk  iphoneos  clang  -arch  arm64  -rewrite-objc main.m</p>
 </blockquote>
 <figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="comment">/* @autoreleasepool */</span> &#123; __AtAutoreleasePool __autoreleasepool; </span><br><span class="line">        <span class="built_in">NSObject</span> *obj = ((<span class="built_in">NSObject</span> *(*)(<span class="type">id</span>, SEL))(<span class="type">void</span> *)objc_msgSend)((<span class="type">id</span>)((<span class="built_in">NSObject</span> *(*)(<span class="type">id</span>, SEL))(<span class="type">void</span> *)objc_msgSend)((<span class="type">id</span>)objc_getClass(<span class="string">&quot;NSObject&quot;</span>), sel_registerName(<span class="string">&quot;alloc&quot;</span>)), sel_registerName(<span class="string">&quot;init&quot;</span>));</span><br><span class="line">        <span class="built_in">NSLog</span>((<span class="built_in">NSString</span> *)&amp;__NSConstantStringImpl__var_folders_s0_4wsgyhps0fv7r90xwgjm4lwr0000gn_T_main_96c2d6_mi_0);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
 <p>NSObject 的结构为</p>
 <figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> objc_class *Class;</span><br><span class="line"><span class="keyword">struct</span> objc_object &#123;</span><br><span class="line">    Class _Nonnull isa __attribute__((deprecated));</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> objc_object <span class="built_in">NSObject</span>;</span><br></pre></td></tr></table></figure>
-
 <p>可以看到NSObject是由结构体objc_object来定义的，objc_object里面只有一个Class类型的isa属性，指向该类的类信息；Class是由结构体 objc_class来定义。由此可以知道oc编写的代码都会被翻译为C++代码。</p>
-<h3 id="NSObject的内存占用"><a href="#NSObject的内存占用" class="headerlink" title="NSObject的内存占用"></a>NSObject的内存占用</h3><p><code>class_getInstanceSize</code>是一个runtime提供的API，用于获取类实例对象所占用的内存大小，源码如下：</p>
+<h3 id="nsobject的内存占用"><a class="markdownIt-Anchor" href="#nsobject的内存占用"></a> NSObject的内存占用</h3>
+<p><code>class_getInstanceSize</code>是一个runtime提供的API，用于获取类实例对象所占用的内存大小，源码如下：</p>
 <figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">size_t class_getInstanceSize(Class cls)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (!cls) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">return</span> cls-&gt;alignedInstanceSize();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Class&#x27;s ivar size rounded up to a pointer-size boundary.</span></span><br><span class="line">uint32_t alignedInstanceSize() <span class="keyword">const</span> &#123;</span><br><span class="line">   <span class="keyword">return</span> word_align(unalignedInstanceSize());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
 <p>根据源码的意思来看， <code>class_getInstanceSize</code> 就是获取实例对象中成员变量内存大小。</p>
 <p>下面我们使用一个case来说明一个对象占用内存的大小：</p>
 <figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&lt;Foundation/Foundation.h&gt;</span></span></span><br><span class="line"><span class="meta">#import <span class="string">&lt;objc/runtime.h&gt;</span></span></span><br><span class="line"><span class="meta">#import <span class="string">&lt;malloc/malloc.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSObject</span> *obj = [[<span class="built_in">NSObject</span> alloc] init];</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获得NSObject实例对象的成员变量所占用的大小</span></span><br><span class="line">        size_t class_size = class_getInstanceSize(<span class="built_in">NSObject</span>.class);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获得ptr指针所指向内存的大小</span></span><br><span class="line">        <span class="type">void</span> *ptr = (__bridge <span class="type">void</span> *)obj;</span><br><span class="line">        size_t ptrmalloc_size = malloc_size(ptr);</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;class_size:%zu ptrmalloc_size:%zu&quot;</span>, class_size, ptrmalloc_size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
 <p>运行结果为</p>
 <blockquote>
 <p>class_size:8 ptrmalloc_size:16</p>
 </blockquote>
-<p>运行结果说明nsobject类对象的大小正好是isa指针的大小为8个字节，使用view memory可以查看ptr指向的内存，占用16个字节。<br>这是因为在objc的alloc内存申请的流程中有这样一段代码，限制一个NSObect对象的大小至少要占用16个字节。</p>
+<p>运行结果说明nsobject类对象的大小正好是isa指针的大小为8个字节，使用view memory可以查看ptr指向的内存，占用16个字节。<br />
+这是因为在objc的alloc内存申请的流程中有这样一段代码，限制一个NSObect对象的大小至少要占用16个字节。</p>
 <figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">size_t instanceSize(size_t extraBytes) <span class="keyword">const</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (fastpath(cache.hasFastInstanceSize(extraBytes))) &#123;</span><br><span class="line">        <span class="keyword">return</span> cache.fastInstanceSize(extraBytes);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    size_t size = alignedInstanceSize() + extraBytes;</span><br><span class="line">    <span class="comment">// CF requires all objects be at least 16 bytes.</span></span><br><span class="line">    <span class="keyword">if</span> (size &lt; <span class="number">16</span>) size = <span class="number">16</span>;</span><br><span class="line">    <span class="keyword">return</span> size;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
 <p><strong>所以我们知道NSObject中只有一个isa指针，所以NSObject类对象占用8个字节，NSObject在内存中占用16个字节。</strong></p>
-<h3 id="自定义类的内存占用"><a href="#自定义类的内存占用" class="headerlink" title="自定义类的内存占用"></a>自定义类的内存占用</h3><p>定义Test类，并进行如下初始化，那么obj在内存中是怎样布局的呢？</p>
+<h3 id="自定义类的内存占用"><a class="markdownIt-Anchor" href="#自定义类的内存占用"></a> 自定义类的内存占用</h3>
+<p>定义Test类，并进行如下初始化，那么obj在内存中是怎样布局的呢？</p>
 <figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Test</span> : <span class="title">NSObject</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_1;</span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_2;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Test</span></span></span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main(<span class="type">int</span> argc, <span class="keyword">const</span> <span class="type">char</span> * argv[]) &#123;</span><br><span class="line">    <span class="keyword">@autoreleasepool</span> &#123;</span><br><span class="line">        </span><br><span class="line">        Test *obj = [[Test alloc] init];</span><br><span class="line">        obj.property_1 = <span class="number">1</span>;</span><br><span class="line">        obj.property_2 = <span class="number">2</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获得NSObject实例对象的成员变量所占用的大小</span></span><br><span class="line">        size_t class_size = class_getInstanceSize(Test.class);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获得ptr指针所指向内存的大小</span></span><br><span class="line">        <span class="type">void</span> *ptr = (__bridge <span class="type">void</span> *)obj;</span><br><span class="line">        size_t ptrmalloc_size = malloc_size(ptr);</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;class_size:%zu ptrmalloc_size:%zu&quot;</span>, class_size, ptrmalloc_size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
 <p>运行的结果如下</p>
 <blockquote>
 <p>class_size:16 ptrmalloc_size:16</p>
 </blockquote>
-<p>使用view memory查看ptr指向的内存，如下图<br><img src="/images/ios/1.png"><br>其中红框是对象属性property_1和property_2 的值，分别是1和2，int类型各占4个字节。</p>
+<p>使用view memory查看ptr指向的内存，如下图<br />
+<img src="/images/ios/1.png" alt="" /><br />
+其中红框是对象属性property_1和property_2 的值，分别是1和2，int类型各占4个字节。</p>
 <p>如果Test的定义如下</p>
 <figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Test</span> : <span class="title">NSObject</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_1;</span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_2;</span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>, <span class="keyword">assign</span>) <span class="type">int</span> property_3;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
-
 <p>初始化obj并赋值</p>
 <figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Test *obj = [[Test alloc] init];</span><br><span class="line">obj.property_1 = <span class="number">1</span>;</span><br><span class="line">obj.property_2 = <span class="number">2</span>;</span><br><span class="line">obj.property_3 = <span class="number">3</span>;</span><br></pre></td></tr></table></figure>
 <p>运行结果为</p>
 <blockquote>
 <p>class_size:24 ptrmalloc_size:32</p>
 </blockquote>
-<p>则在内存中的布局如下，可以看到property_1、property_2和property_3 的值分别为1、2、3<br><img src="/images/ios/2.png"><br>首先Test的类对象的大小为24，但是为何不是 8(isa指针) + 三个属性占用的12个字节 &#x3D; 20 个字节？<br>这是因为表示Class的struct objc_class是一个结构体，结构体大小结果要为成员中最大字节的整数倍，所以Test类指向的objc_class变量大小为24。</p>
-<p>对象在内存中占用了32个字节，这是因为malloc要满足 16 字节对齐原则 ( 可以在 libmaclloc 源码查找到 ) , 因此实际总占用内存为24. 而实际开辟则满足对齐标准开辟为 32.<br><img src="/images/ios/3.png"></p>
-<p>参考<br><a target="_blank" rel="noopener" href="https://juejin.cn/post/6844903939985391629">https://juejin.cn/post/6844903939985391629</a><br><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/98432137">https://zhuanlan.zhihu.com/p/98432137</a></p>
+<p>则在内存中的布局如下，可以看到property_1、property_2和property_3 的值分别为1、2、3<br />
+<img src="/images/ios/2.png" alt="" /><br />
+首先Test的类对象的大小为24，但是为何不是 8(isa指针) + 三个属性占用的12个字节 = 20 个字节？<br />
+这是因为表示Class的struct objc_class是一个结构体，结构体大小结果要为成员中最大字节的整数倍，所以Test类指向的objc_class变量大小为24。</p>
+<p>对象在内存中占用了32个字节，这是因为malloc要满足 16 字节对齐原则 ( 可以在 libmaclloc 源码查找到 ) , 因此实际总占用内存为24. 而实际开辟则满足对齐标准开辟为 32.<br />
+<img src="/images/ios/3.png" alt="" /></p>
+<p>参考<br />
+<a target="_blank" rel="noopener" href="https://juejin.cn/post/6844903939985391629">https://juejin.cn/post/6844903939985391629</a><br />
+<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/98432137">https://zhuanlan.zhihu.com/p/98432137</a></p>
 
     </div>
 
@@ -377,7 +379,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#NSObject%E7%9A%84%E6%9C%AC%E8%B4%A8"><span class="nav-number">1.</span> <span class="nav-text">NSObject的本质</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NSObject%E7%9A%84%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8"><span class="nav-number">2.</span> <span class="nav-text">NSObject的内存占用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E7%B1%BB%E7%9A%84%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8"><span class="nav-number">3.</span> <span class="nav-text">自定义类的内存占用</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#nsobject%E7%9A%84%E6%9C%AC%E8%B4%A8"><span class="nav-number">1.</span> <span class="nav-text"> NSObject的本质</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#nsobject%E7%9A%84%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8"><span class="nav-number">2.</span> <span class="nav-text"> NSObject的内存占用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E7%B1%BB%E7%9A%84%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8"><span class="nav-number">3.</span> <span class="nav-text"> 自定义类的内存占用</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -393,7 +395,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">24</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -404,7 +406,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -497,6 +499,11 @@
 
 
   
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0/dist/katex.min.css">
+
 
   
 

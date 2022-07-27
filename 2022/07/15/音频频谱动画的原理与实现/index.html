@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/lfavicon.ico" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Long+Cang&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Cormorant+Garamond:wght@300&family=Long+Cang&display=swap" rel="stylesheet">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhangdongxuan.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="频谱是指一个时域的信号在频域下的表示方式，可以将时域信号进行傅里叶变换得到频域数据，并将其以动画形式表现出来，可以反映出声音的特征。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="音频频谱动画的原理与实现（一）">
+<meta property="og:url" content="http://zhangdongxuan.com/2022/07/15/%E9%9F%B3%E9%A2%91%E9%A2%91%E8%B0%B1%E5%8A%A8%E7%94%BB%E7%9A%84%E5%8E%9F%E7%90%86%E4%B8%8E%E5%AE%9E%E7%8E%B0/index.html">
+<meta property="og:site_name" content="张东轩的博客">
+<meta property="og:description" content="频谱是指一个时域的信号在频域下的表示方式，可以将时域信号进行傅里叶变换得到频域数据，并将其以动画形式表现出来，可以反映出声音的特征。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/record_wave.jpeg">
+<meta property="og:image" content="http://zhangdongxuan.com/images/common/question.png">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/Nyquist_sampling.gif">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/loudness.png">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/Acoustic_weighting_curves.png">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/A_Func.svg">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/ff.jpg">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/process.png">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/recording_callback_function.png">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/packets.png">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/circular_buffer.jpg">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/hann.jpeg">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/DSPSplitComplex.png">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/symmetry.png">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/vdsp_01.gif">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/vdsp_02.gif">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/vdsp_03.gif">
+<meta property="og:image" content="http://zhangdongxuan.com/images/audio/raw_wave.gif">
+<meta property="article:published_time" content="2022-07-15T13:09:50.000Z">
+<meta property="article:modified_time" content="2022-07-27T08:34:39.907Z">
+<meta property="article:author" content="Dongxuan Zhang">
+<meta property="article:tag" content="音视频">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zhangdongxuan.com/images/audio/record_wave.jpeg">
+
+<link rel="canonical" href="http://zhangdongxuan.com/2022/07/15/%E9%9F%B3%E9%A2%91%E9%A2%91%E8%B0%B1%E5%8A%A8%E7%94%BB%E7%9A%84%E5%8E%9F%E7%90%86%E4%B8%8E%E5%AE%9E%E7%8E%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>音频频谱动画的原理与实现（一） | 张东轩的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">张东轩的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhangdongxuan.com/2022/07/15/%E9%9F%B3%E9%A2%91%E9%A2%91%E8%B0%B1%E5%8A%A8%E7%94%BB%E7%9A%84%E5%8E%9F%E7%90%86%E4%B8%8E%E5%AE%9E%E7%8E%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Dongxuan Zhang">
+      <meta itemprop="description" content="程序员的成长之路">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="张东轩的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          音频频谱动画的原理与实现（一）
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-15 21:09:50" itemprop="dateCreated datePublished" datetime="2022-07-15T21:09:50+08:00">2022-07-15</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-07-27 16:34:39" itemprop="dateModified" datetime="2022-07-27T16:34:39+08:00">2022-07-27</time>
+              </span>
+
+          
+            <div class="post-description">频谱是指一个时域的信号在频域下的表示方式，可以将时域信号进行傅里叶变换得到频域数据，并将其以动画形式表现出来，可以反映出声音的特征。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="背景"><a class="markdownIt-Anchor" href="#背景"></a> 背景</h2>
+<p>微信的语音消息的按住说话，通过动画反馈出用户输入声音的大小，得到了比较好的效果，增强了用户体验。<br />
+<img src="/images/audio/record_wave.jpeg" width="350"/></p>
+<div style="position:relative;top:-110px;height:50px;">
+<span style="display:inline-block;">微信的录音反馈做的很不错，但并没有表现出音频的频域信息，那么如何表示出声音的频率信息呢</span>
+<img src="/images/common/question.png" style="display:inline-block;position:relative;top:30px;" width="80"/>
+</div>
+<h2 id="基础知识"><a class="markdownIt-Anchor" href="#基础知识"></a> 基础知识</h2>
+<p>音频基础知识可以参考：<a href="/2018/09/08/音频基本概念/">音频基本概念</a>，下面只列举和本文有关的几个概念。</p>
+<h3 id="采样"><a class="markdownIt-Anchor" href="#采样"></a> 采样</h3>
+<p>在信号处理中，采样就是将连续时间的信号减少成离散时间的信号。<br />
+声音是一种连续压力波，通过对声音定时采样可以得到计算机能表示离散的数据，采样的频率被称<code>采样率(Sample Rate)</code>。<br />
+<img src="/images/audio/Nyquist_sampling.gif" width="800"/>为了不失真地恢复模拟信号，采样频率应该不小于模拟信号频谱中最高频率的2倍，这个定理被称为<code>采样定理</code>又被称为<code>奈奎斯特采样定理(Nyquist–Shannon sampling theorem)</code>。</p>
+<h3 id="量化"><a class="markdownIt-Anchor" href="#量化"></a> 量化</h3>
+<p>将采样的结果表示成数据的过程被称为量化，这个数值范围被称为<code>位深(bit depth)</code>表示数值位数，常见的位数有8bit和16bit，位数越大对信号表达就越精确。</p>
+<h3 id="响度"><a class="markdownIt-Anchor" href="#响度"></a> 响度</h3>
+<p><code>声强</code>亦称<code>声强</code>或<code>声强度</code>，反映的是声音的客观物理强弱，决定于发音体振动的振幅，振幅越大，音强越强。<br />
+<code>响度(loudness)</code>，又称音量，是量度声音大小的知觉量，与<code>声强</code>不同，响度是受主观知觉影响的物理量。在同等声强下，不同频率的声音会造成不同的听觉感知。</p>
+<h3 id="等响曲线"><a class="markdownIt-Anchor" href="#等响曲线"></a> 等响曲线</h3>
+<p>人类的可听频率范围(20Hz 到 20000Hz)中，由于听觉对 3 000 Hz 左右的声音较为敏感，该段频率也能造成较大的听觉感知。<br />
+<img src="/images/audio/loudness.png" width="400"/>等响曲线的横坐标为频率，纵坐标为声压级。在同一条曲线之上，所有频率和声压的组合，都有着一样的响度。<br />
+最下方的曲线表示人类能听到的最小的声音响度，即听阈。等响曲线反映了响度听觉的许多特点：</p>
+<ul>
+<li>声压级愈高，响度一般也愈高。</li>
+<li>响度频率有关，相同声压级的纯音，频率不同，响度也不同。</li>
+<li>对于不同频率的纯音，提高声压级带来的响度增长，也有所不同。</li>
+</ul>
+<h3 id="a计权"><a class="markdownIt-Anchor" href="#a计权"></a> A计权</h3>
+<p>在相同声强下，人耳对不同频率音频有不同的音量感受，因此需要对不同频率的音频进行加权，得到对应的音量，从而模拟耳朵的听觉效果。在声音测量中，我们以分贝(dB) 为单位测量声音的响度。<br />
+<img src="/images/audio/Acoustic_weighting_curves.png" width="400"/>上图横坐标是频率，纵坐标是响度增益。在几种常用的加权曲线中，A权重曲线对低频部分相比其他计权有着最多的衰减，是最常用加权策略。其函数实现为如下，其中<code>f</code>代表频率 <img src="/images/audio/A_Func.svg" width="500"/></p>
+<h3 id="傅里叶变换"><a class="markdownIt-Anchor" href="#傅里叶变换"></a> 傅里叶变换</h3>
+<p>傅里叶在1807年提出，任何连续周期信号可以由一组适当的正弦曲线组合而成。任何周期函数，都可以看作是不同振幅，不同相位正弦波的叠加。<br />
+以其名称命名的傅里叶变换（Fourier transform），是用于信号在时域（或空域）和频域之间的变换。<br />
+<img src="/images/audio/ff.jpg" width="500"/>录音获得的数据都是时域的，横轴是时间，纵轴是信号强度。<br />
+频谱动画要求横轴是频域数据，傅里叶变换可以实现时域信息到频域信息的转变。<br />
+计算机处理的是<code>离散傅里叶变换(DFT)</code>，<code>快速傅里叶变换(FFT)</code>是快速计算离散傅里叶变换（DFT）或其逆变换的方法，它将DFT的复杂度从O(n²)降低到O(nlogn)。<br />
+苹果的Accelerate框架中vDSP部分提供了数字信号处理的函数实现，包含FFT，其使用可参考<a target="_blank" rel="noopener" href="http://pkmital.com/home/2011/04/14/real-fftifft-with-the-accelerate-framework/">Real FFT/IFFT with the Accelerate Framework</a>。<br />
+另外关于FFT比较有趣的文章可以看看<a href=" https://www.jezzamon.com/fourier/index.html">《An Interactive Introduction to Fourier Transforms》</a><br />
+<a target="_blank" rel="noopener" href="https://charlesliuyx.github.io/2018/02/18/%E3%80%90%E7%9B%B4%E8%A7%82%E8%AF%A6%E8%A7%A3%E3%80%91%E8%AE%A9%E4%BD%A0%E6%B0%B8%E8%BF%9C%E5%BF%98%E4%B8%8D%E4%BA%86%E7%9A%84%E5%82%85%E9%87%8C%E5%8F%B6%E5%8F%98%E6%8D%A2%E8%A7%A3%E6%9E%90/">《让你永远忘不了的傅里叶变换解析》</a><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/19759362">《如果看了这篇文章你还不懂傅里叶变换，那就过来掐死我吧》</a></p>
+<h2 id="整体流程"><a class="markdownIt-Anchor" href="#整体流程"></a> 整体流程</h2>
+<p><img src="/images/audio/process.png" width="700"/>要实现对录制声音的频谱动画，将功能分解为以上几个部分，<code>Recorder</code>实现对音频PCM数据的采集，<code>RealtimeAnalyser</code>对PCM进行频域变换和数据处理，最后由<code>RecordFeedbackView</code>产生反馈动画。</p>
+<h2 id="ios音频采集"><a class="markdownIt-Anchor" href="#ios音频采集"></a> iOS音频采集</h2>
+<p>iOS中实现音频采集的接口有很多，例如<code>AVAudioRecorder</code>、<code>AudioQueue</code>、<code>AVAudioEngine</code>、<code>AudioUnit</code>。<br />
+本文使用<code>AudioQueue</code>实现录音功能，<code>AudioQueue</code>的录音的过程如下：<img src="/images/audio/recording_callback_function.png" width="500"/><code>AudioQueue</code>将麦克风获取的数据填充到<code>AudioQueueBuffer</code>中 ，通过callback函数回调给app，app将<code>AudioQueueBuffer</code>代表的数据消耗后，将<code>AudioQueueBuffer</code>重新入队到<code>AudioQueue</code>中。<br />
+使用<code>AudioQueue</code>实现录音的<code>AudioRecorder</code>在github地址:<a target="_blank" rel="noopener" href="https://github.com/zhangdongxuan/CodeSlice/tree/master/audio/AudioQueueService/AudioQueueService/Core">AudioRecorder</a>，简要介绍其中比较关键的部分。</p>
+<h3 id="初始化recoder"><a class="markdownIt-Anchor" href="#初始化recoder"></a> 初始化Recoder</h3>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">void</span>)start &#123;</span><br><span class="line">    [[<span class="built_in">AVAudioSession</span> sharedInstance] setActive:<span class="literal">YES</span> error:<span class="literal">nil</span>];</span><br><span class="line">    [[<span class="built_in">AVAudioSession</span> sharedInstance] setCategory:<span class="built_in">AVAudioSessionCategoryPlayAndRecord</span> error:<span class="literal">nil</span>];</span><br><span class="line">    </span><br><span class="line">    mAqState.mDataFormat.mSampleRate = <span class="keyword">self</span>.sampleRate;     <span class="comment">//采样率, 1s采集的次数</span></span><br><span class="line">    mAqState.mDataFormat.mFormatID = kAudioFormatLinearPCM; <span class="comment">//数据格式 PCM</span></span><br><span class="line">    mAqState.mDataFormat.mBitsPerChannel = AUDIO_BIT_LEN;      <span class="comment">//在一个数据帧中，每个通道的样本数据的位数。</span></span><br><span class="line">    mAqState.mDataFormat.mChannelsPerFrame = <span class="number">1</span>;     <span class="comment">//每帧数据通道数(左右声道)</span></span><br><span class="line">    mAqState.mDataFormat.mFramesPerPacket = <span class="number">1</span>;      <span class="comment">//每包数据帧数</span></span><br><span class="line">    mAqState.mDataFormat.mBytesPerFrame = (mAqState.mDataFormat.mBitsPerChannel / <span class="number">8</span>) * mAqState.mDataFormat.mChannelsPerFrame;</span><br><span class="line">    mAqState.mDataFormat.mBytesPerPacket = mAqState.mDataFormat.mBytesPerFrame * mAqState.mDataFormat.mFramesPerPacket;</span><br><span class="line">    mAqState.mDataFormat.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger | kLinearPCMFormatFlagIsPacked;</span><br><span class="line"><span class="comment">//  上面使用的格式是signed integer类型，后面在做fft计算的时候需要转换成float类型，如果直接使用Float就少了这个过程。</span></span><br><span class="line"><span class="comment">//    mAqState.mDataFormat.mFormatFlags = kLinearPCMFormatFlagIsFloat | kLinearPCMFormatFlagIsPacked ;</span></span><br><span class="line">    </span><br><span class="line">    <span class="built_in">UInt32</span> frameCount = <span class="keyword">self</span>.fftSize;</span><br><span class="line">    mAqState.bufferByteSize = frameCount * (mAqState.mDataFormat.mBitsPerChannel / <span class="number">8</span>);</span><br><span class="line">    AudioQueueNewInput(&amp;mAqState.mDataFormat, HandleInputBuffer, (__bridge <span class="type">void</span> *)(<span class="keyword">self</span>), <span class="literal">NULL</span>, kCFRunLoopCommonModes, <span class="number">0</span>, &amp;mAqState.mQueue);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">UInt32</span> channels = <span class="number">0</span>;</span><br><span class="line">    <span class="built_in">UInt32</span> channelsSize = <span class="number">0</span>;</span><br><span class="line">    AudioChannelLayout channelLayout;</span><br><span class="line">    <span class="built_in">UInt32</span> layoutSize = <span class="keyword">sizeof</span>(channelLayout);</span><br><span class="line">    AudioQueueGetProperty(mAqState.mQueue, kAudioQueueDeviceProperty_NumberChannels, &amp;channels, &amp;channelsSize);</span><br><span class="line">    AudioQueueGetProperty(mAqState.mQueue, kAudioQueueProperty_ChannelLayout, &amp;channelLayout, &amp;layoutSize);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; kNumberBuffers; i++) &#123;</span><br><span class="line">        AudioQueueAllocateBuffer(mAqState.mQueue, mAqState.bufferByteSize, &amp;mAqState.mBuffers[i]);</span><br><span class="line">        AudioQueueEnqueueBuffer(mAqState.mQueue, mAqState.mBuffers[i], <span class="number">0</span>, <span class="literal">NULL</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    mAqState.mIsRunning = <span class="number">1</span>;</span><br><span class="line">    OSStatus ret = AudioQueueStart(mAqState.mQueue, <span class="literal">NULL</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面是<code>AudioQueue</code>的启动代码，<br />
+<code>mDataFormat</code>设置了录音的数据格式，其中<code>mFormatID</code>:是音频格式，这里使用<code>LinearPCM</code>；<br />
+另外还有<code>采样率(SampleRate)</code>、<code>位深(mBitsPerChannel)</code>、<code>每帧的声道数(mChannelsPerFrame)</code>、 <code>packet帧数(mFramesPerPacket)</code>、 <code>每帧的字节数(mBytesPerFrame)</code>、 <code>Packet字节数(mBytesPerPacket)</code>、 <code>数值格式(mFormatFlags)Int or Float</code>等参数的设置，其中Packet、Frame、Sample的关系如下图：<br />
+<img src="/images/audio/packets.png" width="600"/>不过本文使用的是单声道，每个packet里面只有一个frame；</p>
+<h3 id="数据回调"><a class="markdownIt-Anchor" href="#数据回调"></a> 数据回调</h3>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="type">void</span> HandleInputBuffer(<span class="type">void</span> *inUserData,</span><br><span class="line">                              AudioQueueRef inAudioQueue,</span><br><span class="line">                              AudioQueueBufferRef inBuffer,</span><br><span class="line">                              <span class="keyword">const</span> AudioTimeStamp *inStartTime,</span><br><span class="line">                              <span class="built_in">UInt32</span> inNumPackets,</span><br><span class="line">                              <span class="keyword">const</span> AudioStreamPacketDescription *inPacketDesc) &#123;</span><br><span class="line">    AudioRecorder *recorder = (__bridge AudioRecorder *)inUserData;</span><br><span class="line">    <span class="keyword">if</span> (recorder == <span class="literal">nil</span>) &#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;recorder is dealloc&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">NSTimeInterval</span> recordTime = inStartTime-&gt;mSampleTime / recorder-&gt;mAqState.mDataFormat.mSampleRate;</span><br><span class="line">    <span class="keyword">if</span> (inNumPackets &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        [recorder outputPcmBuffer:inBuffer recordTime:recordTime];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (recorder-&gt;mAqState.mIsRunning) &#123;</span><br><span class="line">        AudioQueueEnqueueBuffer(recorder-&gt;mAqState.mQueue, inBuffer, <span class="number">0</span>, <span class="literal">NULL</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)outputPcmBuffer:(AudioQueueBufferRef)buffer recordTime:(<span class="built_in">NSTimeInterval</span>)recordTime &#123;</span><br><span class="line">    <span class="type">int</span> length = buffer-&gt;mAudioDataByteSize / mAqState.mDataFormat.mBytesPerFrame;</span><br><span class="line">    <span class="built_in">NSData</span> *data = [<span class="built_in">NSData</span> dataWithBytes:buffer-&gt;mAudioData length:buffer-&gt;mAudioDataByteSize];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 将录制的PCM数据写文件</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">self</span>.outputSteam) &#123;</span><br><span class="line">        [<span class="keyword">self</span>.outputSteam write:(uint8_t *)buffer-&gt;mAudioData maxLength:buffer-&gt;mAudioDataByteSize];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 交给分析模块</span></span><br><span class="line">    [<span class="keyword">self</span>.analyzer onRecievePcmData:data frameCount:length];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>屏幕绘制的频率是16ms一帧，动画需要16ms更新一下动画数据，我们使用的<code>SampleRate</code>使用的是16000，所以我们将<code>AudioQueueBuffer</code>对应的<code>FrameCount</code>设置为1024；<br />
+当录制的数据填满一个<code>AudioQueueBuffer</code>时，会通过<code>AudioQueueNewInput</code>函数传入的<code>HandleInputBuffer</code>函数将PCM数据回调给<code>RealtimeAnalyser</code>，所以基本每次刷新屏幕都可以获取到最新的频域数据。</p>
+<p>以上是Recorder部分的全部介绍，这部分总体上比较简单，这里的难点部分主要在RealtimeAnalyser这部分。</p>
+<h2 id="realtimeanalyser"><a class="markdownIt-Anchor" href="#realtimeanalyser"></a> RealtimeAnalyser</h2>
+<p><a target="_blank" rel="noopener" href="https://github.com/zhangdongxuan/CodeSlice/tree/master/audio/AudioQueueService/AudioQueueService/Analyser/RealtimeAnalyser.mm">RealtimeAnalyser</a>的实现我放到了github上，可以点击查看。</p>
+<h3 id="数值转换"><a class="markdownIt-Anchor" href="#数值转换"></a> 数值转换</h3>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">void</span>)onRecievePcmData:(<span class="built_in">NSData</span> *)rawData frameCount:(<span class="built_in">UInt32</span>)frameCount &#123;</span><br><span class="line">    __<span class="keyword">weak</span> <span class="keyword">typeof</span>(<span class="keyword">self</span>) weakSelf = <span class="keyword">self</span>;</span><br><span class="line">    <span class="built_in">dispatch_async</span>(_processQueue, ^&#123;</span><br><span class="line">        __<span class="keyword">strong</span> <span class="keyword">typeof</span>(weakSelf) strongSelf = weakSelf;</span><br><span class="line"></span><br><span class="line">        <span class="type">float</span> fft_data[frameCount];</span><br><span class="line">        <span class="type">short</span> *pcmbuffer = (<span class="type">short</span> *)rawData.bytes;</span><br><span class="line"></span><br><span class="line">        vDSP_vflt16(pcmbuffer, <span class="number">1</span>, fft_data, <span class="number">1</span>, frameCount);</span><br><span class="line">        <span class="type">float</span> scalar = <span class="number">1.0</span> / (<span class="number">1</span> &lt;&lt; (AUDIO_BIT_LEN - <span class="number">1</span>));</span><br><span class="line">        vDSP_vsmul(fft_data, <span class="number">1</span>, &amp;scalar, fft_data, <span class="number">1</span>, frameCount);</span><br><span class="line"></span><br><span class="line">        [strongSelf writeInput:fft_data audioFrameCount:frameCount];</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由于我这里采集的数据格式是<code>kLinearPCMFormatFlagIsSignedInteger</code>，但是<code>vDSP</code>中处理的数据都是float类型的，所以这里需要对PCM数据的数值格式做转换，直接使用vDSP_vsmul将数值乘以<code>scalar</code>(将数值除以最大值)从而变换为float类型，如果直接使用<code>kLinearPCMFormatFlagIsFloat</code>可以减少这一步。</p>
+<h3 id="环形缓冲区"><a class="markdownIt-Anchor" href="#环形缓冲区"></a> 环形缓冲区</h3>
+<p>录音数据的产生和频域动画的消耗是一个生产-消费模型，中间需要加一个缓冲区进行数据的缓冲。<br />
+这里我使用的是环形缓冲区进行数据的缓存，其模型如下图:<br />
+<img src="/images/audio/circular_buffer.jpg" width="300"/>当产生新的录音数据时Write指针前进，当对时域信息进行FFT消耗数据时Read指针也向前移动，达缓冲区的尾部时指针回到缓冲区的起始位置。write和read的实现代码如下</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="type">void</span>)writeInput:(<span class="type">float</span> *)rawData audioFrameCount:(<span class="built_in">UInt32</span>)framesToProcess &#123;</span><br><span class="line">    _shouldDoFFTAnalysis = <span class="literal">NO</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">float</span> *dest = _inputBuffer + _circleWriteIndex;</span><br><span class="line">    <span class="type">float</span> *source = rawData;</span><br><span class="line">    <span class="comment">// Then save the result in the _inputBuffer at the appropriate place.</span></span><br><span class="line">    <span class="keyword">if</span> (_circleWriteIndex + framesToProcess &gt; InputBufferSize) &#123;</span><br><span class="line">        <span class="type">int</span> length = InputBufferSize - _circleWriteIndex;</span><br><span class="line">        memcpy(dest, source, <span class="keyword">sizeof</span>(<span class="type">float</span>) * length);</span><br><span class="line">        dest = _inputBuffer;</span><br><span class="line">        source = rawData + length;</span><br><span class="line">        length = framesToProcess - length;</span><br><span class="line">        memcpy(dest, source, <span class="keyword">sizeof</span>(<span class="type">float</span>) * length);</span><br><span class="line">        _circleWriteIndex = length;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        memcpy(dest, source, <span class="keyword">sizeof</span>(<span class="type">float</span>) * framesToProcess);</span><br><span class="line">        _circleWriteIndex += framesToProcess;</span><br><span class="line">        <span class="keyword">if</span> (_circleWriteIndex == InputBufferSize) &#123;</span><br><span class="line">            _circleWriteIndex = <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    _bufferLength += framesToProcess;</span><br><span class="line">    <span class="comment">// A new render quantum has been processed so we should do the FFT analysis again.</span></span><br><span class="line">    _shouldDoFFTAnalysis = <span class="literal">YES</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="type">void</span>)readBufferWithSize:(<span class="type">int</span>)fftSize tempP:(<span class="type">float</span> *)tempP &#123;</span><br><span class="line">    <span class="type">float</span> *inputBuffer = _inputBuffer;</span><br><span class="line">    <span class="built_in">UInt32</span> tailLength = InputBufferSize - _circleReadIndex;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (tailLength &lt; fftSize) &#123;</span><br><span class="line">        memcpy(tempP, inputBuffer + _circleReadIndex, <span class="keyword">sizeof</span>(<span class="type">float</span>) * (tailLength));</span><br><span class="line">        memcpy(tempP + tailLength, inputBuffer, <span class="keyword">sizeof</span>(<span class="type">float</span>) * (fftSize - tailLength));</span><br><span class="line">        _circleReadIndex = fftSize - tailLength;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        memcpy(tempP, inputBuffer + _circleReadIndex, <span class="keyword">sizeof</span>(<span class="type">float</span>) * fftSize);</span><br><span class="line">        _circleReadIndex += fftSize;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 减去被消耗缓冲</span></span><br><span class="line">    _bufferLength -= fftSize;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="fft"><a class="markdownIt-Anchor" href="#fft"></a> FFT</h3>
+<p>这里我们使用的是<code>Accelerate</code>框架中的<code>FFTSetup</code>来实现<code>FFT</code>。</p>
+<h4 id="1-创建fftsetup"><a class="markdownIt-Anchor" href="#1-创建fftsetup"></a> 1、创建fftSetup</h4>
+<p>根据<code>vDSP</code>文档，首先需要定义一个<code>FFT</code>的<code>权重数组(fftSetup)</code>，它可以在多次<code>FFT</code>中重复使用和提升<code>FFT</code>性能。</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">_fftSize = fftSize;</span><br><span class="line">_log2FFTSize = static_cast&lt;<span class="type">unsigned</span>&gt;(log2(_fftSize));</span><br><span class="line">_fftSetup = vDSP_create_fftsetup(_log2FFTSize, FFT_RADIX2);</span><br></pre></td></tr></table></figure>
+<h4 id="2-读取时域信号"><a class="markdownIt-Anchor" href="#2-读取时域信号"></a> 2、读取时域信号</h4>
+<p>从环形缓冲区读出需要处理的时域信号数据</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">// Take the previous fftSize values from the input buffer and copy into the temporary buffer.</span></span><br><span class="line"><span class="type">float</span> *tempP = (<span class="type">float</span> *)malloc(fftSize * <span class="keyword">sizeof</span>(<span class="type">float</span>));</span><br><span class="line">[<span class="keyword">self</span> readBufferWithSize:fftSize tempP:tempP];</span><br></pre></td></tr></table></figure>
+<h4 id="3-加汉宁窗"><a class="markdownIt-Anchor" href="#3-加汉宁窗"></a> 3、加汉宁窗</h4>
+<p>需要对时域信号加汉宁窗，汉宁窗的创建：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">_hannwindow = (Float32 *)malloc(_fftSize * <span class="keyword">sizeof</span>(Float32));</span><br><span class="line">vDSP_hann_window(_hannwindow, (vDSP_Length)(_fftSize), vDSP_HANN_NORM);</span><br></pre></td></tr></table></figure>
+<p>应用：</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Window the input samples.</span></span><br><span class="line">vDSP_vmul(tempP, <span class="number">1</span>, _hannwindow, <span class="number">1</span>, tempP, <span class="number">1</span>, fftSize);</span><br></pre></td></tr></table></figure>
+<p>加窗主要是为了使信号似乎更好地满足FFT处理的周期性要求，减少泄漏。<br />
+这是因为每次FFT只能对有限长度的时域信号进行处理，所以需要对时域信号进行截断，但是可能大部分情况下对周期信号进行的都是非周期性截断(不是周期的整数倍)，使得截断后的信号出现泄露。<br />
+<img src="/images/audio/hann.jpeg" width="500"/>参考：<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/50402321">《怎样用通俗易懂的方式解释窗函数？》</a><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzI5NTM0MTQwNA==&mid=2247484164&idx=1&sn=fdaf2164306a9ca4166c2aa8713cacc5&scene=21#wechat_redirect">《什么是泄漏？》</a></p>
+<h4 id="4-转换为复数"><a class="markdownIt-Anchor" href="#4-转换为复数"></a> 4、转换为复数</h4>
+<p><code>vDSP</code>中的离散傅立叶变换函数为了节省内存，提供了一种独特的数据格式，需要将实数转换为复数形式，既是输入也是输出，后面会对这里的原因作出说明。参考<a target="_blank" rel="noopener" href="https://developer.apple.com/library/archive/documentation/Performance/Conceptual/vDSP_Programming_Guide/UsingFourierTransforms/UsingFourierTransforms.html">《UsingFourierTransforms》</a></p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> halfSize = fftSize / <span class="number">2</span>;</span><br><span class="line"><span class="type">float</span> value = <span class="number">0</span>;</span><br><span class="line">vDSP_vfill(&amp;value, _frame.imagp, <span class="number">1</span>, fftSize / <span class="number">2</span>);</span><br><span class="line">vDSP_vfill(&amp;value, _frame.realp, <span class="number">1</span>, fftSize / <span class="number">2</span>);</span><br><span class="line">vDSP_ctoz(reinterpret_cast&lt;<span class="keyword">const</span> DSPComplex *&gt;(tempP), <span class="number">2</span>, &amp;_frame, <span class="number">1</span>, halfSize);</span><br><span class="line"><span class="comment">// 释放内存避免泄露</span></span><br><span class="line">free(tempP);</span><br></pre></td></tr></table></figure>
+<p>以下面为例，这里将8个时域信号数据强制转换为<code>DSPComplex</code>格式的数组，然后通过<code>vDSP_ctoz</code>将其转换为<code>DSPSplitComplex</code>类型的数据。<br />
+<img src="/images/audio/DSPSplitComplex.png" width="900"/></p>
+<h4 id="5-执行fft"><a class="markdownIt-Anchor" href="#5-执行fft"></a> 5、执行FFT</h4>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Perform the FFT via Accelerate</span></span><br><span class="line"><span class="comment">// Use FFT forward for standard PCM audio</span></span><br><span class="line">vDSP_fft_zrip(_fftSetup, &amp;_frame, <span class="number">1</span>, _log2FFTSize, FFT_FORWARD);</span><br></pre></td></tr></table></figure>
+<p>通过上面的<code>vDSP_fft_zrip</code>进行FFT计算，这里展开讲一下<code>FFT</code>的输入和输出</p>
+<div style="display:flex;flex-direction:row;">
+    <img src="/images/audio/symmetry.png" width="300"/>
+    <div style="display:flex;flex-direction:column;align-items:center;align-content:center;">
+        <span>实信号的频谱是对称的，所以N位样本数据(N/2位复数)进行FFT计算会得到N/2+1位复数结果。</span>
+        <div><img src="/images/audio/vdsp_01.gif" style="align-items:center;" width="300"/></div>
+        <span>以上面的信号为例，8个实数换成4个复数后进行FFT计算，产生5个复数:</span>
+        <div><img src="/images/audio/vdsp_02.gif" width="360"/></div>
+        <span>其中第一个复数是直流分量(DC)，最后一个复数是Nyquist频率值(NY)，它们的虚部都是0，所以可以将NY的值放到DC中的虚部。</span>
+        <div><img src="/images/audio/vdsp_03.gif" width="320"/></div>
+        <span>这样就可以使得输入和输出的数据共用同一内存，从而节省内存空间。</span>
+    </div>  
+</div>
+<h4 id="6-结果缩放"><a class="markdownIt-Anchor" href="#6-结果缩放"></a> 6、结果缩放</h4>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>R</mi><msub><mi>F</mi><mrow><mi>i</mi><mi>m</mi><mi>p</mi></mrow></msub><mo>=</mo><mn>2</mn><mo>∗</mo><mi>R</mi><msub><mi>F</mi><mrow><mi>m</mi><mi>a</mi><mi>t</mi><mi>h</mi></mrow></msub></mrow><annotation encoding="application/x-tex">{RF_{imp} = 2*RF_{math}}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.969438em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.00773em;">R</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">F</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mord mathnormal mtight">m</span><span class="mord mathnormal mtight">p</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord">2</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">∗</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathnormal" style="margin-right:0.00773em;">R</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">F</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">m</span><span class="mord mathnormal mtight">a</span><span class="mord mathnormal mtight">t</span><span class="mord mathnormal mtight">h</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></span></p>
+<p><code>vDSP</code>为了最佳执行速度并不严格遵循傅立叶变换公式，我们必须相应地对得到的结果进行缩放二分之一。</p>
+<h4 id="7-幅值变换"><a class="markdownIt-Anchor" href="#7-幅值变换"></a> 7、幅值变换</h4>
+<p>假设原始信号的峰值为A，那么FFT的结果的每个点（除了第一个点直流分量之外）的模值就是A的<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mi>N</mi><mn>2</mn></mfrac></mrow><annotation encoding="application/x-tex">\frac{N}{2}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.217331em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.872331em;"><span style="top:-2.6550000000000002em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span>倍。<br />
+第一个点就是直流分量，它的模值就是直流分量的N倍。<br />
+这是因为傅里叶级数对应时域幅值，其中已经包含了<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mn>1</mn><mi>N</mi></mfrac></mrow><annotation encoding="application/x-tex">\frac{1}{N}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.190108em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.845108em;"><span style="top:-2.6550000000000002em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span>项，而FFT变换中没有该系数，因此，进行FFT变换后，需除以<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mi>N</mi><mn>2</mn></mfrac></mrow><annotation encoding="application/x-tex">\frac{N}{2}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.217331em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.872331em;"><span style="top:-2.6550000000000002em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span>才能与时域对上。<br />
+简单来说就是采样求和，加了N次，平均值（直流分量）就得除以N，然后每个频点的“能量”分到了两个共轭的频域参数上，所以是除以N/2</p>
+<figure class="highlight objc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Blow away the packed nyquist component.</span></span><br><span class="line">_frame.imagp[<span class="number">0</span>] = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Normalize so than an input sine wave at 0dBfs registers as 0dBfs (undo FFT scaling factor).</span></span><br><span class="line"><span class="comment">//    https://blog.csdn.net/seekyong/article/details/104434128</span></span><br><span class="line"><span class="comment">//    https://zhuanlan.zhihu.com/p/137433994   当输入样点数据为复数时除以N</span></span><br><span class="line"><span class="type">float</span> magnitudeScale = <span class="number">2.0</span> / fftSize;</span><br><span class="line"></span><br><span class="line"><span class="comment">// To provide the best possible execution speeds, the vDSP library&#x27;s functions don&#x27;t always adhere strictly</span></span><br><span class="line"><span class="comment">// to textbook formulas for Fourier transforms, and must be scaled accordingly.</span></span><br><span class="line"><span class="comment">// (See https://developer.apple.com/library/archive/documentation/Performance/Conceptual/vDSP_Programming_Guide/UsingFourierTransforms/UsingFourierTransforms.html#//apple_ref/doc/uid/TP40005147-CH3-SW5)</span></span><br><span class="line"><span class="comment">// In the case of a Real forward Transform like above: RFimp = RFmath * 2 so we need to divide the output</span></span><br><span class="line"><span class="comment">// by 2 to get the correct value.</span></span><br><span class="line"><span class="comment">//http://pkmital.com/home/2011/04/14/real-fftifft-with-the-accelerate-framework/</span></span><br><span class="line">magnitudeScale = magnitudeScale / <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line">vDSP_vsmul(_frame.realp, <span class="number">1</span>, &amp;magnitudeScale, _frame.realp, <span class="number">1</span>, halfSize);</span><br><span class="line">vDSP_vsmul(_frame.imagp, <span class="number">1</span>, &amp;magnitudeScale, _frame.imagp, <span class="number">1</span>, halfSize);</span><br><span class="line"></span><br><span class="line">vDSP_vfill(&amp;value, _amplitudes, <span class="number">1</span>, halfSize);</span><br><span class="line"></span><br><span class="line"><span class="comment">//Take the absolute value of the output to get in range of 0 to 1</span></span><br><span class="line">vDSP_zvabs(&amp;_frame, <span class="number">1</span>, _amplitudes, <span class="number">1</span>, halfSize);</span><br></pre></td></tr></table></figure>
+<p>其中的<code>_amplitudes</code>就是将最终出来的频域数据，对得到的数据进行显式如下图<br />
+<img src="/images/audio/raw_wave.gif" width="500"/>可以非常粗糙的对频域数据进行显示了，不过要做到比较好的效果，还得对数据做后处理才行。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E9%9F%B3%E8%A7%86%E9%A2%91/" rel="tag"># 音视频</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/07/15/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E4%B8%AD%E7%9A%84I-O%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8-Select-Poll/" rel="prev" title="网络编程中的I/O多路复用 - Select & Poll">
+      <i class="fa fa-chevron-left"></i> 网络编程中的I/O多路复用 - Select & Poll
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text"> 背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86"><span class="nav-number">2.</span> <span class="nav-text"> 基础知识</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%87%87%E6%A0%B7"><span class="nav-number">2.1.</span> <span class="nav-text"> 采样</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%87%8F%E5%8C%96"><span class="nav-number">2.2.</span> <span class="nav-text"> 量化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%93%8D%E5%BA%A6"><span class="nav-number">2.3.</span> <span class="nav-text"> 响度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AD%89%E5%93%8D%E6%9B%B2%E7%BA%BF"><span class="nav-number">2.4.</span> <span class="nav-text"> 等响曲线</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#a%E8%AE%A1%E6%9D%83"><span class="nav-number">2.5.</span> <span class="nav-text"> A计权</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%82%85%E9%87%8C%E5%8F%B6%E5%8F%98%E6%8D%A2"><span class="nav-number">2.6.</span> <span class="nav-text"> 傅里叶变换</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B4%E4%BD%93%E6%B5%81%E7%A8%8B"><span class="nav-number">3.</span> <span class="nav-text"> 整体流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ios%E9%9F%B3%E9%A2%91%E9%87%87%E9%9B%86"><span class="nav-number">4.</span> <span class="nav-text"> iOS音频采集</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96recoder"><span class="nav-number">4.1.</span> <span class="nav-text"> 初始化Recoder</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%9B%9E%E8%B0%83"><span class="nav-number">4.2.</span> <span class="nav-text"> 数据回调</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#realtimeanalyser"><span class="nav-number">5.</span> <span class="nav-text"> RealtimeAnalyser</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E5%80%BC%E8%BD%AC%E6%8D%A2"><span class="nav-number">5.1.</span> <span class="nav-text"> 数值转换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA"><span class="nav-number">5.2.</span> <span class="nav-text"> 环形缓冲区</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#fft"><span class="nav-number">5.3.</span> <span class="nav-text"> FFT</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E5%88%9B%E5%BB%BAfftsetup"><span class="nav-number">5.3.1.</span> <span class="nav-text"> 1、创建fftSetup</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E8%AF%BB%E5%8F%96%E6%97%B6%E5%9F%9F%E4%BF%A1%E5%8F%B7"><span class="nav-number">5.3.2.</span> <span class="nav-text"> 2、读取时域信号</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E5%8A%A0%E6%B1%89%E5%AE%81%E7%AA%97"><span class="nav-number">5.3.3.</span> <span class="nav-text"> 3、加汉宁窗</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-%E8%BD%AC%E6%8D%A2%E4%B8%BA%E5%A4%8D%E6%95%B0"><span class="nav-number">5.3.4.</span> <span class="nav-text"> 4、转换为复数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-%E6%89%A7%E8%A1%8Cfft"><span class="nav-number">5.3.5.</span> <span class="nav-text"> 5、执行FFT</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6-%E7%BB%93%E6%9E%9C%E7%BC%A9%E6%94%BE"><span class="nav-number">5.3.6.</span> <span class="nav-text"> 6、结果缩放</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#7-%E5%B9%85%E5%80%BC%E5%8F%98%E6%8D%A2"><span class="nav-number">5.3.7.</span> <span class="nav-text"> 7、幅值变换</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Dongxuan Zhang"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Dongxuan Zhang</p>
+  <div class="site-description" itemprop="description">程序员的成长之路</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zhangdongxuan" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zhangdongxuan" rel="noopener" target="_blank"><i class="github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Dongxuan Zhang</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0/dist/katex.min.css">
+
+
+  
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"log":false,"pluginJsPath":"lib/","pluginModelPath":"assets/","pluginRootPath":"live2dw/","tagMode":false});</script></body>
+</html>
