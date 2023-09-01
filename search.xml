@@ -1,6 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Audio Session编程指南(二)</title>
+    <url>/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-%E4%BA%8C/</url>
+    <content><![CDATA[<h2 id="一-audio-session的默认行为"><a class="markdownIt-Anchor" href="#一-audio-session的默认行为"></a> 一、Audio Session的默认行为</h2>
+<ul>
+<li>可以播放，但不能进行录制；</li>
+<li>静音开关设置为静音模式的时候，这个App的任何的音频播放都会被设置为静音；</li>
+<li>当设备锁屏时，这个app的音频会被静音；</li>
+<li>当App播放音频时，其他在后台播放的音频都会被静音；</li>
+</ul>
+<h2 id="二-配置audio-session"><a class="markdownIt-Anchor" href="#二-配置audio-session"></a> 二、配置Audio Session</h2>
+<p>在categories设置了Audio最基本的行为的同时，可以通过设置category的mode更进一步的设置Audio的行为。例如拥有Voice over IP (VoIP)功能的App，它会在使用<code>AVAudioSessionCategoryPlayAndRecord</code>的同时，将Audio Session的mode也设置为<code>AVAudioSessionModeVoiceChat</code>，这样可以通过系统级别的数字信号处理使音频信号得到提升。<br />
+某些categories支持使用设置options重写category默认的Audio行为，举例来讲，Category为<code>AVAudioSessionCategoryPlayback</code>的Audio Session 在active的时候，会打断系统其他的Audio，大多数场景我们都需要这样的表现，但是如果想和系统其他音频进行混播，可以通过设置Category的options为<code>AVAudioSessionCategoryOptionMixWithOthers</code>来进行实现，使用的方法为<code> setCategory:mode:options:error:</code>。</p>
+<h2 id="三-冲突的音频需求"><a class="markdownIt-Anchor" href="#三-冲突的音频需求"></a> 三、冲突的音频需求</h2>
+<p>同一时间内可能有多个app需要使用Audio device，系统这里做了一个比较形象的比。将使用Audio Device比作机场的跑道，将app比作正在飞机，系统服务作为塔台:<br />
+<img src="/images/audio/competing_audio_demands.png" width="600"/><br />
+图中，第一步，你的App请求激活audio session；第二步，系统会判断你配置的category，这里你的app要求其他App进行静音；第三步和第四部，系统deactivates了音乐App的Audio Session，停止了它的音频播放；最后，系统激活了你的audio session，然后你就可以开始播放了；</p>
+<h2 id="四-audio-session的激活和释放"><a class="markdownIt-Anchor" href="#四-audio-session的激活和释放"></a> 四、Audio Session的激活和释放</h2>
+<p>虽然AVFoundation的播放和录音会自动激活Audio Session，但是手动激活可以让你知道active audio session是否成功。<br />
+闹钟、来电或者日历提醒的时候，系统会将你的App deactive掉，当用户dismiss或者挂断电话后，系统允许app再次active audio session，这个时候你可以决定是否将自己的AudioSession进行激活。</p>
+<p>激活AudioSession的方法如下</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Configure your audio session category, options, and mode</span></span><br><span class="line">[[<span class="built_in">AVAudioSession</span> sharedInstance] setCategory:<span class="built_in">AVAudioSessionCategoryPlayback</span> withOptions:<span class="number">0</span> error:<span class="literal">nil</span>];</span><br><span class="line"></span><br><span class="line"><span class="comment">// Activate your audio session to enable your custom configuration</span></span><br><span class="line"><span class="built_in">NSError</span> *outError = <span class="literal">nil</span>;</span><br><span class="line"><span class="type">BOOL</span> ret = [[<span class="built_in">AVAudioSession</span> sharedInstance] setActive:<span class="literal">YES</span> error:&amp;outError];</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>可以将<code>setActive</code> 的参数设置为NO来释放AudioSession。除了一些VoIP、录音这些App，大多数App并不需要对AudioSession进行显式的释放。</p>
+<blockquote>
+<p>对拥有VoIP功能的App，要确保在后台待机运行的情况下不激活AudioSession，确保只有收到呼叫的时候才激活AudioSession；</p>
+<p>对于使用recording category的App，要确保只有它在录音的时候才处于激活状态。在录音前和录音结束后，要将AudioSession设置为未激活态，这样其他功能的音频提示、消息才能被正确播放出来；</p>
+</blockquote>
+<h2 id="五-处理中断"><a class="markdownIt-Anchor" href="#五-处理中断"></a> 五、处理中断</h2>
+<p>为了让App的可以在AudioSesson被电话呼叫、闹钟和其他App的Active事件打断后正常工作，我们需要去监听AudioSession的打断事件。音频的打断来自于那些被激活且未配置mix with others的AudioSession，打断会使我们的AudioSession处于未激活状态，然后结束我们对Audio的使用。</p>
+ <img src="/images/audio/audio_session_interrupted.png" width="600"/>
+<p>以上图片演示了一个播放应用程序的AudioSessionz在中断之前、期间和之后的事件序列。</p>
+<p>可以使用<code>AVAudioSessionInterruptionNotification</code> 来监听AudioSession的变化：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">[[<span class="built_in">NSNotificationCenter</span> defaultCenter] addObserver:<span class="keyword">self</span> selector:<span class="keyword">@selector</span>(handleInterruption:) name:<span class="built_in">AVAudioSessionInterruptionNotification</span> object:[<span class="built_in">AVAudioSession</span> sharedInstance]];</span><br></pre></td></tr></table></figure>
+<p>在interrupt begin和interrupt end的时候做对应处理，当interruptType为<code>AVAudioSessionInterruptionTypeEnded</code>时，可以从userInfo中通过<code>AVAudioSessionInterruptionOptionKey</code>拿到option，当option的值为<code>AVAudioSessionInterruptionOptionShouldResume</code>时，可以重新激活AudioSession并开始进行record或者play。</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">- (<span class="type">void</span>)handleInterruption:(<span class="built_in">NSNotification</span> *)notification &#123;</span><br><span class="line">    <span class="built_in">NSDictionary</span> *info = notification.userInfo;</span><br><span class="line">    <span class="built_in">AVAudioSessionInterruptionType</span> interruptType = [info[<span class="built_in">AVAudioSessionInterruptionTypeKey</span>] unsignedIntegerValue];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (interruptType == <span class="built_in">AVAudioSessionInterruptionTypeBegan</span>) &#123;</span><br><span class="line">        <span class="comment">// Interruption began, take appropriate actions (save state, update user interface)</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (interruptType == <span class="built_in">AVAudioSessionInterruptionTypeEnded</span>) &#123;</span><br><span class="line">        <span class="built_in">AVAudioSessionInterruptionOptions</span> option = [info[<span class="built_in">AVAudioSessionInterruptionOptionKey</span>] unsignedIntegerValue];</span><br><span class="line">        <span class="keyword">if</span> (option == <span class="built_in">AVAudioSessionInterruptionOptionShouldResume</span>) &#123;</span><br><span class="line">            <span class="comment">// reactive audio session &amp; play</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="六-响应媒体服务重置"><a class="markdownIt-Anchor" href="#六-响应媒体服务重置"></a> 六、响应媒体服务重置</h2>
+<p>媒体服务通过共享服务进程来提供音频和其他多媒体功能。虽然很罕见，但是在你的App处于active的时候，媒体服务重置的情况还是有可能发生的。可以通过注册 <code>AVAudioSessionMediaServicesWereResetNotification</code> 来监听媒体服务被重置的情况。当这种情况发生时，你需要做一些处理:</p>
+<ul>
+<li>清理之前的audio对象（例如players、recorders、converters和audio queue），重新创建一个新的；</li>
+<li>重置所有正在跟踪的内部音频状态，包括AVAudioSession的所有属性；</li>
+<li>适当时，使用setActive:error:方法重新激活AVAudioSession实例；</li>
+</ul>
+<blockquote>
+<p>Apps 无需重新注册AudioSession的notification，无需对AudioSession的属性进行 key-value 监控进行重置；</p>
+</blockquote>
+]]></content>
+      <tags>
+        <tag>音视频</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>多模匹配之AC自动机</title>
     <url>/2021/04/18/Aho-Corasick/</url>
     <content><![CDATA[<img src="/images/algorithm/1.png" width="700"/>
@@ -193,67 +243,31 @@ USB and headphones、HDMI and headphones、LineOut and headphones，另外只支
       </tags>
   </entry>
   <entry>
-    <title>Audio Session编程指南(二)</title>
-    <url>/2022/03/20/Audio-Session%E7%BC%96%E7%A8%8B%E6%8C%87%E5%8D%97-%E4%BA%8C/</url>
-    <content><![CDATA[<h2 id="一-audio-session的默认行为"><a class="markdownIt-Anchor" href="#一-audio-session的默认行为"></a> 一、Audio Session的默认行为</h2>
-<ul>
-<li>可以播放，但不能进行录制；</li>
-<li>静音开关设置为静音模式的时候，这个App的任何的音频播放都会被设置为静音；</li>
-<li>当设备锁屏时，这个app的音频会被静音；</li>
-<li>当App播放音频时，其他在后台播放的音频都会被静音；</li>
-</ul>
-<h2 id="二-配置audio-session"><a class="markdownIt-Anchor" href="#二-配置audio-session"></a> 二、配置Audio Session</h2>
-<p>在categories设置了Audio最基本的行为的同时，可以通过设置category的mode更进一步的设置Audio的行为。例如拥有Voice over IP (VoIP)功能的App，它会在使用<code>AVAudioSessionCategoryPlayAndRecord</code>的同时，将Audio Session的mode也设置为<code>AVAudioSessionModeVoiceChat</code>，这样可以通过系统级别的数字信号处理使音频信号得到提升。<br />
-某些categories支持使用设置options重写category默认的Audio行为，举例来讲，Category为<code>AVAudioSessionCategoryPlayback</code>的Audio Session 在active的时候，会打断系统其他的Audio，大多数场景我们都需要这样的表现，但是如果想和系统其他音频进行混播，可以通过设置Category的options为<code>AVAudioSessionCategoryOptionMixWithOthers</code>来进行实现，使用的方法为<code> setCategory:mode:options:error:</code>。</p>
-<h2 id="三-冲突的音频需求"><a class="markdownIt-Anchor" href="#三-冲突的音频需求"></a> 三、冲突的音频需求</h2>
-<p>同一时间内可能有多个app需要使用Audio device，系统这里做了一个比较形象的比。将使用Audio Device比作机场的跑道，将app比作正在飞机，系统服务作为塔台:<br />
-<img src="/images/audio/competing_audio_demands.png" width="600"/><br />
-图中，第一步，你的App请求激活audio session；第二步，系统会判断你配置的category，这里你的app要求其他App进行静音；第三步和第四部，系统deactivates了音乐App的Audio Session，停止了它的音频播放；最后，系统激活了你的audio session，然后你就可以开始播放了；</p>
-<h2 id="四-audio-session的激活和释放"><a class="markdownIt-Anchor" href="#四-audio-session的激活和释放"></a> 四、Audio Session的激活和释放</h2>
-<p>虽然AVFoundation的播放和录音会自动激活Audio Session，但是手动激活可以让你知道active audio session是否成功。<br />
-闹钟、来电或者日历提醒的时候，系统会将你的App deactive掉，当用户dismiss或者挂断电话后，系统允许app再次active audio session，这个时候你可以决定是否将自己的AudioSession进行激活。</p>
-<p>激活AudioSession的方法如下</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Configure your audio session category, options, and mode</span></span><br><span class="line">[[<span class="built_in">AVAudioSession</span> sharedInstance] setCategory:<span class="built_in">AVAudioSessionCategoryPlayback</span> withOptions:<span class="number">0</span> error:<span class="literal">nil</span>];</span><br><span class="line"></span><br><span class="line"><span class="comment">// Activate your audio session to enable your custom configuration</span></span><br><span class="line"><span class="built_in">NSError</span> *outError = <span class="literal">nil</span>;</span><br><span class="line"><span class="type">BOOL</span> ret = [[<span class="built_in">AVAudioSession</span> sharedInstance] setActive:<span class="literal">YES</span> error:&amp;outError];</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>可以将<code>setActive</code> 的参数设置为NO来释放AudioSession。除了一些VoIP、录音这些App，大多数App并不需要对AudioSession进行显式的释放。</p>
-<blockquote>
-<p>对拥有VoIP功能的App，要确保在后台待机运行的情况下不激活AudioSession，确保只有收到呼叫的时候才激活AudioSession；</p>
-<p>对于使用recording category的App，要确保只有它在录音的时候才处于激活状态。在录音前和录音结束后，要将AudioSession设置为未激活态，这样其他功能的音频提示、消息才能被正确播放出来；</p>
-</blockquote>
-<h2 id="五-处理中断"><a class="markdownIt-Anchor" href="#五-处理中断"></a> 五、处理中断</h2>
-<p>为了让App的可以在AudioSesson被电话呼叫、闹钟和其他App的Active事件打断后正常工作，我们需要去监听AudioSession的打断事件。音频的打断来自于那些被激活且未配置mix with others的AudioSession，打断会使我们的AudioSession处于未激活状态，然后结束我们对Audio的使用。</p>
- <img src="/images/audio/audio_session_interrupted.png" width="600"/>
-<p>以上图片演示了一个播放应用程序的AudioSessionz在中断之前、期间和之后的事件序列。</p>
-<p>可以使用<code>AVAudioSessionInterruptionNotification</code> 来监听AudioSession的变化：</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">[[<span class="built_in">NSNotificationCenter</span> defaultCenter] addObserver:<span class="keyword">self</span> selector:<span class="keyword">@selector</span>(handleInterruption:) name:<span class="built_in">AVAudioSessionInterruptionNotification</span> object:[<span class="built_in">AVAudioSession</span> sharedInstance]];</span><br></pre></td></tr></table></figure>
-<p>在interrupt begin和interrupt end的时候做对应处理，当interruptType为<code>AVAudioSessionInterruptionTypeEnded</code>时，可以从userInfo中通过<code>AVAudioSessionInterruptionOptionKey</code>拿到option，当option的值为<code>AVAudioSessionInterruptionOptionShouldResume</code>时，可以重新激活AudioSession并开始进行record或者play。</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">- (<span class="type">void</span>)handleInterruption:(<span class="built_in">NSNotification</span> *)notification &#123;</span><br><span class="line">    <span class="built_in">NSDictionary</span> *info = notification.userInfo;</span><br><span class="line">    <span class="built_in">AVAudioSessionInterruptionType</span> interruptType = [info[<span class="built_in">AVAudioSessionInterruptionTypeKey</span>] unsignedIntegerValue];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (interruptType == <span class="built_in">AVAudioSessionInterruptionTypeBegan</span>) &#123;</span><br><span class="line">        <span class="comment">// Interruption began, take appropriate actions (save state, update user interface)</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (interruptType == <span class="built_in">AVAudioSessionInterruptionTypeEnded</span>) &#123;</span><br><span class="line">        <span class="built_in">AVAudioSessionInterruptionOptions</span> option = [info[<span class="built_in">AVAudioSessionInterruptionOptionKey</span>] unsignedIntegerValue];</span><br><span class="line">        <span class="keyword">if</span> (option == <span class="built_in">AVAudioSessionInterruptionOptionShouldResume</span>) &#123;</span><br><span class="line">            <span class="comment">// reactive audio session &amp; play</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="六-响应媒体服务重置"><a class="markdownIt-Anchor" href="#六-响应媒体服务重置"></a> 六、响应媒体服务重置</h2>
-<p>媒体服务通过共享服务进程来提供音频和其他多媒体功能。虽然很罕见，但是在你的App处于active的时候，媒体服务重置的情况还是有可能发生的。可以通过注册 <code>AVAudioSessionMediaServicesWereResetNotification</code> 来监听媒体服务被重置的情况。当这种情况发生时，你需要做一些处理:</p>
-<ul>
-<li>清理之前的audio对象（例如players、recorders、converters和audio queue），重新创建一个新的；</li>
-<li>重置所有正在跟踪的内部音频状态，包括AVAudioSession的所有属性；</li>
-<li>适当时，使用setActive:error:方法重新激活AVAudioSession实例；</li>
-</ul>
-<blockquote>
-<p>Apps 无需重新注册AudioSession的notification，无需对AudioSession的属性进行 key-value 监控进行重置；</p>
-</blockquote>
-]]></content>
-      <tags>
-        <tag>音视频</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>ExtendedLayout</title>
-    <url>/2017/06/15/ExtendedLayout/</url>
-    <content><![CDATA[<p>UIViewController中的定义</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">@property(nonatomic,assign) UIRectEdge edgesForExtendedLayout NS_AVAILABLE_IOS(7_0); // Defaults to UIRectEdgeAll</span><br></pre></td></tr></table></figure>
-<p>当使用NavigationController时，edgesForExtendedLayout的值默认为UIRectEdgeAll，布局默认从navigation Bar的底部开始，所有的元素会下移44pt。可将其设置为UIRectEdgeNone来取消默认设置。</p>
-]]></content>
+    <title>MacOS 编译C++</title>
+    <url>/2016/10/31/MacOS-%E7%BC%96%E8%AF%91C/</url>
+    <content><![CDATA[<h2 id="编译"><a class="markdownIt-Anchor" href="#编译"></a> 编译</h2>
+<p>指用编译器(compiler)将源代码(source code)生成二进制目标文件(object file)，在Windows下也就是 .obj 文件，UNIX下是 .o 文件。编译时，编译器需要的是语法的正确，函数与变量的声明的正确，编译器只检测程序语法，和函数、变量是否被声明，函数并不需要被定义。<br />
+mac os 下编译C++的文件：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ -c test.cpp    </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>-c 是compile的意思<br />
+生成二进制文件 test.o。</p>
+<h2 id="链接"><a class="markdownIt-Anchor" href="#链接"></a> 链接</h2>
+<p>找到所要用到函数所在的目标文件，并把它们链接在一起合成为可执行文件(executable file)。链接时，要确保编译器能找到所有被用到了的函数所在的目标文件。<br />
+mac os 下编译C++的文件：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o -o output </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>生成可执行文件output。这里可以将多个文件同时</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o test2.o -o output</span><br></pre></td></tr></table></figure>
+<h2 id="结合"><a class="markdownIt-Anchor" href="#结合"></a> 结合</h2>
+<p>编译和链接两个过程可以结合起来：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp test2.cpp -o output</span><br></pre></td></tr></table></figure>
+<p>一步生成可执行文件output。中间会先编译生成目标文件，然后链接生成可执行文件。</p>
+<p>另外如果只有一个C++文件，可以一步到位，生成执行文件a.out</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp</span><br></pre></td></tr></table></figure>]]></content>
       <categories>
-        <category>iOS</category>
+        <category>备忘</category>
       </categories>
       <tags>
-        <tag>UI</tag>
+        <tag>C++</tag>
       </tags>
   </entry>
   <entry>
@@ -343,34 +357,6 @@ token用于标记语法解析中用到的基本语素，教程里称之为“记
       </tags>
   </entry>
   <entry>
-    <title>MacOS 编译C++</title>
-    <url>/2016/10/31/MacOS-%E7%BC%96%E8%AF%91C/</url>
-    <content><![CDATA[<h2 id="编译"><a class="markdownIt-Anchor" href="#编译"></a> 编译</h2>
-<p>指用编译器(compiler)将源代码(source code)生成二进制目标文件(object file)，在Windows下也就是 .obj 文件，UNIX下是 .o 文件。编译时，编译器需要的是语法的正确，函数与变量的声明的正确，编译器只检测程序语法，和函数、变量是否被声明，函数并不需要被定义。<br />
-mac os 下编译C++的文件：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ -c test.cpp    </span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>-c 是compile的意思<br />
-生成二进制文件 test.o。</p>
-<h2 id="链接"><a class="markdownIt-Anchor" href="#链接"></a> 链接</h2>
-<p>找到所要用到函数所在的目标文件，并把它们链接在一起合成为可执行文件(executable file)。链接时，要确保编译器能找到所有被用到了的函数所在的目标文件。<br />
-mac os 下编译C++的文件：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o -o output </span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>生成可执行文件output。这里可以将多个文件同时</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.o test2.o -o output</span><br></pre></td></tr></table></figure>
-<h2 id="结合"><a class="markdownIt-Anchor" href="#结合"></a> 结合</h2>
-<p>编译和链接两个过程可以结合起来：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp test2.cpp -o output</span><br></pre></td></tr></table></figure>
-<p>一步生成可执行文件output。中间会先编译生成目标文件，然后链接生成可执行文件。</p>
-<p>另外如果只有一个C++文件，可以一步到位，生成执行文件a.out</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">g++ test.cpp</span><br></pre></td></tr></table></figure>]]></content>
-      <categories>
-        <category>备忘</category>
-      </categories>
-      <tags>
-        <tag>C++</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>NSAutoreleasePool分析</title>
     <url>/2017/09/26/NSAutoreleasePool%E5%88%86%E6%9E%90/</url>
     <content><![CDATA[<h2 id="定义"><a class="markdownIt-Anchor" href="#定义"></a> 定义</h2>
@@ -454,6 +440,20 @@ mac os 下编译C++的文件：</p>
 ]]></content>
       <tags>
         <tag>iOS</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>ExtendedLayout</title>
+    <url>/2017/06/15/ExtendedLayout/</url>
+    <content><![CDATA[<p>UIViewController中的定义</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">@property(nonatomic,assign) UIRectEdge edgesForExtendedLayout NS_AVAILABLE_IOS(7_0); // Defaults to UIRectEdgeAll</span><br></pre></td></tr></table></figure>
+<p>当使用NavigationController时，edgesForExtendedLayout的值默认为UIRectEdgeAll，布局默认从navigation Bar的底部开始，所有的元素会下移44pt。可将其设置为UIRectEdgeNone来取消默认设置。</p>
+]]></content>
+      <categories>
+        <category>iOS</category>
+      </categories>
+      <tags>
+        <tag>UI</tag>
       </tags>
   </entry>
   <entry>
@@ -947,44 +947,6 @@ BASE[1]的后继子节点字符为<code>e</code>、<code>i</code>，CODE(e) = 2�
       </tags>
   </entry>
   <entry>
-    <title>音频频谱动画的原理与实现（二）</title>
-    <url>/2022/07/27/frequencydomainanimation2/</url>
-    <content><![CDATA[<p>看这篇文章之前建议先看一下之前的文章：<a href="http://zhangdongxuan.com/2022/07/15/frequencydomainanimation1/">《音频频谱动画的原理与实现（一）》</a></p>
-<h3 id="加权"><a class="markdownIt-Anchor" href="#加权"></a> 加权</h3>
-<p>对人类听觉来说，愈高的声压或声强，会造成愈大的听觉感知。需要根据等响曲线对频率幅值进行加权，这里使用上文提到的A加权方式。初始化加权数组：</p>
- <figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"> <span class="comment">//   https://en.wikipedia.org/wiki/A-weighting</span></span><br><span class="line">- (<span class="type">void</span>)initWeightings &#123;</span><br><span class="line">    <span class="type">float</span> Δf = <span class="number">1.0</span> * _sampleRate / _fftSize;</span><br><span class="line">    <span class="type">int</span> length = _fftSize;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (_loudnessWeights != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        free(_loudnessWeights);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">float</span> value = <span class="number">1</span>;</span><br><span class="line">    _loudnessWeights = (Float32 *)malloc(length * <span class="keyword">sizeof</span>(Float32));</span><br><span class="line">    vDSP_vfill(&amp;value, _loudnessWeights, <span class="number">1</span>, length);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//  (12194 * x^2)^2 / (x^2 + 20.6^2) / (x^2 + 12194^2) / sqrt((x^2 + 107.7^2) * (x^2 + 737.9^2))</span></span><br><span class="line">    <span class="type">float</span> c1 = powf(<span class="number">12194</span>, <span class="number">2.0</span>);</span><br><span class="line">    <span class="type">float</span> c2 = powf(<span class="number">20.6</span>, <span class="number">2.0</span>);</span><br><span class="line">    <span class="type">float</span> c3 = powf(<span class="number">107.7</span>, <span class="number">2.0</span>);</span><br><span class="line">    <span class="type">float</span> c4 = powf(<span class="number">737.9</span>, <span class="number">2.0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; length; i++) &#123;</span><br><span class="line">        <span class="type">float</span> f = powf(Δf * i, <span class="number">2</span>);</span><br><span class="line">        <span class="type">float</span> num = c1 * powf(f, <span class="number">2</span>);</span><br><span class="line">        <span class="type">float</span> den = (f + c2) * sqrtf((f + c3) * (f + c4)) * (f + c1);</span><br><span class="line">        <span class="type">float</span> Raf = num / den;</span><br><span class="line">        <span class="type">float</span> weights = <span class="number">1.2589</span> * Raf;</span><br><span class="line">        _loudnessWeights[i] = weights;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>对FFT结果进行加权</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> length = _fftSize / <span class="number">2</span>;</span><br><span class="line"><span class="comment">// 添加声响权重</span></span><br><span class="line">vDSP_vmul(_amplitudes, <span class="number">1</span>, _loudnessWeights, <span class="number">1</span>, _weightsAmplitudes, <span class="number">1</span>, length);</span><br></pre></td></tr></table></figure>
-<img src="/images/audio/weights.gif" width="500"/>
-相比之前的实现没有特别大的区别，这是因为我们对时域信号进行FFT得到的512个频率点进行了直接的展示，表示出录音数据在每个频率点的振幅，对用户而言，是不需要对频域进行如此高精度展示的。
-所以我们需要对频率进行精度划分，也就是频带划分。
-<h3 id="频带划分"><a class="markdownIt-Anchor" href="#频带划分"></a> 频带划分</h3>
-<p>人耳可以听到20 - 20KHZ的音频信号，但对3000Hz左右的声音较为敏感，人耳可以很轻松的分别出低频声音的音调变化，但是对高频声音的变化并不敏感。所以可以说频率和音调之间的变化并不是呈线性关系，而是某种对数的关系。因此在实现动画时将数据从等频率间隔划分成对数增长的间隔更合乎人类的听感。频带划分示意图:<br />
-<img src="/images/audio/band.png" width="800"/></p>
-<p>频带划分实现代码</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">- (<span class="type">void</span>)updateFrequencyBandsCount:(<span class="built_in">UInt32</span>)bandsCount &#123;</span><br><span class="line">    <span class="keyword">if</span> (_arrFrequencyBands.count == bandsCount) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//1：根据起止频谱、频带数量确定增长的倍数：2^n log2x的意思就是求x是2的多少次幂.</span></span><br><span class="line">    <span class="type">float</span> n = log2f(_maxFrequency / _minFrequency) / bandsCount;</span><br><span class="line"></span><br><span class="line">    <span class="type">float</span> lowerFrequency = _minFrequency;</span><br><span class="line">    <span class="type">float</span> upperFrequency = _minFrequency;</span><br><span class="line">    <span class="type">float</span> bandWidth = <span class="number">1.0</span> * _sampleRate / _fftSize;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">NSMutableArray</span> *arrFrequencyBands = [<span class="built_in">NSMutableArray</span> array];</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; bandsCount; i++) &#123;</span><br><span class="line">        upperFrequency = lowerFrequency * powf(<span class="number">2</span>, n);</span><br><span class="line">        <span class="keyword">if</span> (i == bandsCount - <span class="number">1</span>) &#123;</span><br><span class="line">            upperFrequency = _maxFrequency;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        AudioBandsInfo *brandInfo = [AudioBandsInfo createWith:lowerFrequency upperFrequency:upperFrequency bandWidth:bandWidth];</span><br><span class="line">        [arrFrequencyBands addObject:brandInfo];</span><br><span class="line">        lowerFrequency = upperFrequency;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    _bandsCount = bandsCount;</span><br><span class="line">    _arrFrequencyBands = arrFrequencyBands;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>这里我使用的<code>_minFrequency</code>的值为60，<code>_maxFrequency</code>的值为9000</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">Float32 *spectrum = (Float32 *)malloc(_bandsCount * <span class="keyword">sizeof</span>(Float32));</span><br><span class="line"><span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; _bandsCount; i++) &#123;</span><br><span class="line">    AudioBandsInfo *brandInfo = [_arrFrequencyBands objectAtIndex:i];</span><br><span class="line">    <span class="comment">// getMaxAmplitude 从_weightsAmplitudes中找到对应频带的最大值</span></span><br><span class="line">    <span class="type">float</span> maxAmplitude = [brandInfo getMaxAmplitude:_weightsAmplitudes length:length];</span><br><span class="line">    <span class="type">float</span> result = maxAmplitude * _amplitudeLevel;</span><br><span class="line">    spectrum[i] = result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>效果如下<br />
-<img src="/images/audio/band.gif" width="400"/></p>
-<h3 id="闪动优化"><a class="markdownIt-Anchor" href="#闪动优化"></a> 闪动优化</h3>
-<p>目前看动画效果由于每帧之间的数据差异较大，导致前后两帧的画面闪动的感觉较为明显，所以我们可以将上一帧的值缓存起来，然后跟当前帧的值进行加权平均，使得前后两帧的变化更为平滑。</p>
-<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">- (<span class="type">void</span>)smoothVerticalSpectrum:(<span class="type">float</span> *)spectrum length:(<span class="type">int</span>)length &#123;</span><br><span class="line">    <span class="keyword">if</span> (_spectrum == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; length; i++) &#123;</span><br><span class="line">        <span class="type">float</span> oldVal = _spectrum[i];</span><br><span class="line">        <span class="type">float</span> newVal = spectrum[i];</span><br><span class="line">        spectrum[i] = oldVal * kSmoothingTimeConstant + newVal * (<span class="number">1.0</span> - kSmoothingTimeConstant);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<img src="/images/audio/smooth_vertical.gif" width="400"/>
-<h3 id="锯齿消除"><a class="markdownIt-Anchor" href="#锯齿消除"></a> 锯齿消除</h3>
-<p>上面的效果频带之间的高低变化过大，导致锯齿感较强，这里也可以使用加权平均的方式进行优化</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// 使用加权平均解决锯齿过多</span><br><span class="line">- (void)smoothHorizontalSpectrum:(float *)spectrum length:(int)length &#123;</span><br><span class="line">    int count = 3;</span><br><span class="line">    float weights[] = &#123; 1, 4, 1 &#125;;</span><br><span class="line"></span><br><span class="line">    float totalWeights = 0;</span><br><span class="line">    for (int i = 0; i &lt; count; i++) &#123;</span><br><span class="line">        totalWeights += weights[i];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    int startIndex = count / 2;</span><br><span class="line"></span><br><span class="line">    for (int i = startIndex; i &lt; length - count; i++) &#123;</span><br><span class="line">        float total = 0;</span><br><span class="line">        for (int j = 0; j &lt; count; j++) &#123;</span><br><span class="line">            total += spectrum[i + j] * weights[j];</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        float averaged = total / totalWeights;</span><br><span class="line">        spectrum[i] = averaged;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<img src="/images/audio/final.gif" width="400"/>
-<p>本文参考<br />
-<a href="https://en.wikipedia.org/wiki/A-weighting">https://en.wikipedia.org/wiki/A-weighting</a><br />
-一步一步教你实现iOS音频频谱动画（一）<a href="https://juejin.cn/post/6844903784011792391">https://juejin.cn/post/6844903784011792391</a><br />
-一步一步教你实现iOS音频频谱动画（二）<a href="https://juejin.cn/post/6844903791670591495">https://juejin.cn/post/6844903791670591495</a></p>
-]]></content>
-      <tags>
-        <tag>音视频</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>iOS 图片压缩</title>
     <url>/2017/09/05/iOS-%E5%9B%BE%E7%89%87%E5%8E%8B%E7%BC%A9/</url>
     <content><![CDATA[<p>最近在解决Share Extension发送大图导致爆内存的问题，测试用27M的图片，用的是iPhone 7P，系统分配给Share Extension的内存应该有100M，一步步debug发现问题出在压缩的过程。</p>
@@ -1007,69 +969,6 @@ BASE[1]的后继子节点字符为<code>e</code>、<code>i</code>，CODE(e) = 2�
 [1]:<a href="http://pulkitgoyal.in/resizing-high-resolution-images-on-ios-without-memory-issues/">http://pulkitgoyal.in/resizing-high-resolution-images-on-ios-without-memory-issues/</a><br />
 [2]:<a href="https://medium.com/@ranleung/uiimage-vs-ciimage-vs-cgimage-3db9d8b83d94">https://medium.com/@ranleung/uiimage-vs-ciimage-vs-cgimage-3db9d8b83d94</a></p>
 ]]></content>
-  </entry>
-  <entry>
-    <title>iOS 观察者模式</title>
-    <url>/2016/08/06/iOS-%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/</url>
-    <content><![CDATA[<h2 id="引言"><a class="markdownIt-Anchor" href="#引言"></a> 引言</h2>
-<p>差不多有半年没有写过博客了，知识沉淀的感觉让我十分怀念。最近在工作中用到的观察者模式比较多，发现客户端开发中无论是Android还是iOS都需要很多经常的利用到这种模式。这种模式会在很大程度上达到层次解耦合的作用，具体如果解耦会在下文中提到。</p>
-<h2 id="模式定义"><a class="markdownIt-Anchor" href="#模式定义"></a> 模式定义</h2>
-<blockquote>
-<p>定义对象之间的一种一对多依赖关系，使得每当一个对象状态发生改变时，其相关依赖对象皆得到通知并被自动更新。观察者模式的别名包括发布-订阅（Publish/Subscribe）模式、模型-视图（Model/View）模式、源-监听器（Source/Listener）模式或从属者（Dependents）模式。观察者模式是一种对象行为型模式。  – 刘伟老师</p>
-</blockquote>
-<h2 id="模式概述"><a class="markdownIt-Anchor" href="#模式概述"></a> 模式概述</h2>
-<p>观察者模式是使用频率很高的模式，它定义了对象与对象之间的依赖关系，当一个对象的状态发生变化的时候自动地去通知其他对象响应此变化。发生改变的对象被称为观察目标(Subject)，被通知去响应变化的被称为观察者(Observer),可以动态的去增加和删除观察者，从而做到观察者和被观察者之家的解耦，使系统更容易拓展。</p>
-<h2 id="举个例子"><a class="markdownIt-Anchor" href="#举个例子"></a> 举个例子</h2>
-<p>“铃响，学生上课；铃再响，学生下课”。在这个场景中铃声就是同学们的观察目标，而学生就是观察者。</p>
-<h2 id="模式类图"><a class="markdownIt-Anchor" href="#模式类图"></a> 模式类图</h2>
-<p><img src="/images/old/Observer.png" alt="" /></p>
-<ul>
-<li><strong>Subjec:</strong> 目标，即被观察者。其中会定义一个观察者集合，用来存放任意数量的观察者，并提供管理这些观察者的方法。同时定义了通知的方法notify()。这个类可以是接口，抽象类或者具体类；</li>
-<li><strong>ConcreteSubject:</strong> 具体的目标类。当其状态改变时，会向各个观察者发出通知，此类可以根据情况来决定是否对目标类进行扩展；</li>
-<li><strong>Observer:</strong> 观察者类对观察目标的改变做出响应。一般定义为接口，该接口声明了更新数据的方法update()；</li>
-<li><strong>ConcreteObserver:</strong> 具体观察者,它是真正响应变化的类，在一般情况下它维护一个指向具体目标对象的引用，它具体存储观察者的有关状态（例如下课的铃响，学生记住下课的状态），这些状态要和具体目标的状态保持一致。它实现了在Observer接口中的update（）方法。可以调用观察目标对象的addObserver()和removeObserver()将自己添加到观察者队列或者从观察者队列中删除。</li>
-<li><strong>ConcreteObserver:</strong> 具体观察者</li>
-</ul>
-<p>##注意<br />
-<strong>在OC中没有接口这一说，并且其与接口类似的协议也是不能声明对象的！！</strong></p>
-<h2 id="代码示例"><a class="markdownIt-Anchor" href="#代码示例"></a> 代码示例</h2>
-<p>下面是该模式在Objective-C中的实现。</p>
-<p><code>Observer.h</code></p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Observer</span> : <span class="title">NSObject</span></span></span><br><span class="line"></span><br><span class="line">-(<span class="type">void</span>)update;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
-<p><code>Observer.m</code></p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Observer</span></span></span><br><span class="line"></span><br><span class="line">-(<span class="type">void</span>)update&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
-<hr />
-<p><code>ConcreteObserver.h</code></p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&quot;Observer.h&quot;</span></span></span><br><span class="line"><span class="class"><span class="keyword">@class</span> <span class="title">Subject</span>;</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">ConcreteObserver</span> : <span class="title">Observer</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>,<span class="keyword">weak</span>)Subject *subject;</span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
-<p><code>ConcreteObserver.m</code></p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&quot;ConcreteObserver.h&quot;</span></span></span><br><span class="line"><span class="meta">#import <span class="string">&quot;Subject.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">ConcreteObserver</span></span>&#123;</span><br><span class="line">    <span class="built_in">CLASS_STATE</span> state;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="type">void</span>)update&#123;</span><br><span class="line">    state = [_subject state];</span><br><span class="line">    <span class="keyword">if</span>(state)&#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;学生冲进教室&quot;</span>);</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;学生冲出教室&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
-<hr />
-<p><code>Subject.h</code></p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@class</span> <span class="title">Observer</span>;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="built_in">NS_ENUM</span>(<span class="built_in">NSInteger</span>, <span class="built_in">CLASS_STATE</span>) &#123;</span><br><span class="line">    <span class="built_in">CLASS_OFF</span> = <span class="number">0</span>,   <span class="comment">//下课</span></span><br><span class="line">    <span class="built_in">CLASS_ON</span>,  <span class="comment">//上课</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Subject</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>,<span class="keyword">assign</span>)SUBJECT_STATE state;</span><br><span class="line">-(<span class="type">BOOL</span>)addObserver:(Observer*)observer;</span><br><span class="line">-(<span class="type">BOOL</span>)removeObserver:(Observer*)observer;</span><br><span class="line">-(<span class="type">void</span>)notify;</span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
-<p><code>Subject.m</code></p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&quot;Subject.h&quot;</span></span></span><br><span class="line"><span class="meta">#import <span class="string">&quot;Observer.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Subject</span></span>&#123;</span><br><span class="line">    <span class="built_in">NSMutableArray</span> *observerArray;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="keyword">instancetype</span>)init&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">self</span> = [<span class="variable language_">super</span> init]) &#123;</span><br><span class="line">        observerArray = [[<span class="built_in">NSMutableArray</span> alloc]init];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">self</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="type">BOOL</span>)addObserver:(Observer*)observer&#123;</span><br><span class="line">    <span class="keyword">if</span> (![observerArray containsObject:observer]) &#123;</span><br><span class="line">        [observerArray addObject:observer];</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="type">BOOL</span>)removeObserver:(Observer*)observer&#123;</span><br><span class="line">    <span class="keyword">if</span> ([observerArray containsObject:observer]) &#123;</span><br><span class="line">        [observerArray removeObject:observer];</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="type">void</span>)notify&#123;</span><br><span class="line">    <span class="keyword">for</span> (Observer* observer <span class="keyword">in</span> observerArray) &#123;</span><br><span class="line">        [observer update];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="type">void</span>)setState:(<span class="built_in">CLASS_STATE</span>)state&#123;</span><br><span class="line">    _state = state;</span><br><span class="line">    <span class="keyword">if</span> (_state) &#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;上课铃响&quot;</span>);</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;下课铃响&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
-<hr />
-<p>另外为了尽量匹配观察者模式的类图结构，还有一个Subject的子类ConcreteSubject，其实在这个例子中这个类并不需要存在。<br />
-<code>ConcreteSubject.h</code></p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&quot;Subject.h&quot;</span></span></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">ConcreteSubject</span> : <span class="title">Subject</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
-<p><code>ConcreteSubject.m</code></p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&quot;ConcreteSubject.h&quot;</span></span></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">ConcreteSubject</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
-<hr />
-<p>最后在main函数中我们运行：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">Subject * subject = [[Subject alloc]init];</span><br><span class="line">        </span><br><span class="line">ConcreteObserver *observer1 = [[ConcreteObserver alloc]init];</span><br><span class="line">ConcreteObserver *observer2= [[ConcreteObserver alloc]init];</span><br><span class="line">ConcreteObserver *observer3 = [[ConcreteObserver alloc]init];</span><br><span class="line">ConcreteObserver *observer4 = [[ConcreteObserver alloc]init];</span><br><span class="line"></span><br><span class="line">observer1.subject = subject;</span><br><span class="line">observer2.subject = subject;</span><br><span class="line">observer3.subject = subject;</span><br><span class="line">observer4.subject = subject;</span><br><span class="line"></span><br><span class="line">[subject addObserver:observer1];</span><br><span class="line">[subject addObserver:observer2];</span><br><span class="line">[subject addObserver:observer3];</span><br><span class="line">[subject addObserver:observer4];</span><br><span class="line"></span><br><span class="line">[subject setState:<span class="built_in">CLASS_ON</span>];</span><br><span class="line">[subject notify];</span><br><span class="line">        </span><br><span class="line">[subject setState:<span class="built_in">CLASS_OFF</span>];</span><br><span class="line">[subject notify];</span><br></pre></td></tr></table></figure>
-<p>运动结果：<br />
-<img src="/images/old/result.png" alt="" /></p>
-<hr />
-<h2 id="思考"><a class="markdownIt-Anchor" href="#思考"></a> 思考</h2>
-<p>以上是比较复杂的观察着模式，在更新观察者的状态的时候需要获被观察者的状态。但是在很多情况下，我们并不需获取被观察者的状态，也就不需要持有被观察者的对象，这样会大大的简化模式模型。<br />
-比如在网络层和业务层之间，网络层下载数据之后如何通知业务层进行更新呢？如果像以上这种做法很显然观察者和被观察者之间相互依赖，层次之间的耦合度还是比较高的，所以代码应该如何组织呢？</p>
-]]></content>
-      <categories>
-        <category>非技术</category>
-      </categories>
-      <tags>
-        <tag>设计模式</tag>
-      </tags>
   </entry>
   <entry>
     <title>iOS实现文字复制</title>
@@ -1114,6 +1013,81 @@ BASE[1]的后继子节点字符为<code>e</code>、<code>i</code>，CODE(e) = 2�
       </categories>
       <tags>
         <tag>UI</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>iOS视频播放常用类</title>
+    <url>/2017/02/07/iOS%E8%A7%86%E9%A2%91%E6%92%AD%E6%94%BE%E5%B8%B8%E7%94%A8%E7%B1%BB/</url>
+    <content><![CDATA[<p>之前做过一些iOS视频边下边播的一些东西，现在抽时间整理一下关于视频播放的一些东西。</p>
+<h2 id="avasset"><a class="markdownIt-Anchor" href="#avasset"></a> AVAsset</h2>
+<p>AVAsset是所有媒体资源的承载类，他定义了媒体资源的呈现形式，对媒体资源的读取、播放、处理都是在AVAsset上进行，其包含了资源的duration、preferredRate(默认音速)、preferredVolume(默认音量)、createTime等属性。<br />
+AVAsset是一个抽象类，我们一般使用其子类AVURLAsset和AVComposition。一般使用AVURLAsset对资源文件进行读取，使用AVComposition对资源进行编辑。</p>
+<h3 id="懒加载属性"><a class="markdownIt-Anchor" href="#懒加载属性"></a> 懒加载属性</h3>
+<p>对类似于视频这类资源，我们从AVAsset中获取tracks、duration等属性会比较耗时，如果在创建对象的时候就去加载这些属性可能会阻塞线程，所以这类属性使用了懒加载的方式，在第一次访问这类属性的时候可以使用AVFoundation提的了AVAsynchronousKeyValueLoading协议来异步加载属性。</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="built_in">AVAsset</span> *asset = [<span class="built_in">AVAsset</span> assetWithURL:[<span class="built_in">NSURL</span> fileURLWithPath:<span class="string">@&quot;xxx.mp4&quot;</span>]];</span><br><span class="line"><span class="built_in">NSString</span> *tracksKey = <span class="string">@&quot;tracks&quot;</span>;</span><br><span class="line"><span class="built_in">NSString</span> *durationKey = <span class="string">@&quot;duration&quot;</span>;</span><br><span class="line"></span><br><span class="line">__<span class="keyword">weak</span> <span class="built_in">AVAsset</span> *weakAsset = asset;</span><br><span class="line">[asset loadValuesAsynchronouslyForKeys:@[tracksKey, durationKey] completionHandler:^&#123;</span><br><span class="line">    <span class="built_in">dispatch_async</span>(dispatch_get_main_queue(), ^&#123;</span><br><span class="line">    <span class="built_in">NSError</span> *error;</span><br><span class="line">    <span class="built_in">AVKeyValueStatus</span> status = [asset statusOfValueForKey:tracksKey error:&amp;error];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (status == <span class="built_in">AVKeyValueStatusLoaded</span>) &#123;</span><br><span class="line">        <span class="built_in">NSArray</span> *audioTracks = [weakAsset tracksWithMediaType:<span class="built_in">AVMediaTypeAudio</span>];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">AVKeyValueStatus</span> durationStatus = [weakAsset statusOfValueForKey:durationKey error:&amp;error];</span><br><span class="line">    <span class="keyword">if</span> (durationStatus == <span class="built_in">AVKeyValueStatusLoaded</span>) &#123;</span><br><span class="line">        Float64 duration = <span class="built_in">CMTimeGetSeconds</span>(weakAsset.duration);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;];</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="avassettrack"><a class="markdownIt-Anchor" href="#avassettrack"></a> AVAssetTrack</h3>
+<p>媒体资源会有多种组成部分，一般的视频至少有两个轨道，一个播放声音一个播放画面。AVAssetTrack中包括duration、rage、volume、trackId等属性。</p>
+<p>可以用以下方法获取AVAssetTrack实例：</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="keyword">nullable</span> <span class="built_in">AVAssetTrack</span> *)trackWithTrackID:(<span class="built_in">CMPersistentTrackID</span>)trackID;</span><br><span class="line">- (<span class="built_in">NSArray</span>&lt;<span class="built_in">AVAssetTrack</span> *&gt; *)tracksWithMediaType:(<span class="built_in">NSString</span> *)mediaType;</span><br><span class="line">- (<span class="built_in">NSArray</span>&lt;<span class="built_in">AVAssetTrack</span> *&gt; *)tracksWithMediaCharacteristic:(<span class="built_in">NSString</span> *)mediaCharacteristic;</span><br></pre></td></tr></table></figure>
+<h2 id="avplayer"><a class="markdownIt-Anchor" href="#avplayer"></a> AVPlayer</h2>
+<p>AVPlayer是iOS提供的一个强大的播放组件，其支持播放本地、分步下载或通过HLS协议得到的流媒体。其不能直接显示画面，需要创建一个播放器层AVPlayerLayer用于显示视频画面。</p>
+<h2 id="avplayerlayer"><a class="markdownIt-Anchor" href="#avplayerlayer"></a> AVPlayerLayer</h2>
+<p>AVPlayerLayer构建于Core Animation之上,是AV Foundation为数不多的可见组件.</p>
+<p>AVPlayerLayer扩展了Core Animation的CALayer类,并通过框架在屏幕上显示视频内容,这一图层并不提供任何可交互的控件.创建AVPlayerLayer需要一个AVPlayer实例指针,这就将图层和播放器绑定在一起,保证了二者间的时间同步.AVPlayerLayer可以和其他CALayer一样,添加到UIView或NSView的layer上.</p>
+<p>AVPlayerLayer中可自定义的属性只有video gravity,用来设置视频的拉伸或缩放程度.</p>
+<h2 id="avplayeritem"><a class="markdownIt-Anchor" href="#avplayeritem"></a> AVPlayerItem</h2>
+<p>一个媒体资源管理对象，是一个载体,承载AVAsset，然后通过AVPlayer进行播放，管理并保存着AVPlayer播放视频时的状态。<br />
+我们的目的是使用AVPlayer来播放AVAsset，AVAsset中只有时长，创建时间等静态信息，AVPlayerItem则有获取当前播放时间以及调节播放进度的方法。</p>
+<h3 id="动态对象"><a class="markdownIt-Anchor" href="#动态对象"></a> 动态对象</h3>
+<p>AVPlayerItem是一个动态对象，除了可以被我们改变的属性之外，许多read-only属性在准备播放和播放过程中被其相关联的AVPlayer所改变。可以使用KVO去监听这些变化，一个非常重要的属性是<a href="https://developer.apple.com/reference/avfoundation/avplayeritem/1389493-status?language=objc">status</a>，这个属性指示了什么时候可以播放。当我们刚创建出AVPlayerItem对象的时候这个属性的值是AVPlayerItemStatusUnknown表示媒体资源还没有被加载。关联AVPlayer对象之后会立马将AVPlayerItem对象对应的资源排队，毕竟开始为播放做准备。当status的值变为AVPlayerItemStatusReadyToPlay的时候表示我们可以准备播放。</p>
+<p>如下代码指示了如何创建并注册监听：</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="type">void</span>)prepareToPlay &#123;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">NSURL</span> *url = &lt;#Asset URL#&gt;</span><br><span class="line">    <span class="comment">// Create asset to be played</span></span><br><span class="line">    asset = [<span class="built_in">AVAsset</span> assetWithURL:url];</span><br><span class="line">    <span class="built_in">NSArray</span> *assetKeys = @[<span class="string">@&quot;playable&quot;</span>, <span class="string">@&quot;hasProtectedContent&quot;</span>];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Create a new AVPlayerItem with the asset and an</span></span><br><span class="line">    <span class="comment">// array of asset keys to be automatically loaded</span></span><br><span class="line">    playerItem = [<span class="built_in">AVPlayerItem</span> playerItemWithAsset:asset automaticallyLoadedAssetKeys:assetKeys];</span><br><span class="line"></span><br><span class="line">    <span class="built_in">NSKeyValueObservingOptions</span> options = <span class="built_in">NSKeyValueObservingOptionOld</span> | <span class="built_in">NSKeyValueObservingOptionNew</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Register as an observer of the player item&#x27;s status property</span></span><br><span class="line">    [playerItem addObserver:<span class="keyword">self</span></span><br><span class="line">        forKeyPath:<span class="string">@&quot;status&quot;</span></span><br><span class="line">        options:options</span><br><span class="line">        context:&amp;PlayerItemContext];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Associate the player item with the player</span></span><br><span class="line">    player = [<span class="built_in">AVPlayer</span> playerWithPlayerItem:playerItem];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后当status发生变化时，我们需要实现如下如下方法以获得通知。</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="type">void</span>)observeValueForKeyPath:(<span class="built_in">NSString</span> *)keyPath ofObject:(<span class="type">id</span>)object change:(<span class="built_in">NSDictionary</span>&lt;<span class="built_in">NSString</span> *,<span class="type">id</span>&gt; *)change context:(<span class="type">void</span> *)context &#123;</span><br><span class="line">    <span class="comment">// Only handle observations for the PlayerItemContext</span></span><br><span class="line">    <span class="keyword">if</span> (context != &amp;PlayerItemContext) &#123;</span><br><span class="line">        [<span class="variable language_">super</span> observeValueForKeyPath:keyPath ofObject:object change:change context:context];</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ([keyPath isEqualToString:<span class="string">@&quot;status&quot;</span>]) &#123;</span><br><span class="line">        <span class="built_in">AVPlayerItemStatus</span> status = <span class="built_in">AVPlayerItemStatusUnknown</span>;</span><br><span class="line">        <span class="comment">// Get the status change from the change dictionary</span></span><br><span class="line">        <span class="built_in">NSNumber</span> *statusNumber = change[<span class="built_in">NSKeyValueChangeNewKey</span>];</span><br><span class="line">        <span class="keyword">if</span> ([statusNumber isKindOfClass:[<span class="built_in">NSNumber</span> <span class="keyword">class</span>]]) &#123;</span><br><span class="line">            status = statusNumber.integerValue;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// Switch over the status</span></span><br><span class="line">        <span class="keyword">switch</span> (status) &#123;</span><br><span class="line">            <span class="keyword">case</span> <span class="built_in">AVPlayerItemStatusReadyToPlay</span>:</span><br><span class="line">                <span class="comment">// Ready to Play</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> <span class="built_in">AVPlayerItemStatusFailed</span>:</span><br><span class="line">                <span class="comment">// Failed. Examine AVPlayerItem.error</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> <span class="built_in">AVPlayerItemStatusUnknown</span>:</span><br><span class="line">                <span class="comment">// Not ready</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>iOS</category>
+      </categories>
+      <tags>
+        <tag>音视频</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>音频频谱动画的原理与实现（二）</title>
+    <url>/2022/07/27/frequencydomainanimation2/</url>
+    <content><![CDATA[<p>看这篇文章之前建议先看一下之前的文章：<a href="http://zhangdongxuan.com/2022/07/15/frequencydomainanimation1/">《音频频谱动画的原理与实现（一）》</a></p>
+<h3 id="加权"><a class="markdownIt-Anchor" href="#加权"></a> 加权</h3>
+<p>对人类听觉来说，愈高的声压或声强，会造成愈大的听觉感知。需要根据等响曲线对频率幅值进行加权，这里使用上文提到的A加权方式。初始化加权数组：</p>
+ <figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"> <span class="comment">//   https://en.wikipedia.org/wiki/A-weighting</span></span><br><span class="line">- (<span class="type">void</span>)initWeightings &#123;</span><br><span class="line">    <span class="type">float</span> Δf = <span class="number">1.0</span> * _sampleRate / _fftSize;</span><br><span class="line">    <span class="type">int</span> length = _fftSize;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (_loudnessWeights != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        free(_loudnessWeights);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">float</span> value = <span class="number">1</span>;</span><br><span class="line">    _loudnessWeights = (Float32 *)malloc(length * <span class="keyword">sizeof</span>(Float32));</span><br><span class="line">    vDSP_vfill(&amp;value, _loudnessWeights, <span class="number">1</span>, length);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//  (12194 * x^2)^2 / (x^2 + 20.6^2) / (x^2 + 12194^2) / sqrt((x^2 + 107.7^2) * (x^2 + 737.9^2))</span></span><br><span class="line">    <span class="type">float</span> c1 = powf(<span class="number">12194</span>, <span class="number">2.0</span>);</span><br><span class="line">    <span class="type">float</span> c2 = powf(<span class="number">20.6</span>, <span class="number">2.0</span>);</span><br><span class="line">    <span class="type">float</span> c3 = powf(<span class="number">107.7</span>, <span class="number">2.0</span>);</span><br><span class="line">    <span class="type">float</span> c4 = powf(<span class="number">737.9</span>, <span class="number">2.0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; length; i++) &#123;</span><br><span class="line">        <span class="type">float</span> f = powf(Δf * i, <span class="number">2</span>);</span><br><span class="line">        <span class="type">float</span> num = c1 * powf(f, <span class="number">2</span>);</span><br><span class="line">        <span class="type">float</span> den = (f + c2) * sqrtf((f + c3) * (f + c4)) * (f + c1);</span><br><span class="line">        <span class="type">float</span> Raf = num / den;</span><br><span class="line">        <span class="type">float</span> weights = <span class="number">1.2589</span> * Raf;</span><br><span class="line">        _loudnessWeights[i] = weights;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对FFT结果进行加权</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> length = _fftSize / <span class="number">2</span>;</span><br><span class="line"><span class="comment">// 添加声响权重</span></span><br><span class="line">vDSP_vmul(_amplitudes, <span class="number">1</span>, _loudnessWeights, <span class="number">1</span>, _weightsAmplitudes, <span class="number">1</span>, length);</span><br></pre></td></tr></table></figure>
+<img src="/images/audio/weights.gif" width="500"/>
+相比之前的实现没有特别大的区别，这是因为我们对时域信号进行FFT得到的512个频率点进行了直接的展示，表示出录音数据在每个频率点的振幅，对用户而言，是不需要对频域进行如此高精度展示的。
+所以我们需要对频率进行精度划分，也就是频带划分。
+<h3 id="频带划分"><a class="markdownIt-Anchor" href="#频带划分"></a> 频带划分</h3>
+<p>人耳可以听到20 - 20KHZ的音频信号，但对3000Hz左右的声音较为敏感，人耳可以很轻松的分别出低频声音的音调变化，但是对高频声音的变化并不敏感。所以可以说频率和音调之间的变化并不是呈线性关系，而是某种对数的关系。因此在实现动画时将数据从等频率间隔划分成对数增长的间隔更合乎人类的听感。频带划分示意图:<br />
+<img src="/images/audio/band.png" width="800"/></p>
+<p>频带划分实现代码</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">- (<span class="type">void</span>)updateFrequencyBandsCount:(<span class="built_in">UInt32</span>)bandsCount &#123;</span><br><span class="line">    <span class="keyword">if</span> (_arrFrequencyBands.count == bandsCount) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//1：根据起止频谱、频带数量确定增长的倍数：2^n log2x的意思就是求x是2的多少次幂.</span></span><br><span class="line">    <span class="type">float</span> n = log2f(_maxFrequency / _minFrequency) / bandsCount;</span><br><span class="line"></span><br><span class="line">    <span class="type">float</span> lowerFrequency = _minFrequency;</span><br><span class="line">    <span class="type">float</span> upperFrequency = _minFrequency;</span><br><span class="line">    <span class="type">float</span> bandWidth = <span class="number">1.0</span> * _sampleRate / _fftSize;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">NSMutableArray</span> *arrFrequencyBands = [<span class="built_in">NSMutableArray</span> array];</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; bandsCount; i++) &#123;</span><br><span class="line">        upperFrequency = lowerFrequency * powf(<span class="number">2</span>, n);</span><br><span class="line">        <span class="keyword">if</span> (i == bandsCount - <span class="number">1</span>) &#123;</span><br><span class="line">            upperFrequency = _maxFrequency;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        AudioBandsInfo *brandInfo = [AudioBandsInfo createWith:lowerFrequency upperFrequency:upperFrequency bandWidth:bandWidth];</span><br><span class="line">        [arrFrequencyBands addObject:brandInfo];</span><br><span class="line">        lowerFrequency = upperFrequency;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    _bandsCount = bandsCount;</span><br><span class="line">    _arrFrequencyBands = arrFrequencyBands;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里我使用的<code>_minFrequency</code>的值为60，<code>_maxFrequency</code>的值为9000</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">Float32 *spectrum = (Float32 *)malloc(_bandsCount * <span class="keyword">sizeof</span>(Float32));</span><br><span class="line"><span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; _bandsCount; i++) &#123;</span><br><span class="line">    AudioBandsInfo *brandInfo = [_arrFrequencyBands objectAtIndex:i];</span><br><span class="line">    <span class="comment">// getMaxAmplitude 从_weightsAmplitudes中找到对应频带的最大值</span></span><br><span class="line">    <span class="type">float</span> maxAmplitude = [brandInfo getMaxAmplitude:_weightsAmplitudes length:length];</span><br><span class="line">    <span class="type">float</span> result = maxAmplitude * _amplitudeLevel;</span><br><span class="line">    spectrum[i] = result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>效果如下<br />
+<img src="/images/audio/band.gif" width="400"/></p>
+<h3 id="闪动优化"><a class="markdownIt-Anchor" href="#闪动优化"></a> 闪动优化</h3>
+<p>目前看动画效果由于每帧之间的数据差异较大，导致前后两帧的画面闪动的感觉较为明显，所以我们可以将上一帧的值缓存起来，然后跟当前帧的值进行加权平均，使得前后两帧的变化更为平滑。</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">- (<span class="type">void</span>)smoothVerticalSpectrum:(<span class="type">float</span> *)spectrum length:(<span class="type">int</span>)length &#123;</span><br><span class="line">    <span class="keyword">if</span> (_spectrum == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; length; i++) &#123;</span><br><span class="line">        <span class="type">float</span> oldVal = _spectrum[i];</span><br><span class="line">        <span class="type">float</span> newVal = spectrum[i];</span><br><span class="line">        spectrum[i] = oldVal * kSmoothingTimeConstant + newVal * (<span class="number">1.0</span> - kSmoothingTimeConstant);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<img src="/images/audio/smooth_vertical.gif" width="400"/>
+<h3 id="锯齿消除"><a class="markdownIt-Anchor" href="#锯齿消除"></a> 锯齿消除</h3>
+<p>上面的效果频带之间的高低变化过大，导致锯齿感较强，这里也可以使用加权平均的方式进行优化</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// 使用加权平均解决锯齿过多</span><br><span class="line">- (void)smoothHorizontalSpectrum:(float *)spectrum length:(int)length &#123;</span><br><span class="line">    int count = 3;</span><br><span class="line">    float weights[] = &#123; 1, 4, 1 &#125;;</span><br><span class="line"></span><br><span class="line">    float totalWeights = 0;</span><br><span class="line">    for (int i = 0; i &lt; count; i++) &#123;</span><br><span class="line">        totalWeights += weights[i];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    int startIndex = count / 2;</span><br><span class="line"></span><br><span class="line">    for (int i = startIndex; i &lt; length - count; i++) &#123;</span><br><span class="line">        float total = 0;</span><br><span class="line">        for (int j = 0; j &lt; count; j++) &#123;</span><br><span class="line">            total += spectrum[i + j] * weights[j];</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        float averaged = total / totalWeights;</span><br><span class="line">        spectrum[i] = averaged;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<img src="/images/audio/final.gif" width="400"/>
+<p>本文参考<br />
+<a href="https://en.wikipedia.org/wiki/A-weighting">https://en.wikipedia.org/wiki/A-weighting</a><br />
+一步一步教你实现iOS音频频谱动画（一）<a href="https://juejin.cn/post/6844903784011792391">https://juejin.cn/post/6844903784011792391</a><br />
+一步一步教你实现iOS音频频谱动画（二）<a href="https://juejin.cn/post/6844903791670591495">https://juejin.cn/post/6844903791670591495</a></p>
+]]></content>
+      <tags>
+        <tag>音视频</tag>
       </tags>
   </entry>
   <entry>
@@ -1199,6 +1173,114 @@ BASE[1]的后继子节点字符为<code>e</code>、<code>i</code>，CODE(e) = 2�
       </tags>
   </entry>
   <entry>
+    <title>iOS 观察者模式</title>
+    <url>/2016/08/06/iOS-%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/</url>
+    <content><![CDATA[<h2 id="引言"><a class="markdownIt-Anchor" href="#引言"></a> 引言</h2>
+<p>差不多有半年没有写过博客了，知识沉淀的感觉让我十分怀念。最近在工作中用到的观察者模式比较多，发现客户端开发中无论是Android还是iOS都需要很多经常的利用到这种模式。这种模式会在很大程度上达到层次解耦合的作用，具体如果解耦会在下文中提到。</p>
+<h2 id="模式定义"><a class="markdownIt-Anchor" href="#模式定义"></a> 模式定义</h2>
+<blockquote>
+<p>定义对象之间的一种一对多依赖关系，使得每当一个对象状态发生改变时，其相关依赖对象皆得到通知并被自动更新。观察者模式的别名包括发布-订阅（Publish/Subscribe）模式、模型-视图（Model/View）模式、源-监听器（Source/Listener）模式或从属者（Dependents）模式。观察者模式是一种对象行为型模式。  – 刘伟老师</p>
+</blockquote>
+<h2 id="模式概述"><a class="markdownIt-Anchor" href="#模式概述"></a> 模式概述</h2>
+<p>观察者模式是使用频率很高的模式，它定义了对象与对象之间的依赖关系，当一个对象的状态发生变化的时候自动地去通知其他对象响应此变化。发生改变的对象被称为观察目标(Subject)，被通知去响应变化的被称为观察者(Observer),可以动态的去增加和删除观察者，从而做到观察者和被观察者之家的解耦，使系统更容易拓展。</p>
+<h2 id="举个例子"><a class="markdownIt-Anchor" href="#举个例子"></a> 举个例子</h2>
+<p>“铃响，学生上课；铃再响，学生下课”。在这个场景中铃声就是同学们的观察目标，而学生就是观察者。</p>
+<h2 id="模式类图"><a class="markdownIt-Anchor" href="#模式类图"></a> 模式类图</h2>
+<p><img src="/images/old/Observer.png" alt="" /></p>
+<ul>
+<li><strong>Subjec:</strong> 目标，即被观察者。其中会定义一个观察者集合，用来存放任意数量的观察者，并提供管理这些观察者的方法。同时定义了通知的方法notify()。这个类可以是接口，抽象类或者具体类；</li>
+<li><strong>ConcreteSubject:</strong> 具体的目标类。当其状态改变时，会向各个观察者发出通知，此类可以根据情况来决定是否对目标类进行扩展；</li>
+<li><strong>Observer:</strong> 观察者类对观察目标的改变做出响应。一般定义为接口，该接口声明了更新数据的方法update()；</li>
+<li><strong>ConcreteObserver:</strong> 具体观察者,它是真正响应变化的类，在一般情况下它维护一个指向具体目标对象的引用，它具体存储观察者的有关状态（例如下课的铃响，学生记住下课的状态），这些状态要和具体目标的状态保持一致。它实现了在Observer接口中的update（）方法。可以调用观察目标对象的addObserver()和removeObserver()将自己添加到观察者队列或者从观察者队列中删除。</li>
+<li><strong>ConcreteObserver:</strong> 具体观察者</li>
+</ul>
+<p>##注意<br />
+<strong>在OC中没有接口这一说，并且其与接口类似的协议也是不能声明对象的！！</strong></p>
+<h2 id="代码示例"><a class="markdownIt-Anchor" href="#代码示例"></a> 代码示例</h2>
+<p>下面是该模式在Objective-C中的实现。</p>
+<p><code>Observer.h</code></p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Observer</span> : <span class="title">NSObject</span></span></span><br><span class="line"></span><br><span class="line">-(<span class="type">void</span>)update;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+<p><code>Observer.m</code></p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Observer</span></span></span><br><span class="line"></span><br><span class="line">-(<span class="type">void</span>)update&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+<hr />
+<p><code>ConcreteObserver.h</code></p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&quot;Observer.h&quot;</span></span></span><br><span class="line"><span class="class"><span class="keyword">@class</span> <span class="title">Subject</span>;</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">ConcreteObserver</span> : <span class="title">Observer</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>,<span class="keyword">weak</span>)Subject *subject;</span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+<p><code>ConcreteObserver.m</code></p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&quot;ConcreteObserver.h&quot;</span></span></span><br><span class="line"><span class="meta">#import <span class="string">&quot;Subject.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">ConcreteObserver</span></span>&#123;</span><br><span class="line">    <span class="built_in">CLASS_STATE</span> state;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="type">void</span>)update&#123;</span><br><span class="line">    state = [_subject state];</span><br><span class="line">    <span class="keyword">if</span>(state)&#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;学生冲进教室&quot;</span>);</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;学生冲出教室&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+<hr />
+<p><code>Subject.h</code></p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@class</span> <span class="title">Observer</span>;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="built_in">NS_ENUM</span>(<span class="built_in">NSInteger</span>, <span class="built_in">CLASS_STATE</span>) &#123;</span><br><span class="line">    <span class="built_in">CLASS_OFF</span> = <span class="number">0</span>,   <span class="comment">//下课</span></span><br><span class="line">    <span class="built_in">CLASS_ON</span>,  <span class="comment">//上课</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">Subject</span> : <span class="title">NSObject</span></span></span><br><span class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>,<span class="keyword">assign</span>)SUBJECT_STATE state;</span><br><span class="line">-(<span class="type">BOOL</span>)addObserver:(Observer*)observer;</span><br><span class="line">-(<span class="type">BOOL</span>)removeObserver:(Observer*)observer;</span><br><span class="line">-(<span class="type">void</span>)notify;</span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+<p><code>Subject.m</code></p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&quot;Subject.h&quot;</span></span></span><br><span class="line"><span class="meta">#import <span class="string">&quot;Observer.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">Subject</span></span>&#123;</span><br><span class="line">    <span class="built_in">NSMutableArray</span> *observerArray;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="keyword">instancetype</span>)init&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">self</span> = [<span class="variable language_">super</span> init]) &#123;</span><br><span class="line">        observerArray = [[<span class="built_in">NSMutableArray</span> alloc]init];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">self</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="type">BOOL</span>)addObserver:(Observer*)observer&#123;</span><br><span class="line">    <span class="keyword">if</span> (![observerArray containsObject:observer]) &#123;</span><br><span class="line">        [observerArray addObject:observer];</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="type">BOOL</span>)removeObserver:(Observer*)observer&#123;</span><br><span class="line">    <span class="keyword">if</span> ([observerArray containsObject:observer]) &#123;</span><br><span class="line">        [observerArray removeObject:observer];</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">YES</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NO</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="type">void</span>)notify&#123;</span><br><span class="line">    <span class="keyword">for</span> (Observer* observer <span class="keyword">in</span> observerArray) &#123;</span><br><span class="line">        [observer update];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">-(<span class="type">void</span>)setState:(<span class="built_in">CLASS_STATE</span>)state&#123;</span><br><span class="line">    _state = state;</span><br><span class="line">    <span class="keyword">if</span> (_state) &#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;上课铃响&quot;</span>);</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="built_in">NSLog</span>(<span class="string">@&quot;下课铃响&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+<hr />
+<p>另外为了尽量匹配观察者模式的类图结构，还有一个Subject的子类ConcreteSubject，其实在这个例子中这个类并不需要存在。<br />
+<code>ConcreteSubject.h</code></p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&quot;Subject.h&quot;</span></span></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">ConcreteSubject</span> : <span class="title">Subject</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+<p><code>ConcreteSubject.m</code></p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="meta">#import <span class="string">&quot;ConcreteSubject.h&quot;</span></span></span><br><span class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">ConcreteSubject</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure>
+<hr />
+<p>最后在main函数中我们运行：</p>
+<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">Subject * subject = [[Subject alloc]init];</span><br><span class="line">        </span><br><span class="line">ConcreteObserver *observer1 = [[ConcreteObserver alloc]init];</span><br><span class="line">ConcreteObserver *observer2= [[ConcreteObserver alloc]init];</span><br><span class="line">ConcreteObserver *observer3 = [[ConcreteObserver alloc]init];</span><br><span class="line">ConcreteObserver *observer4 = [[ConcreteObserver alloc]init];</span><br><span class="line"></span><br><span class="line">observer1.subject = subject;</span><br><span class="line">observer2.subject = subject;</span><br><span class="line">observer3.subject = subject;</span><br><span class="line">observer4.subject = subject;</span><br><span class="line"></span><br><span class="line">[subject addObserver:observer1];</span><br><span class="line">[subject addObserver:observer2];</span><br><span class="line">[subject addObserver:observer3];</span><br><span class="line">[subject addObserver:observer4];</span><br><span class="line"></span><br><span class="line">[subject setState:<span class="built_in">CLASS_ON</span>];</span><br><span class="line">[subject notify];</span><br><span class="line">        </span><br><span class="line">[subject setState:<span class="built_in">CLASS_OFF</span>];</span><br><span class="line">[subject notify];</span><br></pre></td></tr></table></figure>
+<p>运动结果：<br />
+<img src="/images/old/result.png" alt="" /></p>
+<hr />
+<h2 id="思考"><a class="markdownIt-Anchor" href="#思考"></a> 思考</h2>
+<p>以上是比较复杂的观察着模式，在更新观察者的状态的时候需要获被观察者的状态。但是在很多情况下，我们并不需获取被观察者的状态，也就不需要持有被观察者的对象，这样会大大的简化模式模型。<br />
+比如在网络层和业务层之间，网络层下载数据之后如何通知业务层进行更新呢？如果像以上这种做法很显然观察者和被观察者之间相互依赖，层次之间的耦合度还是比较高的，所以代码应该如何组织呢？</p>
+]]></content>
+      <categories>
+        <category>非技术</category>
+      </categories>
+      <tags>
+        <tag>设计模式</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>诗歌</title>
+    <url>/2016/07/17/song/</url>
+    <content><![CDATA[<p>我愿意成为她的守护天使<br />
+爱她所爱<br />
+思她所思<br />
+为她承担伤痛<br />
+度过苦难<br />
+无论贫寒或富贵<br />
+无论卑贱或高贵<br />
+无论身处乱世<br />
+还是神所不顾<br />
+我愿为她拔剑而战<br />
+为她收起翅膀<br />
+不离不弃<br />
+直至永远</p>
+]]></content>
+  </entry>
+  <entry>
+    <title>Objective-C 中的load和initialize</title>
+    <url>/2021/04/11/oc_load_initialize/</url>
+    <content><![CDATA[<h3 id="load调用时机"><a class="markdownIt-Anchor" href="#load调用时机"></a> load调用时机</h3>
+<blockquote>
+<p>在这个文件被程序装载时调用。</p>
+</blockquote>
+<p>当我们启动程序时，参与了编译的类、分类都会被加载进内存，load方法就是在这个类被加载的时候调用的，这个过程与这个类是否被使用是无关的，只要是在Compile Sources中出现的文件总是会被装载。<br />
+<code>load</code>是在main之前进行调用。</p>
+<h3 id="load调用顺序"><a class="markdownIt-Anchor" href="#load调用顺序"></a> load调用顺序</h3>
+<p>一个程序中如果所有的类、分类都实现了load方法，那么所有的load方法都会被调用。它们的执行顺序遵循以下规则：</p>
+<p>先执行所有类的<code>load</code>方法，再执行所有分类的<code>load</code>方法。<br />
+执行类的<code>load</code>方法时，是按照参与编译的顺序，先编译的类先执行，但是如果某个类是继承自另一个类，那么会先执行父类的<code>load</code>方法个再执行自己的<code>load</code>方法。<br />
+执行分类的<code>load</code>方法时，是按照分类参与编译的顺序，先编译的分类先执行。</p>
+<p>编译顺序是按照项目中<code>Build Phases --&gt; Compile Sources</code>文件排序来进行的，最上面的就最先编译。</p>
+<h3 id="initialize调用时机"><a class="markdownIt-Anchor" href="#initialize调用时机"></a> initialize调用时机</h3>
+<p><code>initialize</code>方法是在类或它的子类收到第一条消息时被调用的，这里的消息就是指实例方法或类方法的调用，所以所有类的<code>initialize</code>调用是在执行<code>main</code>函数之后调用的。而且一个类只会调用一次<code>initialize</code>方法。如果一个类在程序运行过程中一直没有被使用过，那这个类的<code>initialize</code>方法也就不会被调用，这一点和<code>load</code>方法是不一样的。</p>
+<p>使用initialize要比使用load安全(因为在调用initialize时所有类已经被加载进内存了)，但我们还是要尽量少用initialize这个方法个，尤其要谨慎在分类中实现initialize方法，因为如果在分类中实现了，本类实现的initialize方法将不会被调用。实际开发中initialize方法一般用于初始化全局变量或静态变量。</p>
+<h3 id="应用场景"><a class="markdownIt-Anchor" href="#应用场景"></a> 应用场景</h3>
+<p><code>load</code>方法通常用来进行<code>Method Swizzle</code>，<code>initialize</code>方法一般用于初始化全局变量或静态变量，<code>load</code>和<code>initialize</code>方法内部使用了锁，因此它们是线程安全的。实现时要尽可能保持简单，避免阻塞线程，不要再使用锁。</p>
+<p>参考<br />
+<a href="https://juejin.cn/post/6844904040703197191">https://juejin.cn/post/6844904040703197191</a></p>
+]]></content>
+      <tags>
+        <tag>iOS基础</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>轻弹幕隐私协议</title>
     <url>/2015/10/14/qingdanmu-private/</url>
     <content><![CDATA[<p>「轻弹幕」网（以下简称「轻弹幕」）非常重视对您的个人隐私保护，有时候我们需要某些信息才能为您提供您请求的服务，本隐私声明解释了这些情况下的数据收集和使用情况。</p>
@@ -1229,88 +1311,6 @@ BASE[1]的后继子节点字符为<code>e</code>、<code>i</code>，CODE(e) = 2�
       <tags>
         <tag>隐私协议</tag>
       </tags>
-  </entry>
-  <entry>
-    <title>iOS视频播放常用类</title>
-    <url>/2017/02/07/iOS%E8%A7%86%E9%A2%91%E6%92%AD%E6%94%BE%E5%B8%B8%E7%94%A8%E7%B1%BB/</url>
-    <content><![CDATA[<p>之前做过一些iOS视频边下边播的一些东西，现在抽时间整理一下关于视频播放的一些东西。</p>
-<h2 id="avasset"><a class="markdownIt-Anchor" href="#avasset"></a> AVAsset</h2>
-<p>AVAsset是所有媒体资源的承载类，他定义了媒体资源的呈现形式，对媒体资源的读取、播放、处理都是在AVAsset上进行，其包含了资源的duration、preferredRate(默认音速)、preferredVolume(默认音量)、createTime等属性。<br />
-AVAsset是一个抽象类，我们一般使用其子类AVURLAsset和AVComposition。一般使用AVURLAsset对资源文件进行读取，使用AVComposition对资源进行编辑。</p>
-<h3 id="懒加载属性"><a class="markdownIt-Anchor" href="#懒加载属性"></a> 懒加载属性</h3>
-<p>对类似于视频这类资源，我们从AVAsset中获取tracks、duration等属性会比较耗时，如果在创建对象的时候就去加载这些属性可能会阻塞线程，所以这类属性使用了懒加载的方式，在第一次访问这类属性的时候可以使用AVFoundation提的了AVAsynchronousKeyValueLoading协议来异步加载属性。</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line"><span class="built_in">AVAsset</span> *asset = [<span class="built_in">AVAsset</span> assetWithURL:[<span class="built_in">NSURL</span> fileURLWithPath:<span class="string">@&quot;xxx.mp4&quot;</span>]];</span><br><span class="line"><span class="built_in">NSString</span> *tracksKey = <span class="string">@&quot;tracks&quot;</span>;</span><br><span class="line"><span class="built_in">NSString</span> *durationKey = <span class="string">@&quot;duration&quot;</span>;</span><br><span class="line"></span><br><span class="line">__<span class="keyword">weak</span> <span class="built_in">AVAsset</span> *weakAsset = asset;</span><br><span class="line">[asset loadValuesAsynchronouslyForKeys:@[tracksKey, durationKey] completionHandler:^&#123;</span><br><span class="line">    <span class="built_in">dispatch_async</span>(dispatch_get_main_queue(), ^&#123;</span><br><span class="line">    <span class="built_in">NSError</span> *error;</span><br><span class="line">    <span class="built_in">AVKeyValueStatus</span> status = [asset statusOfValueForKey:tracksKey error:&amp;error];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (status == <span class="built_in">AVKeyValueStatusLoaded</span>) &#123;</span><br><span class="line">        <span class="built_in">NSArray</span> *audioTracks = [weakAsset tracksWithMediaType:<span class="built_in">AVMediaTypeAudio</span>];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">AVKeyValueStatus</span> durationStatus = [weakAsset statusOfValueForKey:durationKey error:&amp;error];</span><br><span class="line">    <span class="keyword">if</span> (durationStatus == <span class="built_in">AVKeyValueStatusLoaded</span>) &#123;</span><br><span class="line">        Float64 duration = <span class="built_in">CMTimeGetSeconds</span>(weakAsset.duration);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;];</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h3 id="avassettrack"><a class="markdownIt-Anchor" href="#avassettrack"></a> AVAssetTrack</h3>
-<p>媒体资源会有多种组成部分，一般的视频至少有两个轨道，一个播放声音一个播放画面。AVAssetTrack中包括duration、rage、volume、trackId等属性。</p>
-<p>可以用以下方法获取AVAssetTrack实例：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="keyword">nullable</span> <span class="built_in">AVAssetTrack</span> *)trackWithTrackID:(<span class="built_in">CMPersistentTrackID</span>)trackID;</span><br><span class="line">- (<span class="built_in">NSArray</span>&lt;<span class="built_in">AVAssetTrack</span> *&gt; *)tracksWithMediaType:(<span class="built_in">NSString</span> *)mediaType;</span><br><span class="line">- (<span class="built_in">NSArray</span>&lt;<span class="built_in">AVAssetTrack</span> *&gt; *)tracksWithMediaCharacteristic:(<span class="built_in">NSString</span> *)mediaCharacteristic;</span><br></pre></td></tr></table></figure>
-<h2 id="avplayer"><a class="markdownIt-Anchor" href="#avplayer"></a> AVPlayer</h2>
-<p>AVPlayer是iOS提供的一个强大的播放组件，其支持播放本地、分步下载或通过HLS协议得到的流媒体。其不能直接显示画面，需要创建一个播放器层AVPlayerLayer用于显示视频画面。</p>
-<h2 id="avplayerlayer"><a class="markdownIt-Anchor" href="#avplayerlayer"></a> AVPlayerLayer</h2>
-<p>AVPlayerLayer构建于Core Animation之上,是AV Foundation为数不多的可见组件.</p>
-<p>AVPlayerLayer扩展了Core Animation的CALayer类,并通过框架在屏幕上显示视频内容,这一图层并不提供任何可交互的控件.创建AVPlayerLayer需要一个AVPlayer实例指针,这就将图层和播放器绑定在一起,保证了二者间的时间同步.AVPlayerLayer可以和其他CALayer一样,添加到UIView或NSView的layer上.</p>
-<p>AVPlayerLayer中可自定义的属性只有video gravity,用来设置视频的拉伸或缩放程度.</p>
-<h2 id="avplayeritem"><a class="markdownIt-Anchor" href="#avplayeritem"></a> AVPlayerItem</h2>
-<p>一个媒体资源管理对象，是一个载体,承载AVAsset，然后通过AVPlayer进行播放，管理并保存着AVPlayer播放视频时的状态。<br />
-我们的目的是使用AVPlayer来播放AVAsset，AVAsset中只有时长，创建时间等静态信息，AVPlayerItem则有获取当前播放时间以及调节播放进度的方法。</p>
-<h3 id="动态对象"><a class="markdownIt-Anchor" href="#动态对象"></a> 动态对象</h3>
-<p>AVPlayerItem是一个动态对象，除了可以被我们改变的属性之外，许多read-only属性在准备播放和播放过程中被其相关联的AVPlayer所改变。可以使用KVO去监听这些变化，一个非常重要的属性是<a href="https://developer.apple.com/reference/avfoundation/avplayeritem/1389493-status?language=objc">status</a>，这个属性指示了什么时候可以播放。当我们刚创建出AVPlayerItem对象的时候这个属性的值是AVPlayerItemStatusUnknown表示媒体资源还没有被加载。关联AVPlayer对象之后会立马将AVPlayerItem对象对应的资源排队，毕竟开始为播放做准备。当status的值变为AVPlayerItemStatusReadyToPlay的时候表示我们可以准备播放。</p>
-<p>如下代码指示了如何创建并注册监听：</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="type">void</span>)prepareToPlay &#123;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">NSURL</span> *url = &lt;#Asset URL#&gt;</span><br><span class="line">    <span class="comment">// Create asset to be played</span></span><br><span class="line">    asset = [<span class="built_in">AVAsset</span> assetWithURL:url];</span><br><span class="line">    <span class="built_in">NSArray</span> *assetKeys = @[<span class="string">@&quot;playable&quot;</span>, <span class="string">@&quot;hasProtectedContent&quot;</span>];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Create a new AVPlayerItem with the asset and an</span></span><br><span class="line">    <span class="comment">// array of asset keys to be automatically loaded</span></span><br><span class="line">    playerItem = [<span class="built_in">AVPlayerItem</span> playerItemWithAsset:asset automaticallyLoadedAssetKeys:assetKeys];</span><br><span class="line"></span><br><span class="line">    <span class="built_in">NSKeyValueObservingOptions</span> options = <span class="built_in">NSKeyValueObservingOptionOld</span> | <span class="built_in">NSKeyValueObservingOptionNew</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Register as an observer of the player item&#x27;s status property</span></span><br><span class="line">    [playerItem addObserver:<span class="keyword">self</span></span><br><span class="line">        forKeyPath:<span class="string">@&quot;status&quot;</span></span><br><span class="line">        options:options</span><br><span class="line">        context:&amp;PlayerItemContext];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Associate the player item with the player</span></span><br><span class="line">    player = [<span class="built_in">AVPlayer</span> playerWithPlayerItem:playerItem];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>然后当status发生变化时，我们需要实现如下如下方法以获得通知。</p>
-<figure class="highlight objectivec"><table><tr><td class="code"><pre><span class="line">- (<span class="type">void</span>)observeValueForKeyPath:(<span class="built_in">NSString</span> *)keyPath ofObject:(<span class="type">id</span>)object change:(<span class="built_in">NSDictionary</span>&lt;<span class="built_in">NSString</span> *,<span class="type">id</span>&gt; *)change context:(<span class="type">void</span> *)context &#123;</span><br><span class="line">    <span class="comment">// Only handle observations for the PlayerItemContext</span></span><br><span class="line">    <span class="keyword">if</span> (context != &amp;PlayerItemContext) &#123;</span><br><span class="line">        [<span class="variable language_">super</span> observeValueForKeyPath:keyPath ofObject:object change:change context:context];</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ([keyPath isEqualToString:<span class="string">@&quot;status&quot;</span>]) &#123;</span><br><span class="line">        <span class="built_in">AVPlayerItemStatus</span> status = <span class="built_in">AVPlayerItemStatusUnknown</span>;</span><br><span class="line">        <span class="comment">// Get the status change from the change dictionary</span></span><br><span class="line">        <span class="built_in">NSNumber</span> *statusNumber = change[<span class="built_in">NSKeyValueChangeNewKey</span>];</span><br><span class="line">        <span class="keyword">if</span> ([statusNumber isKindOfClass:[<span class="built_in">NSNumber</span> <span class="keyword">class</span>]]) &#123;</span><br><span class="line">            status = statusNumber.integerValue;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// Switch over the status</span></span><br><span class="line">        <span class="keyword">switch</span> (status) &#123;</span><br><span class="line">            <span class="keyword">case</span> <span class="built_in">AVPlayerItemStatusReadyToPlay</span>:</span><br><span class="line">                <span class="comment">// Ready to Play</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> <span class="built_in">AVPlayerItemStatusFailed</span>:</span><br><span class="line">                <span class="comment">// Failed. Examine AVPlayerItem.error</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> <span class="built_in">AVPlayerItemStatusUnknown</span>:</span><br><span class="line">                <span class="comment">// Not ready</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-]]></content>
-      <categories>
-        <category>iOS</category>
-      </categories>
-      <tags>
-        <tag>音视频</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Objective-C 中的load和initialize</title>
-    <url>/2021/04/11/oc_load_initialize/</url>
-    <content><![CDATA[<h3 id="load调用时机"><a class="markdownIt-Anchor" href="#load调用时机"></a> load调用时机</h3>
-<blockquote>
-<p>在这个文件被程序装载时调用。</p>
-</blockquote>
-<p>当我们启动程序时，参与了编译的类、分类都会被加载进内存，load方法就是在这个类被加载的时候调用的，这个过程与这个类是否被使用是无关的，只要是在Compile Sources中出现的文件总是会被装载。<br />
-<code>load</code>是在main之前进行调用。</p>
-<h3 id="load调用顺序"><a class="markdownIt-Anchor" href="#load调用顺序"></a> load调用顺序</h3>
-<p>一个程序中如果所有的类、分类都实现了load方法，那么所有的load方法都会被调用。它们的执行顺序遵循以下规则：</p>
-<p>先执行所有类的<code>load</code>方法，再执行所有分类的<code>load</code>方法。<br />
-执行类的<code>load</code>方法时，是按照参与编译的顺序，先编译的类先执行，但是如果某个类是继承自另一个类，那么会先执行父类的<code>load</code>方法个再执行自己的<code>load</code>方法。<br />
-执行分类的<code>load</code>方法时，是按照分类参与编译的顺序，先编译的分类先执行。</p>
-<p>编译顺序是按照项目中<code>Build Phases --&gt; Compile Sources</code>文件排序来进行的，最上面的就最先编译。</p>
-<h3 id="initialize调用时机"><a class="markdownIt-Anchor" href="#initialize调用时机"></a> initialize调用时机</h3>
-<p><code>initialize</code>方法是在类或它的子类收到第一条消息时被调用的，这里的消息就是指实例方法或类方法的调用，所以所有类的<code>initialize</code>调用是在执行<code>main</code>函数之后调用的。而且一个类只会调用一次<code>initialize</code>方法。如果一个类在程序运行过程中一直没有被使用过，那这个类的<code>initialize</code>方法也就不会被调用，这一点和<code>load</code>方法是不一样的。</p>
-<p>使用initialize要比使用load安全(因为在调用initialize时所有类已经被加载进内存了)，但我们还是要尽量少用initialize这个方法个，尤其要谨慎在分类中实现initialize方法，因为如果在分类中实现了，本类实现的initialize方法将不会被调用。实际开发中initialize方法一般用于初始化全局变量或静态变量。</p>
-<h3 id="应用场景"><a class="markdownIt-Anchor" href="#应用场景"></a> 应用场景</h3>
-<p><code>load</code>方法通常用来进行<code>Method Swizzle</code>，<code>initialize</code>方法一般用于初始化全局变量或静态变量，<code>load</code>和<code>initialize</code>方法内部使用了锁，因此它们是线程安全的。实现时要尽可能保持简单，避免阻塞线程，不要再使用锁。</p>
-<p>参考<br />
-<a href="https://juejin.cn/post/6844904040703197191">https://juejin.cn/post/6844904040703197191</a></p>
-]]></content>
-      <tags>
-        <tag>iOS基础</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>诗歌</title>
-    <url>/2016/07/17/song/</url>
-    <content><![CDATA[<p>我愿意成为她的守护天使<br />
-爱她所爱<br />
-思她所思<br />
-为她承担伤痛<br />
-度过苦难<br />
-无论贫寒或富贵<br />
-无论卑贱或高贵<br />
-无论身处乱世<br />
-还是神所不顾<br />
-我愿为她拔剑而战<br />
-为她收起翅膀<br />
-不离不弃<br />
-直至永远</p>
-]]></content>
   </entry>
   <entry>
     <title>大屏 iPhone 的适配[转]</title>
@@ -1715,6 +1715,25 @@ AudioStreamBasicDescription是在使用AudioQueue进行语音录音时要传给A
 ]]></content>
       <tags>
         <tag>音视频</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>iOS中的文件读取</title>
+    <url>/2023/08/30/NSData%E8%AF%BB%E5%8F%96%E5%A4%A7%E6%96%87%E4%BB%B6/</url>
+    <content><![CDATA[<p>在<code>iOS</code>开发过程中遇到需要读取文件数据的场景，我们第一会想到以下两个接口:</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">+[<span class="built_in">NSData</span> dataWithContentsOfURL:]</span><br><span class="line">+[<span class="built_in">NSData</span> dataWithContentsOfFile:]</span><br></pre></td></tr></table></figure>
+<p>这两个接口会把data直接加载到<code>App</code>的内存中，如果涉及到的文件数据比较大，那么可能会直接导致<code>App</code>爆内存<code>crash</code>。</p>
+<p>对于这种情况，<code>iOS</code>的<code>Foundation</code>框架提供了<code>mmap</code>的数据加载方式，并以下面两种接口给开发者提供了这种能力：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line">+[<span class="built_in">NSData</span> dataWithContentsOfFile:options:error:]</span><br><span class="line">+[<span class="built_in">NSData</span> dataWithContentsOfURL:options:error:]</span><br></pre></td></tr></table></figure>
+<p>其中<code>option</code>中字段<code>NSDataReadingOptions</code>的定义如下：</p>
+<figure class="highlight objc"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="built_in">NS_OPTIONS</span>(<span class="built_in">NSUInteger</span>, <span class="built_in">NSDataReadingOptions</span>) &#123;</span><br><span class="line">    <span class="built_in">NSDataReadingMappedIfSafe</span> =   <span class="number">1</span>UL &lt;&lt; <span class="number">0</span>,	<span class="comment">// Hint to map the file in if possible and safe</span></span><br><span class="line">    <span class="built_in">NSDataReadingUncached</span> = <span class="number">1</span>UL &lt;&lt; <span class="number">1</span>,	<span class="comment">// Hint to get the file not to be cached in the kernel</span></span><br><span class="line">    <span class="built_in">NSDataReadingMappedAlways</span> API_AVAILABLE(macos(<span class="number">10.7</span>), ios(<span class="number">5.0</span>), watchos(<span class="number">2.0</span>), tvos(<span class="number">9.0</span>)) = <span class="number">1</span>UL &lt;&lt; <span class="number">3</span>,	<span class="comment">// Hint to map the file in if possible. This takes precedence over NSDataReadingMappedIfSafe if both are given.</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>我们使用<code>NSDataReadingMappedIfSafe</code>这个<code>option</code>后，<code>iOS</code>就不会把整个文件的数据全部<code>load</code>进的<code>App</code>的内存了，而是将文件的数据<code>mmap</code>到进程的地址空间中，这样就可以优化爆内存的问题。</p>
+<p>下图是在使用<code>NSDataReadingMappedIfSafe</code>前后加载1.7G的文件数据内存占用的差异，可见差异非常大<br />
+<img src="/images/ios/dataread_1.png"/></p>
+<p>由此可知使用mmap的方式确实可以解决iOS上load大文件爆内存的问题，后面我们就深入理解一下mmap的原理。</p>
+]]></content>
+      <tags>
+        <tag>iOS基础</tag>
       </tags>
   </entry>
 </search>
