@@ -1841,4 +1841,20 @@ Trie树检索的时间复杂度可以做到n，n是要检索单词的长度，<b
         <tag>数据结构</tag>
       </tags>
   </entry>
+  <entry>
+    <title>图片视频资源</title>
+    <url>/2023/10/26/test/</url>
+    <content><![CDATA[<img src="/images/test/livephoto/thumb.jpeg" width="320">
+<video width="320" controls>
+  <source src="/images/test/livephoto/video.MOV" type="video/mp4">
+</video>
+<img src="/images/test/livephoto/0.jpeg" width="320">
+<video width="320" controls>
+  <source src="/images/test/livephoto/0.MOV" type="video/mp4">
+</video>
+]]></content>
+      <tags>
+        <tag>others</tag>
+      </tags>
+  </entry>
 </search>
